@@ -92,6 +92,49 @@ public class ContainerDataScanner extends Thread {
     }
   }
 
+  public void scan() {
+    long startTime = System.nanoTime();
+    Iterator<Container<?>> itr = controller.getContainers(volume);
+    while (!stopping && itr.hasNext()) {
+      Container c = itr.next();
+      if (c.shouldScanData()) {
+        ContainerData containerData = c.getContainerData();
+        long containerId = containerData.getContainerID();
+        try {
+          logScanStart(containerData);
+          if (!c.scanData(throttler, canceler)) {
+            metrics.incNumUnHealthyContainers();
+            controller.markContainerUnhealthy(containerId);
+          } else {
+            Instant now = Instant.now();
+            logScanCompleted(containerData, now);
+            controller.updateDataScanTimestamp(containerId, now);
+          }
+        } catch (IOException ex) {
+          LOG.warn("Unexpected exception while scanning container "
+                  + containerId, ex);
+        } finally {
+          metrics.incNumContainersScanned();
+        }
+      }
+    }
+    long totalDuration = System.nanoTime() - startTime;
+    if (!stopping) {
+      if (metrics.getNumContainersScanned() > 0) {
+        metrics.incNumScanIterations();
+        LOG.info("Completed an iteration of container data scrubber" +
+                 " with {} in {} minutes." +
+                 " Number of iterations (since the data-node restart) : {}" +
+                 ", Number of containers scanned in this iteration : {}" +
+                ", Number of unhealthy containers found in this iteration : {}",
+            String.format(NAME_FORMAT, volume),
+            TimeUnit.NANOSECONDS.toMinutes(totalDuration),
+            metrics.getNumScanIterations(),
+            metrics.getNumContainersScanned(),
+            metrics.getNumUnHealthyContainers());
+      }
+    }
+  }
   @VisibleForTesting
   public void runIteration() {
     long startTime = System.nanoTime();

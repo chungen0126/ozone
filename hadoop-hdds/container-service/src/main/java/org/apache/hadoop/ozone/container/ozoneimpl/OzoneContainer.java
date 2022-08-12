@@ -374,21 +374,28 @@ public class OzoneContainer {
       return;
     }
 
-    LOG.info("Attempting to start container services.");
-    startContainerScrub();
+    try {
+      LOG.info("Attempting to start container services.");
+      startContainerScrub();
 
-    replicationServer.start();
-    datanodeDetails.setPort(Name.REPLICATION, replicationServer.getPort());
+      replicationServer.start();
+      datanodeDetails.setPort(Name.REPLICATION, replicationServer.getPort());
 
-    writeChannel.start();
-    readChannel.start();
-    hddsDispatcher.init();
-    hddsDispatcher.setClusterId(clusterId);
-    blockDeletingService.start();
-    recoveringContainerScrubbingService.start();
+      writeChannel.start();
+      readChannel.start();
+      hddsDispatcher.init();
+      hddsDispatcher.setClusterId(clusterId);
+      blockDeletingService.start();
+      recoveringContainerScrubbingService.start();
 
-    // mark OzoneContainer as INITIALIZED.
-    initializingStatus.set(InitializingStatus.INITIALIZED);
+      // mark OzoneContainer as INITIALIZED.
+      initializingStatus.set(InitializingStatus.INITIALIZED);
+    } catch (IOException e) {
+      for (ContainerDataScanner s : dataScanners) {
+        s.scan();
+        throw e;
+      }
+    }
   }
 
   /**
