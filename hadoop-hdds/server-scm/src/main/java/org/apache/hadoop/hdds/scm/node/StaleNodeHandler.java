@@ -56,16 +56,6 @@ public class StaleNodeHandler implements EventHandler<DatanodeDetails> {
       EventPublisher publisher) {
     Set<PipelineID> pipelineIds =
         nodeManager.getPipelines(datanodeDetails);
-    LOG.info("Datanode {} moved to stale state. Finalizing its pipelines {}",
-        datanodeDetails, pipelineIds);
-    for (PipelineID pipelineID : pipelineIds) {
-      try {
-        Pipeline pipeline = pipelineManager.getPipeline(pipelineID);
-        pipelineManager.closePipeline(pipeline, true);
-      } catch (IOException | TimeoutException e) {
-        LOG.info("Could not finalize pipeline={} for dn={}", pipelineID,
-            datanodeDetails);
-      }
-    }
+    LOG.info("Datanode {} moved to stale state.", datanodeDetails);
   }
 }
