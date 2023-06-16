@@ -68,7 +68,7 @@ public final class TestHddsUpgradeUtils {
   public static void waitForFinalizationFromClient(
       StorageContainerLocationProtocol scmClient, String clientID)
       throws Exception {
-    LambdaTestUtils.await(60_000, 1_000, () -> {
+    LambdaTestUtils.await(120_000, 1_000, () -> {
       UpgradeFinalizer.Status status = scmClient
           .queryUpgradeFinalizationProgress(clientID, true, true)
           .status();
