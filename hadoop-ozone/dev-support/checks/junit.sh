@@ -74,6 +74,10 @@ for i in $(seq 1 ${ITERATIONS}); do
   if [[ ${rc} == 0 ]]; then
     rc=${irc}
   fi
+
+  if [[ "${FAIL_FAST:-}" == "true" ]] && [[ ${rc} != 0 ]]; then
+    break
+  fi
 done
 
 if [[ "${OZONE_WITH_COVERAGE}" == "true" ]]; then
