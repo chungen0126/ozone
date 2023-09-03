@@ -801,6 +801,7 @@ public class TestOzoneFileSystem {
     if (fileStatuses == null) {
       return;
     }
+    getCluster().getOzoneManager().awaitDoubleBufferFlush();
     deleteRootRecursively(fileStatuses);
     fileStatuses = fs.listStatus(ROOT);
     if (fileStatuses != null) {
