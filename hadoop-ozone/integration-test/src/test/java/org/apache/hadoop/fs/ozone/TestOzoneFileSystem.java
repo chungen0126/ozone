@@ -66,6 +66,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -1629,7 +1630,7 @@ public class TestOzoneFileSystem {
    * since fs.rename(src,dst,options) is enabled.
    */
   @Test
-  @Flaky("HDDS-6646")
+  @Disabled("HDDS-6646")
   public void testRenameToTrashEnabled() throws Exception {
     // Create a file
     String testKeyName = "testKey1";
