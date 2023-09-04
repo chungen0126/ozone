@@ -64,6 +64,7 @@ import org.apache.ozone.test.tag.Flaky;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.jupiter.api.Disabled;
@@ -1630,7 +1631,7 @@ public class TestOzoneFileSystem {
    * since fs.rename(src,dst,options) is enabled.
    */
   @Test
-  @Disabled("HDDS-6646")
+  @Ignore("HDDS-6646")
   public void testRenameToTrashEnabled() throws Exception {
     // Create a file
     String testKeyName = "testKey1";
