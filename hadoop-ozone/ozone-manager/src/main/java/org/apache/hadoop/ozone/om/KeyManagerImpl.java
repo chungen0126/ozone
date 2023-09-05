@@ -1611,7 +1611,7 @@ public class KeyManagerImpl implements KeyManager {
         OmKeyInfo omKeyInfo = entry.getValue();
         String volumeName = omKeyInfo.getVolumeName();
         String bucketName = omKeyInfo.getBucketName();
-        if (isKeyDeleted(entryInDb, keyTable)) {
+        if (!keyTable.isExist(entryInDb)) {
           continue;
         }
         if (entryInDb.startsWith(keyArgs)) {
