@@ -803,7 +803,6 @@ public class TestOzoneFileSystem {
     if (fileStatuses == null) {
       return;
     }
-    getCluster().getOzoneManager().awaitDoubleBufferFlush();
     deleteRootRecursively(fileStatuses);
 
     // Waiting for double buffer flush before calling listStatus() again
