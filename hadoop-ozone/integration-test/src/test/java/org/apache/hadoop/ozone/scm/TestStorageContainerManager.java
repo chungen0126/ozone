@@ -907,7 +907,7 @@ public class TestStorageContainerManager {
     ContainerReportHandler containerReportHandler =
         Mockito.mock(ContainerReportHandler.class);
     Mockito.doAnswer((inv) -> {
-      Thread.currentThread().sleep(1000);
+      Thread.currentThread().sleep(1001);
       return null;
     }).when(containerReportHandler).onMessage(Mockito.any(),
         Mockito.eq(eventQueue));
