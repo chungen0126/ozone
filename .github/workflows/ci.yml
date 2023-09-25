@@ -16,7 +16,7 @@ name: full-ci
 on:
   workflow_call:
 env:
-  FAIL_FAST: false
+  FAIL_FAST: ${{ github.event_name == 'pull_request' }}
   MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.class=standard -Dmaven.wagon.http.retryHandler.count=3
   OZONE_WITH_COVERAGE: ${{ github.repository == 'apache/ozone' && github.event_name != 'pull_request' }}
 jobs:
@@ -25,13 +25,14 @@ jobs:
     env:
       GITHUB_CONTEXT: ${{ toJson(github) }}
     outputs:
+      acceptance-suites: ${{ steps.acceptance-suites.outputs.suites }}
       basic-checks: ${{ steps.selective-checks.outputs.basic-checks }}
-      needs-basic-checks: false
+      needs-basic-checks: true
       needs-build: false
       needs-compile: false
       needs-compose-tests: false
       needs-dependency-check: false
-      needs-integration-tests: true
+      needs-integration-tests: false
       needs-kubernetes-tests: false
     steps:
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
@@ -58,6 +59,9 @@ jobs:
             # Run all checks
             dev-support/ci/selective_ci_checks.sh
           fi
+      - name: Acceptance suites
+        id: acceptance-suites
+        run: dev-support/ci/acceptance_suites.sh
   build:
     needs:
       - build-info
@@ -165,7 +169,8 @@ jobs:
     if: needs.build-info.outputs.needs-basic-checks == 'true'
     strategy:
       matrix:
-        check: ${{ fromJson(needs.build-info.outputs.basic-checks) }}
+        check: [ native ]
+        split: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
       fail-fast: false
     steps:
       - name: Checkout project
@@ -180,7 +185,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.m2/repository
-          key: maven-repo-${{ hashFiles('**/pom.xml') }}-8-${{ matrix.check }}
+          key: maven-repo-${{ hashFiles('**/pom.xml') }}-8-${{ matrix.check }}-${{ matrix.split }}
           restore-keys: |
             maven-repo-${{ hashFiles('**/pom.xml') }}-8
             maven-repo-${{ hashFiles('**/pom.xml') }}
@@ -193,9 +198,14 @@ jobs:
           java-version: 8
       - name: Execute tests
         run: hadoop-ozone/dev-support/checks/${{ matrix.check }}.sh
+        env:
+          ITERATIONS: 30
       - name: Summary of failures
         run: cat target/${{ matrix.check }}/summary.txt
         if: ${{ !cancelled() }}
+      - name: Number of failures
+        run: cat target/${{ github.job }}/failures
+        if: always()
       - name: Archive build results
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
@@ -247,16 +257,7 @@ jobs:
     if: needs.build-info.outputs.needs-compose-tests == 'true'
     strategy:
       matrix:
-        suite:
-          - secure
-          - unsecure
-          - compat
-          - EC
-          - HA-secure
-          - HA-unsecure
-          - MR
-          - misc
-          - cert-rotation
+        suite: ${{ fromJson(needs.build-info.outputs.acceptance-suites) }}
       fail-fast: false
     steps:
       - name: Checkout project
@@ -318,7 +319,7 @@ jobs:
           name: kubernetes
           path: target/kubernetes
         continue-on-error: true
-  unit:
+  integration:
     needs:
       - build-info
     runs-on: ubuntu-20.04
@@ -326,7 +327,16 @@ jobs:
     if: needs.build-info.outputs.needs-integration-tests == 'true'
     strategy:
       matrix:
-        profile: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+        profile:
+          - client
+          - contract
+          - filesystem
+          - hdds
+          - om
+          - ozone
+          - scm
+          - shell
+          - flaky
       fail-fast: false
     steps:
       - name: Checkout project
@@ -346,9 +356,11 @@ jobs:
           distribution: 'temurin'
           java-version: 8
       - name: Execute tests
-        run: bash hadoop-ozone/dev-support/checks/junit.sh -pl :hdds-server-scm -Dtest=TestContainerBalancer
-        env:
-          ITERATIONS: 100
+        run: hadoop-ozone/dev-support/checks/integration.sh -P${{ matrix.profile }}
+        if: matrix.profile != 'flaky'
+      - name: Execute flaky tests
+        run: hadoop-ozone/dev-support/checks/integration.sh -P${{ matrix.profile }} -Dsurefire.rerunFailingTestsCount=5 -Dsurefire.fork.timeout=3600
+        if: matrix.profile == 'flaky'
       - name: Summary of failures
         run: cat target/${{ github.job }}/summary.txt
         if: always()
@@ -356,8 +368,8 @@ jobs:
         uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: unit-${{ matrix.profile }}
-          path: target/unit
+          name: it-${{ matrix.profile }}
+          path: target/integration
         continue-on-error: true
       - name: Delete temporary build artifacts before caching
         run: |
@@ -372,6 +384,7 @@ jobs:
     needs:
       - acceptance
       - basic
+      - integration
     steps:
       - name: Checkout project
         uses: actions/checkout@v3

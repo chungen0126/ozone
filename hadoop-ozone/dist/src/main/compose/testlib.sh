@@ -278,7 +278,7 @@ save_container_logs() {
   local output_name=$(get_output_name)
   local c
   for c in $(docker-compose ps "$@" | cut -f1 -d' ' | tail -n +3); do
-    docker logs "${c}" &>> "$RESULT_DIR/docker-${output_name}${c}.log"
+    docker logs "${c}" >> "$RESULT_DIR/docker-${output_name}${c}.log" 2>&1
   done
 }
 
@@ -337,7 +337,17 @@ stop_docker_env(){
   copy_daemon_logs
   save_container_logs
   if [ "${KEEP_RUNNING:-false}" = false ]; then
-     docker-compose --ansi never down
+    down_repeats=3
+    for i in $(seq 1 $down_repeats)
+    do
+      if docker-compose --ansi never down; then
+        return
+      fi
+      sleep 5
+    done
+
+    echo "Failed to remove all docker containers in $down_repeats attempts."
+    return 1
   fi
 }
 

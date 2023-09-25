@@ -819,6 +819,7 @@ public class RpcClient implements ClientProtocol {
    * @throws IOException
    */
   @Override
+  @Nonnull
   public S3SecretValue getS3Secret(String kerberosID) throws IOException {
     Preconditions.checkArgument(StringUtils.isNotBlank(kerberosID),
         "kerberosID cannot be null or empty.");
@@ -2265,7 +2266,8 @@ public class RpcClient implements ClientProtocol {
         HddsProtos.ReplicationType.EC) {
       builder = new ECKeyOutputStream.Builder()
           .setReplicationConfig((ECReplicationConfig) replicationConfig)
-          .setByteBufferPool(byteBufferPool);
+          .setByteBufferPool(byteBufferPool)
+          .setS3CredentialsProvider(getS3CredentialsProvider());
     } else {
       builder = new KeyOutputStream.Builder()
         .setReplicationConfig(replicationConfig);
@@ -2362,6 +2364,11 @@ public class RpcClient implements ClientProtocol {
   @Override
   public void clearThreadLocalS3Auth() {
     ozoneManagerClient.clearThreadLocalS3Auth();
+  }
+
+  @Override
+  public ThreadLocal<S3Auth> getS3CredentialsProvider() {
+    return ozoneManagerClient.getS3CredentialsProvider();
   }
 
   @Override
