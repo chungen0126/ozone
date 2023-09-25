@@ -197,7 +197,7 @@ jobs:
           distribution: 'temurin'
           java-version: 8
       - name: Execute tests
-        run: hadoop-ozone/dev-support/checks/${{ matrix.check }}.sh
+        run: hadoop-ozone/dev-support/checks/${{ matrix.check }}.sh -Dtest=TestOpenKeyCleanupService
         env:
           ITERATIONS: 30
       - name: Summary of failures
