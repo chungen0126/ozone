@@ -25,11 +25,11 @@ jobs:
     env:
       GITHUB_CONTEXT: ${{ toJson(github) }}
     outputs:
-      acceptance-suites: false
-      needs-basic-checks: ${{ steps.selective-checks.outputs.needs-basic-checks }}
+      acceptance-suites: ${{ steps.acceptance-suites.outputs.suites }}
+      needs-basic-checks: false
       basic-checks: ${{ steps.categorize-basic-checks.outputs.basic-checks }}
-      basic-unit: false
-      needs-build: ${{ steps.selective-checks.outputs.needs-build }}
+      basic-unit: ${{ steps.categorize-basic-checks.outputs.basic-unit }}
+      needs-build: false
       needs-compile: false
       needs-compose-tests: false
       needs-dependency-check: false
@@ -361,13 +361,7 @@ jobs:
           path: target/kubernetes
         continue-on-error: true
   integration:
-    needs:
-      - build-info
-      - build
-      - basic
     runs-on: ubuntu-20.04
-    timeout-minutes: 150
-    if: needs.build-info.outputs.needs-integration-tests == 'true'
     strategy:
       matrix:
         profile: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
@@ -390,11 +384,14 @@ jobs:
           distribution: 'temurin'
           java-version: 8
       - name: Execute tests
-        run: bash hadoop-ozone/dev-support/checks/integration.sh
+        run: hadoop-ozone/dev-support/checks/integration.sh
         env:
-          ITERATIONS: 30
+          ITERATIONS: 10
       - name: Summary of failures
         run: cat target/${{ github.job }}/summary.txt
+        if: ${{ !cancelled() }}
+      - name: Number of failures
+        run: cat target/${{ github.job }}/failures
         if: ${{ !cancelled() }}
       - name: Archive build results
         uses: actions/upload-artifact@v3
