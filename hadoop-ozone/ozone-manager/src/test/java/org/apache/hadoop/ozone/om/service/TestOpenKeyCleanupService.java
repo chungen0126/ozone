@@ -172,8 +172,8 @@ public class TestOpenKeyCleanupService {
         5 * (int) SERVICE_INTERVAL.toMillis());
 
     // wait for requests to complete
-    final int n = hsync ? numDEFKeys + numFSOKeys : 2;
-    Thread.sleep(n * SERVICE_INTERVAL.toMillis());
+    final int n = hsync ? numDEFKeys + numFSOKeys : 1;
+    Thread.sleep(2 * n * SERVICE_INTERVAL.toMillis());
 
     assertTrue(openKeyCleanupService.getSubmittedOpenKeyCount() >=
         oldkeyCount + keyCount);
