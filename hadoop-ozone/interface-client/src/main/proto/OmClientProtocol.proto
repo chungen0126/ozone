@@ -316,6 +316,7 @@ message OMResponse {
   optional AllocateBlockResponse             allocateBlockResponse         = 37;
   optional DeleteKeysResponse                deleteKeysResponse            = 38;
   optional RenameKeysResponse                renameKeysResponse            = 39;
+  optional DeleteOpenKeysResponse            deleteOpenKeysResponse        = 40;
 
   optional MultipartInfoInitiateResponse   initiateMultiPartUploadResponse = 45;
   optional MultipartCommitUploadPartResponse commitMultiPartUploadResponse = 46;
@@ -1323,6 +1324,10 @@ message PurgePathRequest {
 message DeleteOpenKeysRequest {
   repeated OpenKeyBucket openKeysPerBucket = 1;
   optional BucketLayoutProto bucketLayout = 2;
+}
+
+message DeleteOpenKeysResponse {
+  repeated OpenKeyBucket unDeletedOpenKeysPerBucket = 1;
 }
 
 message OpenKeyBucket {

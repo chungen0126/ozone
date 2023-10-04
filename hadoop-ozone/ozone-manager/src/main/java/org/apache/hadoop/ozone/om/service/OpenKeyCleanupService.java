@@ -190,7 +190,7 @@ public class OpenKeyCleanupService extends BackgroundService {
 
       final Collection<OpenKeyBucket.Builder> openKeyBuckets
           = expiredOpenKeys.getOpenKeyBuckets();
-      final int numOpenKeys = openKeyBuckets.stream()
+      int numOpenKeys = openKeyBuckets.stream()
           .mapToInt(OpenKeyBucket.Builder::getKeysCount)
           .sum();
       if (!openKeyBuckets.isEmpty()) {
@@ -199,6 +199,10 @@ public class OpenKeyCleanupService extends BackgroundService {
             openKeyBuckets.stream());
         final OMResponse response = submitRequest(omRequest);
         if (response != null && response.getSuccess()) {
+          final int numUnDeletedOpenKeys = response.getDeleteOpenKeysResponse()
+              .getUnDeletedOpenKeysPerBucketList().stream()
+              .mapToInt(OpenKeyBucket::getKeysCount).sum();
+          numOpenKeys -= numUnDeletedOpenKeys;
           ozoneManager.getMetrics().incNumOpenKeysCleaned(numOpenKeys);
         }
       }
