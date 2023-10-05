@@ -172,11 +172,13 @@ public class TestOpenKeyCleanupService {
         5 * (int) SERVICE_INTERVAL.toMillis());
 
     // wait for requests to complete
-    final int n = hsync ? numDEFKeys + numFSOKeys : 1;
-    Thread.sleep(n * SERVICE_INTERVAL.toMillis());
 
-    assertTrue(openKeyCleanupService.getSubmittedOpenKeyCount() >=
-        oldkeyCount + keyCount);
+    final int n = hsync ? numDEFKeys + numFSOKeys : 1;
+    GenericTestUtils.waitFor(() -> openKeyCleanupService
+        .getSubmittedOpenKeyCount() == (oldkeyCount + keyCount),
+        (int) SERVICE_INTERVAL.toMillis(),
+        5 * n * (int) SERVICE_INTERVAL.toMillis());
+
     assertExpiredOpenKeys(true, false, BucketLayout.DEFAULT);
     assertExpiredOpenKeys(true, hsync,
         BucketLayout.FILE_SYSTEM_OPTIMIZED);
