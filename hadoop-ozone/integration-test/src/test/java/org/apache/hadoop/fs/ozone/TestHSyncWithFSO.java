@@ -18,13 +18,12 @@
 
 package org.apache.hadoop.fs.ozone;
 
+import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.junit.jupiter.api.TestInstance;
 
-import static org.apache.hadoop.ozone.om.helpers.BucketLayout.LEGACY;
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestHSync extends AbstractHSyncTest{
-  TestHSync() {
-    super(LEGACY);
+public class TestHSyncWithFSO extends AbstractHSyncTest{
+  TestHSyncWithFSO() {
+    super(BucketLayout.FILE_SYSTEM_OPTIMIZED);
   }
 }
