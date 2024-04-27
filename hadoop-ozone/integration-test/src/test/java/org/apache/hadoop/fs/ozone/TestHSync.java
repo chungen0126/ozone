@@ -23,7 +23,7 @@ import org.junit.jupiter.api.TestInstance;
 import static org.apache.hadoop.ozone.om.helpers.BucketLayout.LEGACY;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestHSync extends AbstractHSyncTest{
+public class TestHSync extends AbstractHSyncTest {
   TestHSync() {
     super(LEGACY);
   }

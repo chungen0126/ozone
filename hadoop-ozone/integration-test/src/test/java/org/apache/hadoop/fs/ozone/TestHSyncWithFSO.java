@@ -22,7 +22,7 @@ import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.junit.jupiter.api.TestInstance;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestHSyncWithFSO extends AbstractHSyncTest{
+public class TestHSyncWithFSO extends AbstractHSyncTest {
   TestHSyncWithFSO() {
     super(BucketLayout.FILE_SYSTEM_OPTIMIZED);
   }

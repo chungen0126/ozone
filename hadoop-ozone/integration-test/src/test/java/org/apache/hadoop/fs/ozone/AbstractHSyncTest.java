@@ -144,11 +144,11 @@ abstract class AbstractHSyncTest {
   private static final Logger LOG =
       LoggerFactory.getLogger(AbstractHSyncTest.class);
 
-  private static MiniOzoneCluster cluster;
-  private static OzoneBucket bucket;
+  private MiniOzoneCluster cluster;
+  private OzoneBucket bucket;
 
   private static final OzoneConfiguration CONF = new OzoneConfiguration();
-  private static OzoneClient client;
+  private OzoneClient client;
   private final BucketLayout bucketLayout;
 
   private static final int CHUNK_SIZE = 4 << 12;
@@ -158,7 +158,7 @@ abstract class AbstractHSyncTest {
   private static final int SERVICE_INTERVAL = 100;
   private static final int EXPIRE_THRESHOLD_MS = 140;
 
-  private static OpenKeyCleanupService openKeyCleanupService;
+  private OpenKeyCleanupService openKeyCleanupService;
 
   AbstractHSyncTest(BucketLayout layout) {
     bucketLayout = layout;
