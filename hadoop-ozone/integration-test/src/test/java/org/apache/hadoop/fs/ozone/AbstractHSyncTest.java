@@ -216,7 +216,7 @@ abstract class AbstractHSyncTest {
   }
 
   @AfterAll
-  public static void teardown() {
+  void teardown() {
     IOUtils.closeQuietly(client);
     if (cluster != null) {
       cluster.shutdown();
@@ -442,14 +442,14 @@ abstract class AbstractHSyncTest {
         os.write(1);
         os.hsync();
         // There should be 1 key in openFileTable
-        assertThat(1 == getOpenKeyInfo(bucketLayout).size());
+        assertThat(1 == getOpenKeyInfo().size());
         // Delete directory recursively
         fs.delete(new Path(OZONE_ROOT + bucket.getVolumeName() + OZONE_URI_DELIMITER +
             bucket.getName() + OZONE_URI_DELIMITER + "dir1/"), true);
 
         // Verify if DELETED_HSYNC_KEY metadata is added to openKey
         GenericTestUtils.waitFor(() -> {
-          List<OmKeyInfo> omKeyInfo = getOpenKeyInfo(bucketLayout);
+          List<OmKeyInfo> omKeyInfo = getOpenKeyInfo();
           return omKeyInfo.size() > 0 && omKeyInfo.get(0).getMetadata().containsKey(OzoneConsts.DELETED_HSYNC_KEY);
         }, 1000, 12000);
 
@@ -458,7 +458,7 @@ abstract class AbstractHSyncTest {
 
         // Verify entry from openKey gets deleted eventually
         GenericTestUtils.waitFor(() ->
-            0 == getOpenKeyInfo(bucketLayout).size(), 1000, 12000);
+            0 == getOpenKeyInfo().size(), 1000, 12000);
       } catch (OMException ex) {
         if (bucketLayout == BucketLayout.FILE_SYSTEM_OPTIMIZED) {
           assertEquals(OMException.ResultCodes.DIRECTORY_NOT_FOUND, ex.getResult());
@@ -472,7 +472,7 @@ abstract class AbstractHSyncTest {
     }
   }
 
-  private List<OmKeyInfo> getOpenKeyInfo(BucketLayout bucketLayout) {
+  private List<OmKeyInfo> getOpenKeyInfo() {
     List<OmKeyInfo> omKeyInfo = new ArrayList<>();
 
     Table<String, OmKeyInfo> openFileTable =
