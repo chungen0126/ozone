@@ -525,7 +525,7 @@ public class BasicOzoneClientAdapterImpl implements OzoneClientAdapter {
         keyInfo.getModificationTime(),
         keyInfo.getModificationTime(),
         status.isDirectory() ? (short) 00777 : (short) 00666,
-        owner,
+        StringUtils.defaultIfEmpty(keyInfo.getOwnerName(), owner),
         owner,
         null,
         getBlockLocations(status),

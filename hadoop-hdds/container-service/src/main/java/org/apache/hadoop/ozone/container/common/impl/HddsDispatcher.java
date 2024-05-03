@@ -62,7 +62,6 @@ import org.apache.hadoop.ozone.container.common.volume.HddsVolume;
 import org.apache.hadoop.ozone.container.common.volume.VolumeSet;
 import org.apache.hadoop.ozone.container.ozoneimpl.OnDemandContainerDataScanner;
 import org.apache.hadoop.ozone.container.common.volume.VolumeUsage;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.Time;
 import org.apache.ratis.statemachine.StateMachine;
 import org.apache.ratis.thirdparty.com.google.protobuf.ProtocolMessageEnum;
@@ -497,7 +496,7 @@ public class HddsDispatcher implements ContainerDispatcher, Auditor {
   private void validateToken(
       ContainerCommandRequestProto msg) throws IOException {
     tokenVerifier.verify(
-        msg, UserGroupInformation.getCurrentUser().getShortUserName(),
+        msg,
         msg.getEncodedToken()
     );
   }
@@ -815,7 +814,6 @@ public class HddsDispatcher implements ContainerDispatcher, Auditor {
     case CloseContainer   : return DNAction.CLOSE_CONTAINER;
     case GetCommittedBlockLength : return DNAction.GET_COMMITTED_BLOCK_LENGTH;
     case StreamInit       : return DNAction.STREAM_INIT;
-    case FinalizeBlock    : return DNAction.FINALIZE_BLOCK;
     case Echo             : return DNAction.ECHO;
     default :
       LOG.debug("Invalid command type - {}", cmdType);
@@ -946,12 +944,6 @@ public class HddsDispatcher implements ContainerDispatcher, Auditor {
     case GetCommittedBlockLength:
       auditParams.put(AUDIT_PARAM_BLOCK_DATA,
           BlockID.getFromProtobuf(msg.getGetCommittedBlockLength().getBlockID())
-              .toString());
-      return auditParams;
-
-    case FinalizeBlock:
-      auditParams.put("blockData",
-          BlockID.getFromProtobuf(msg.getFinalizeBlock().getBlockID())
               .toString());
       return auditParams;
 
