@@ -161,6 +161,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -2573,7 +2574,7 @@ public class RpcClient implements ClientProtocol {
   private static ExecutorService createThreadPoolExecutor(
        int corePoolSize, int maximumPoolSize, String threadNameFormat) {
     return new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
-            60, TimeUnit.SECONDS, new SynchronousQueue<>(),
+            60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
                new ThreadFactoryBuilder().setNameFormat(threadNameFormat).setDaemon(true).build(),
                new ThreadPoolExecutor.CallerRunsPolicy());
   }
