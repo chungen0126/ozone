@@ -18,10 +18,15 @@
 package org.apache.hadoop.ozone.client.rpc;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.hadoop.hdds.client.ReplicationFactor;
@@ -277,7 +282,12 @@ class TestBlockOutputStream {
       key.write(data1);
 
       assertEquals(pendingWriteChunkCount + 2,
-          metrics.getPendingContainerOpCountMetrics(WriteChunk));
+          metrics.getPendingContainerOpCountMetrics(WriteChunk), () -> {
+            ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+            ThreadInfo[] infos = bean.dumpAllThreads(true, true);
+            return Arrays.stream(infos).map(Object::toString)
+                .collect(Collectors.joining());});
+
       assertEquals(pendingPutBlockCount + 1,
           metrics.getPendingContainerOpCountMetrics(PutBlock));
       KeyOutputStream keyOutputStream =

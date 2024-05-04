@@ -195,7 +195,7 @@ public class RpcClient implements ClientProtocol {
   // for reconstruction.
   private static final int EC_RECONSTRUCT_STRIPE_READ_POOL_MIN_SIZE = 3;
 
-  private static final int WRITE_POOL_MIN_SIZE = 3;
+  private static final int WRITE_POOL_MIN_SIZE = 1;
 
   private final ConfigurationSource conf;
   private final OzoneManagerClientProtocol ozoneManagerClient;
