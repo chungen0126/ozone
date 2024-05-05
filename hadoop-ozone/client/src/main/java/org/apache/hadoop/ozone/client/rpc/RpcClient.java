@@ -246,7 +246,7 @@ public class RpcClient implements ClientProtocol {
         EC_RECONSTRUCT_STRIPE_READ_POOL_MIN_SIZE, clientConfig.getEcReconstructStripeReadPoolLimit(),
         "ec-reconstruct-reader-TID-%d"));
     this.writeExecutor = MemoizedSupplier.valueOf(() -> createThreadPoolExecutor(
-        WRITE_POOL_MIN_SIZE, Integer.MAX_VALUE, "client-write-TID-%d"));
+        WRITE_POOL_MIN_SIZE, WRITE_POOL_MIN_SIZE, "client-write-TID-%d"));
 
     OmTransport omTransport = createOmTransport(omServiceId);
     OzoneManagerProtocolClientSideTranslatorPB
