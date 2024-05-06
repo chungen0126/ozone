@@ -655,6 +655,7 @@ public class BlockOutputStream extends OutputStream {
       bufferList.clear();
     }
     bufferList = null;
+    responseExecutor.shutdown();
   }
 
   /**
