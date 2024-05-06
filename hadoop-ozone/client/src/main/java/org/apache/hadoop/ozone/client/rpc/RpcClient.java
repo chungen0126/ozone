@@ -2574,9 +2574,10 @@ public class RpcClient implements ClientProtocol {
 
   private static ExecutorService createThreadPoolExecutor(
        int corePoolSize, int maximumPoolSize, String threadNameFormat) {
-    return new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
-            60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-               new ThreadFactoryBuilder().setNameFormat(threadNameFormat).setDaemon(true).build(),
-               new ThreadPoolExecutor.CallerRunsPolicy());
+    return Executors.newSingleThreadExecutor();
+//    return new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
+//            60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+//               new ThreadFactoryBuilder().setNameFormat(threadNameFormat).setDaemon(true).build(),
+//               new ThreadPoolExecutor.CallerRunsPolicy());
   }
 }
