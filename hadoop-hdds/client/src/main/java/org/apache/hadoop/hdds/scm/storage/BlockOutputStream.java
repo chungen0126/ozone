@@ -183,7 +183,7 @@ public class BlockOutputStream extends OutputStream {
             (long) flushPeriod * streamBufferArgs.getStreamBufferSize() == streamBufferArgs
                 .getStreamBufferFlushSize());
 
-    this.responseExecutor = blockOutputStreamResourceProvider.get();
+    this.responseExecutor = Executors.newSingleThreadExecutor();
     bufferList = null;
     totalDataFlushedLength = 0;
     writtenDataLength = 0;
