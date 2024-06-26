@@ -49,7 +49,7 @@ public final class OzoneManagerPrepareState {
   private static final Logger LOG =
       LoggerFactory.getLogger(OzoneManagerPrepareState.class);
 
-  private boolean prepareGateEnabled;
+  private volatile boolean prepareGateEnabled;
   private long prepareIndex;
   private PrepareStatus status;
   private final ConfigurationSource conf;
