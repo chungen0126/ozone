@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.ozone.om.request.upgrade;
 
+import org.apache.ratis.proto.RaftProtos.LogEntryProto;
 import org.apache.ratis.server.protocol.TermIndex;
 import org.apache.hadoop.ozone.om.OzoneManager;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
@@ -169,6 +170,7 @@ public class OMPrepareRequest extends OMClientRequest {
 
     boolean omDBFlushed = false;
     boolean ratisStateMachineApplied = false;
+    RaftLog raftLog = om.getOmRatisServer().getServerDivision().getRaftLog();
 
     // Wait for Ratis commit index after the specified index to be applied to
     // Ratis' state machine. This index will not appear in the OM DB until a
@@ -193,9 +195,12 @@ public class OMPrepareRequest extends OMClientRequest {
           lastOMDBFlushIndex);
 
       // Check ratis state machine.
-      lastRatisCommitIndex = stateMachine.getLastNotifiedTermIndex().getIndex();
-      ratisStateMachineApplied = (lastRatisCommitIndex >=
-          minRatisStateMachineIndex);
+      lastRatisCommitIndex = raftLog.getLastCommittedIndex();
+      LogEntryProto logEntryProto = raftLog.get(lastRatisCommitIndex);
+      if (logEntryProto.hasMetadataEntry()) {
+        ratisStateMachineApplied = logEntryProto.getMetadataEntry().getCommitIndex() == minOMDBFlushIndex;
+      }
+
       LOG.debug("{} Current Ratis state machine transaction index {}.",
           om.getOMNodeId(), lastRatisCommitIndex);
 
