@@ -1,5 +1,6 @@
 package org.apache.hadoop.ozone.jmh;
 
+import org.apache.hadoop.hdds.cli.GenericCli;
 import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.profile.StackProfiler;
 import org.openjdk.jmh.runner.Runner;
@@ -15,7 +16,7 @@ import picocli.CommandLine.Option;
 @Command(name = "ozone benchmark",
     description = "Tool for running ozone benchmarks",
     mixinStandardHelpOptions = true)
-public final class BenchmarkRunner {
+public final class BenchmarkRunner extends GenericCli {
   private BenchmarkRunner() {
   }
   @Option(names = "-t", defaultValue = "4",
