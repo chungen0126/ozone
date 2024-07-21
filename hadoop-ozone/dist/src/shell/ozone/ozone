@@ -61,6 +61,7 @@ function ozone_usage
   ozone_add_subcommand "debug" client "Ozone debug tool"
   ozone_add_subcommand "repair" client "Ozone repair tool"
   ozone_add_subcommand "checknative" client "checks if native libraries are loaded"
+  ozone_add_subcommand "benchmark" client "Ozone jmh tool"
 
   ozone_generate_usage "${OZONE_SHELL_EXECNAME}" false
 }
@@ -226,6 +227,10 @@ function ozonecmd_case
       OZONE_CLASSNAME=org.apache.hadoop.ozone.repair.OzoneRepair
       OZONE_DEBUG_OPTS="${OZONE_DEBUG_OPTS} ${OZONE_MODULE_ACCESS_ARGS}"
       OZONE_RUN_ARTIFACT_NAME="ozone-tools"
+    ;;
+    benchmark)
+        OZONE_CLASSNAME=org.apache.hadoop.ozone.jmh.BenchmarkRunner
+        OZONE_RUN_ARTIFACT_NAME="ozone-tools"
     ;;
     checknative)
         OZONE_CLASSNAME=org.apache.hadoop.ozone.shell.checknative.CheckNative
