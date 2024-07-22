@@ -146,10 +146,16 @@ https://maven.apache.org/xsd/maven-4.0.0.xsd">
               <artifactId>metainf-services</artifactId>
               <version>${metainf-services.version}</version>
             </path>
+            <path>
+              <groupId>org.openjdk.jmh</groupId>
+              <artifactId>jmh-generator-annprocess</artifactId>
+              <version>1.21</version>
+            </path>
           </annotationProcessorPaths>
           <annotationProcessors>
             <annotationProcessor>org.apache.hadoop.hdds.conf.ConfigFileGenerator</annotationProcessor>
             <annotationProcessor>org.kohsuke.metainf_services.AnnotationProcessorImpl</annotationProcessor>
+            <annotationProcessor>org.openjdk.jmh.generators.BenchmarkProcessor</annotationProcessor>
           </annotationProcessors>
         </configuration>
       </plugin>
