@@ -164,14 +164,10 @@ public class KeyValueContainerCheck {
   public ScanResult fullCheck(DataTransferThrottler throttler,
       Canceler canceler) throws InterruptedException {
     ScanResult result = fastCheck();
-    System.out.println("fastCheck = " + result.isHealthy() +
-        result.getUnhealthyFile() + result.getFailureType() + result.getException());
 
     if (result.isHealthy()) {
       result = scanData(throttler, canceler);
     }
-    System.out.println("fullCheck = " + result.isHealthy() +
-        result.getUnhealthyFile() + result.getFailureType() + result.getException());
 
     if (!result.isHealthy() && Thread.currentThread().isInterrupted()) {
       throw new InterruptedException("Data scan of container " + containerID +
