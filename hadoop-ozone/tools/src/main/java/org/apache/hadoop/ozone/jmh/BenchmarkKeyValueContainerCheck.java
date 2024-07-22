@@ -1,6 +1,7 @@
 package org.apache.hadoop.ozone.jmh;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
@@ -38,6 +39,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.Blackhole;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +69,6 @@ public class BenchmarkKeyValueContainerCheck {
   private static final String DEFAULT_TEST_DATA_DIR =
       "target" + File.separator + "test" + File.separator + "data";
   private static final String CLUSTER_ID = UUID.randomUUID().toString();
-  private static final long CONTAINER_ID = 101;
   private static final DispatcherContext WRITE_STAGE =
       DispatcherContext.newBuilder(DispatcherContext.Op.WRITE_STATE_MACHINE_DATA)
           .setStage(DispatcherContext.WriteChunkStage.WRITE_DATA)
@@ -82,7 +83,7 @@ public class BenchmarkKeyValueContainerCheck {
   /**
    * State for the benchmark.
    */
-  @State(Scope.Benchmark)
+  @State(Scope.Thread)
   public static class BenchmarkState {
     @Param({"FILE_PER_CHUNK", "FILE_PER_BLOCK"})
     private ContainerLayoutVersion containerLayoutVersion;
@@ -94,6 +95,7 @@ public class BenchmarkKeyValueContainerCheck {
     private File dir;
     private KeyValueContainer container;
     private KeyValueContainerData containerData;
+    private long containerID;
 
     private static File getTestDir() throws IOException {
       File dir = new File(DEFAULT_TEST_DATA_DIR).getAbsoluteFile();
@@ -101,8 +103,9 @@ public class BenchmarkKeyValueContainerCheck {
       return dir;
     }
 
-    @Setup(Level.Iteration)
+    @Setup(Level.Trial)
     public void setup() throws Exception {
+      containerID = RandomUtils.nextLong();
       dir = getTestDir();
       conf = new OzoneConfiguration();
       DatanodeConfiguration dc = conf.getObject(DatanodeConfiguration.class);
@@ -135,8 +138,8 @@ public class BenchmarkKeyValueContainerCheck {
       containerData = container.getContainerData();
     }
 
-    @TearDown(Level.Iteration)
-    public void cleanup() {
+    @TearDown(Level.Trial)
+    public void cleanup() throws IOException {
       FileUtils.deleteQuietly(dir);
     }
     private void createContainerWithBlocks(ChunkManager chunkManager)
@@ -148,7 +151,7 @@ public class BenchmarkKeyValueContainerCheck {
       byte[] chunkData = RandomStringUtils.randomAscii(CHUNK_LEN).getBytes(UTF_8);
       ChecksumData checksumData = checksum.computeChecksum(chunkData);
 
-      containerData = new KeyValueContainerData(CONTAINER_ID,
+      containerData = new KeyValueContainerData(containerID,
           containerLayoutVersion,
           (long) CHUNKS_PER_BLOCK * CHUNK_LEN * BLOCKS_PER_CONTAINER,
           UUID.randomUUID().toString(), UUID.randomUUID().toString());
@@ -159,7 +162,7 @@ public class BenchmarkKeyValueContainerCheck {
           conf)) {
         List<ChunkInfo> chunkList = new ArrayList<>();
         for (int i = 0; i < BLOCKS_PER_CONTAINER; i++) {
-          BlockID blockID = new BlockID(CONTAINER_ID, i);
+          BlockID blockID = new BlockID(containerID, i);
           BlockData blockData = new BlockData(blockID);
 
           chunkList.clear();
@@ -183,16 +186,30 @@ public class BenchmarkKeyValueContainerCheck {
         }
       }
     }
-    @Benchmark
-    public void fullScan(BenchmarkState state)
-        throws Exception {
+  }
+  @Benchmark
+  public void fullScanWithHeapBuffer(BenchmarkState state, Blackhole sink)
+      throws Exception {
 
-      kvCheck = new KeyValueContainerCheck(containerData.getMetadataPath(), conf,
-          CONTAINER_ID, containerData.getVolume(), container);
-      ContainerScannerConfiguration c = conf.getObject(
-          ContainerScannerConfiguration.class);
-      kvCheck.fullCheck(new DataTransferThrottler(
-          c.getBandwidthPerVolume()), null);
-    }
+    System.out.println("containerData = " + state.containerData.toString());
+    state.kvCheck = new KeyValueContainerCheck(state.containerData.getMetadataPath(), state.conf,
+        state.containerID, state.containerData.getVolume(), state.container, false);
+    ContainerScannerConfiguration c = state.conf.getObject(
+        ContainerScannerConfiguration.class);
+    state.kvCheck.fullCheck(new DataTransferThrottler(
+        c.getBandwidthPerVolume()), null);
+  }
+
+  @Benchmark
+  public void fullScanWithDirectBuffer(BenchmarkState state, Blackhole sink)
+      throws Exception {
+
+    System.out.println("containerData = " + state.containerData.toString());
+    state.kvCheck = new KeyValueContainerCheck(state.containerData.getMetadataPath(), state.conf,
+        state.containerID, state.containerData.getVolume(), state.container, true);
+    ContainerScannerConfiguration c = state.conf.getObject(
+        ContainerScannerConfiguration.class);
+    state.kvCheck.fullCheck(new DataTransferThrottler(
+        c.getBandwidthPerVolume()), null);
   }
 }

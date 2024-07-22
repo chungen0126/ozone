@@ -18,7 +18,7 @@ import picocli.CommandLine.Option;
 public final class  BenchmarkRunner {
   private BenchmarkRunner() {
   }
-  @Option(names = "-t", defaultValue = "4",
+  @Option(names = "-t", defaultValue = "1",
       description = "Number of threads to use for the benchmark.\n"
           + "This option can be overridden by threads mentioned in benchmark.")
   private static int numThreads;

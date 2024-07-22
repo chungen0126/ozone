@@ -71,10 +71,11 @@ public class KeyValueContainerCheck {
   private String metadataPath;
   private HddsVolume volume;
   private KeyValueContainer container;
+  private boolean isDirectBuffer;
   private static final DirectBufferPool BUFFER_POOL = new DirectBufferPool();
 
   public KeyValueContainerCheck(String metadataPath, ConfigurationSource conf,
-      long containerID, HddsVolume volume, KeyValueContainer container) {
+      long containerID, HddsVolume volume, KeyValueContainer container, boolean isDirectBuffer) {
     Preconditions.checkArgument(metadataPath != null);
 
     this.checkConfig = conf;
@@ -83,6 +84,12 @@ public class KeyValueContainerCheck {
     this.metadataPath = metadataPath;
     this.volume = volume;
     this.container = container;
+    this.isDirectBuffer = isDirectBuffer;
+  }
+
+  public KeyValueContainerCheck(String metadataPath, ConfigurationSource conf,
+                                long containerID, HddsVolume volume, KeyValueContainer container) {
+    this (metadataPath, conf, containerID, volume, container, false);
   }
 
   /**
@@ -157,9 +164,14 @@ public class KeyValueContainerCheck {
   public ScanResult fullCheck(DataTransferThrottler throttler,
       Canceler canceler) throws InterruptedException {
     ScanResult result = fastCheck();
+    System.out.println("fastCheck = " + result.isHealthy() +
+        result.getUnhealthyFile() + result.getFailureType() + result.getException());
+
     if (result.isHealthy()) {
       result = scanData(throttler, canceler);
     }
+    System.out.println("fullCheck = " + result.isHealthy() +
+        result.getUnhealthyFile() + result.getFailureType() + result.getException());
 
     if (!result.isHealthy() && Thread.currentThread().isInterrupted()) {
       throw new InterruptedException("Data scan of container " + containerID +
@@ -367,11 +379,18 @@ public class KeyValueContainerCheck {
       } else if (chunk.getChecksumData().getType()
           != ContainerProtos.ChecksumType.NONE) {
         int bytesPerChecksum = chunk.getChecksumData().getBytesPerChecksum();
-        ByteBuffer buffer = BUFFER_POOL.getBuffer(bytesPerChecksum);
+        ByteBuffer buffer;
+        if (isDirectBuffer) {
+          buffer = BUFFER_POOL.getBuffer(bytesPerChecksum);
+        } else {
+          buffer = ByteBuffer.allocate(bytesPerChecksum);
+        }
         ScanResult result = verifyChecksum(block, chunk, chunkFile, layout, buffer,
             throttler, canceler);
-        buffer.clear();
-        BUFFER_POOL.returnBuffer(buffer);
+        if (isDirectBuffer) {
+          buffer.clear();
+          BUFFER_POOL.returnBuffer(buffer);
+        }
         if (!result.isHealthy()) {
           return result;
         }
