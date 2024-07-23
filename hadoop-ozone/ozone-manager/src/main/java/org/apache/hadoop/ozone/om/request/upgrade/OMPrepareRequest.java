@@ -207,7 +207,7 @@ public class OMPrepareRequest extends OMClientRequest {
       lastRatisCommitIndex = stateMachine.getLastNotifiedTermIndex().getIndex();
       LogEntryProto logEntryProto =
           om.getOmRatisServer().getServerDivision().getRaftLog().get(lastRatisCommitIndex);
-      if (logEntryProto.hasMetadataEntry()) {
+      if (logEntryProto != null && logEntryProto.hasMetadataEntry()) {
         ratisStateMachineApplied = logEntryProto.getMetadataEntry().getCommitIndex() >= minOMDBFlushIndex;
       }
       LOG.debug("{} Current Ratis state machine transaction index {}.",
@@ -228,7 +228,10 @@ public class OMPrepareRequest extends OMClientRequest {
           flushTimeout.getSeconds(), lastOMDBFlushIndex, minOMDBFlushIndex));
     } else if (!ratisStateMachineApplied) {
       for (long i = minOMDBFlushIndex + 1; i <= lastRatisCommitIndex; i++) {
-        LOG.debug(om.getOmRatisServer().getServerDivision().getRaftLog().get(i).toString());
+        LogEntryProto logEntryProto = om.getOmRatisServer().getServerDivision().getRaftLog().get(i);
+        if (logEntryProto != null) {
+          LOG.debug(logEntryProto.toString());
+        }
       }
       throw new IOException(String.format("After waiting for %d seconds, " +
               "Ratis state machine applied index %d which is less than" +
