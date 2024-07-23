@@ -20,6 +20,7 @@ package org.apache.hadoop.ozone.om.request.upgrade;
 import java.util.HashMap;
 import org.apache.hadoop.ozone.audit.AuditLogger;
 import org.apache.hadoop.ozone.audit.OMAction;
+import org.apache.ratis.proto.RaftProtos.LogEntryProto;
 import org.apache.ratis.server.protocol.TermIndex;
 import org.apache.hadoop.ozone.om.OzoneManager;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
@@ -204,8 +205,11 @@ public class OMPrepareRequest extends OMClientRequest {
 
       // Check ratis state machine.
       lastRatisCommitIndex = stateMachine.getLastNotifiedTermIndex().getIndex();
-      ratisStateMachineApplied = (lastRatisCommitIndex >=
-          minRatisStateMachineIndex);
+      LogEntryProto logEntryProto =
+          om.getOmRatisServer().getServerDivision().getRaftLog().get(lastRatisCommitIndex);
+      if (logEntryProto.hasMetadataEntry()) {
+        ratisStateMachineApplied = logEntryProto.getMetadataEntry().getCommitIndex() >= minOMDBFlushIndex;
+      }
       LOG.debug("{} Current Ratis state machine transaction index {}.",
           om.getOMNodeId(), lastRatisCommitIndex);
 
@@ -223,6 +227,9 @@ public class OMPrepareRequest extends OMClientRequest {
               "required index %d.",
           flushTimeout.getSeconds(), lastOMDBFlushIndex, minOMDBFlushIndex));
     } else if (!ratisStateMachineApplied) {
+      for (long i = minOMDBFlushIndex + 1; i <= lastRatisCommitIndex; i++) {
+        LOG.debug(om.getOmRatisServer().getServerDivision().getRaftLog().get(i).toString());
+      }
       throw new IOException(String.format("After waiting for %d seconds, " +
               "Ratis state machine applied index %d which is less than" +
               " the minimum required index %d.",
