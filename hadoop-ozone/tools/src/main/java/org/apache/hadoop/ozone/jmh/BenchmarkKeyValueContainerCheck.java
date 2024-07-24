@@ -31,8 +31,11 @@ import org.apache.hadoop.ozone.container.keyvalue.impl.FilePerChunkStrategy;
 import org.apache.hadoop.ozone.container.keyvalue.interfaces.ChunkManager;
 import org.apache.hadoop.ozone.container.ozoneimpl.ContainerScannerConfiguration;
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
@@ -188,10 +191,11 @@ public class BenchmarkKeyValueContainerCheck {
     }
   }
   @Benchmark
+  @OutputTimeUnit(TimeUnit.NANOSECONDS)
+  @BenchmarkMode(Mode.All)
   public void fullScanWithHeapBuffer(BenchmarkState state, Blackhole sink)
       throws Exception {
 
-    System.out.println("containerData = " + state.containerData.toString());
     state.kvCheck = new KeyValueContainerCheck(state.containerData.getMetadataPath(), state.conf,
         state.containerID, state.containerData.getVolume(), state.container, false);
     ContainerScannerConfiguration c = state.conf.getObject(
@@ -201,10 +205,11 @@ public class BenchmarkKeyValueContainerCheck {
   }
 
   @Benchmark
+  @OutputTimeUnit(TimeUnit.NANOSECONDS)
+  @BenchmarkMode(Mode.All)
   public void fullScanWithDirectBuffer(BenchmarkState state, Blackhole sink)
       throws Exception {
 
-    System.out.println("containerData = " + state.containerData.toString());
     state.kvCheck = new KeyValueContainerCheck(state.containerData.getMetadataPath(), state.conf,
         state.containerID, state.containerData.getVolume(), state.container, true);
     ContainerScannerConfiguration c = state.conf.getObject(
