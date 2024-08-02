@@ -20,6 +20,7 @@ package org.apache.hadoop.ozone.om.request.upgrade;
 import java.util.HashMap;
 import org.apache.hadoop.ozone.audit.AuditLogger;
 import org.apache.hadoop.ozone.audit.OMAction;
+import org.apache.ratis.proto.RaftProtos.LogEntryProto;
 import org.apache.ratis.server.protocol.TermIndex;
 import org.apache.hadoop.ozone.om.OzoneManager;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
@@ -179,6 +180,8 @@ public class OMPrepareRequest extends OMClientRequest {
 
     boolean omDBFlushed = false;
     boolean ratisStateMachineApplied = false;
+    boolean ratisMetadataCommited = false;
+    RaftLog raftLog = om.getOmRatisServer().getServerDivision().getRaftLog();
 
     // Wait for Ratis commit index after the specified index to be applied to
     // Ratis' state machine. This index will not appear in the OM DB until a
@@ -187,14 +190,16 @@ public class OMPrepareRequest extends OMClientRequest {
     // the RocksDB snapshot, and then the log entry is lost on this OM.
     long minRatisStateMachineIndex = minOMDBFlushIndex + 1; // for the ratis-metadata transaction
     long lastRatisCommitIndex = RaftLog.INVALID_LOG_INDEX;
+    long lastMetadataCommitIndex =  RaftLog.INVALID_LOG_INDEX;
 
     // Wait OM state machine to apply the given index.
     long lastOMDBFlushIndex = RaftLog.INVALID_LOG_INDEX;
 
-    LOG.info("{} waiting for index {} to flush to OM DB and index {} to flush" +
+    LOG.info("{} waiting for index {} to flush to OM DB, index {} and " +
+            "metadataEntry with commitIndex larger than {} to flush" +
             " to Ratis state machine.", om.getOMNodeId(), minOMDBFlushIndex,
-        minRatisStateMachineIndex);
-    while (!(omDBFlushed && ratisStateMachineApplied) &&
+        minRatisStateMachineIndex, minOMDBFlushIndex);
+    while (!(omDBFlushed && ratisStateMachineApplied && ratisMetadataCommited) &&
         System.currentTimeMillis() < endTime) {
       // Check OM DB.
       lastOMDBFlushIndex = om.getRatisSnapshotIndex();
@@ -208,6 +213,12 @@ public class OMPrepareRequest extends OMClientRequest {
           minRatisStateMachineIndex);
       LOG.debug("{} Current Ratis state machine transaction index {}.",
           om.getOMNodeId(), lastRatisCommitIndex);
+
+      // Check ratis-metadata commitIndex larger than lastOMDBFlushIndex
+      LogEntryProto lastMetadataEntry = raftLog.getLastMetadataEntry();
+      if (lastMetadataEntry != null) {
+        ratisMetadataCommited = lastMetadataEntry.getMetadataEntry().getCommitIndex() >= minOMDBFlushIndex;
+      }
 
       if (!(omDBFlushed && ratisStateMachineApplied)) {
         Thread.sleep(flushCheckInterval.toMillis());
@@ -228,6 +239,11 @@ public class OMPrepareRequest extends OMClientRequest {
               " the minimum required index %d.",
           flushTimeout.getSeconds(), lastRatisCommitIndex,
           minRatisStateMachineIndex));
+    } else if (!ratisMetadataCommited) {
+      throw new IOException(String.format("After waiting for %d seconds, " +
+              "Ratis state machine applied metadataEntry with commitIndex %d which is less than" +
+              " the minimum required index %d.",
+          flushTimeout.getSeconds(), minRatisStateMachineIndex, minOMDBFlushIndex));
     }
     return lastRatisCommitIndex;
   }

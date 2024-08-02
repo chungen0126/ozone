@@ -25,8 +25,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,8 +53,10 @@ import org.apache.hadoop.ozone.client.protocol.ClientProtocol;
 import org.apache.hadoop.ozone.container.ContainerTestHelper;
 import org.apache.hadoop.ozone.container.TestHelper;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
+import org.apache.hadoop.ozone.om.helpers.OMRatisHelper;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.PrepareStatusResponse.PrepareStatus;
+import org.apache.hadoop.ozone.segmentparser.OMRatisLogParser;
 import org.apache.ozone.test.LambdaTestUtils;
 import org.apache.ozone.test.tag.Slow;
 import org.apache.ozone.test.tag.Unhealthy;
@@ -81,6 +86,7 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
   private MiniOzoneHAClusterImpl cluster;
   private ClientProtocol clientProtocol;
   private ObjectStore store;
+  private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
   private static final Logger LOG =
       LoggerFactory.getLogger(TestOzoneManagerPrepare.class);
@@ -97,6 +103,7 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
   @BeforeEach
   void setup() throws Exception {
     initInstanceVariables();
+    System.setOut(new PrintStream(out, false, UTF_8.name()));
 
     LOG.info("Waiting for OM leader election");
     waitForLeaderToBeReady();
@@ -109,6 +116,7 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
    */
   @AfterEach
   void resetCluster() throws Exception {
+    out.close();
     if (cluster != null) {
       cluster.restartOzoneManager();
     }
@@ -240,7 +248,8 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
       assertFalse(downedOM.isRunning());
     }
 
-    assertThrows(IOException.class,
+    org.apache.hadoop.test.LambdaTestUtils.intercept(IOException.class,
+        "Could not determine or connect to OM Leader.",
         () -> clientProtocol.getOzoneManagerClient().prepareOzoneManager(
             PREPARE_FLUSH_WAIT_TIMEOUT_SECONDS,
             PREPARE_FLUSH_INTERVAL_SECONDS));
@@ -338,7 +347,7 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
     assertKeysWritten(volumeNameNew, writtenKeys);
   }
 
-  private boolean logFilesPresentInRatisPeer(OzoneManager om) {
+  private boolean logFilesPresentInRatisPeer(OzoneManager om) throws UnsupportedEncodingException {
     final RaftServer.Division server = om.getOmRatisServer().getServerDivision();
     final String ratisDir = server.getRaftServer().getProperties().get("raft.server.storage.dir");
     final String groupIdDirName = server.getGroup().getGroupId().getUuid().toString();
@@ -349,6 +358,18 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
     if (files != null) {
       for (File file : files) {
         if (file.getName().startsWith("log")) {
+          OMRatisLogParser omRatisLogParser = new OMRatisLogParser();
+          omRatisLogParser.setSegmentFile(file);
+          omRatisLogParser.parseRatisLogs(OMRatisHelper::smProtoToString);
+          // Check only metadata entries in the file, because of not sure of exact count of
+          // metadata entry changes.
+          String omRatisLog = out.toString(UTF_8.name());
+          out.reset();
+          if (omRatisLog.contains("Num Conf Entries: 0")
+              && omRatisLog.contains("Num StateMachineEntries Entries: 0")
+              && omRatisLog.contains("Num Invalid Entries: 0")) {
+            continue;
+          }
           return true;
         }
       }
