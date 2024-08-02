@@ -190,7 +190,7 @@ public class OMPrepareRequest extends OMClientRequest {
     // the RocksDB snapshot, and then the log entry is lost on this OM.
     long minRatisStateMachineIndex = minOMDBFlushIndex + 1; // for the ratis-metadata transaction
     long lastRatisCommitIndex = RaftLog.INVALID_LOG_INDEX;
-    long lastMetadataCommitIndex =  RaftLog.INVALID_LOG_INDEX;
+    LogEntryProto lastMetadataEntry = null;
 
     // Wait OM state machine to apply the given index.
     long lastOMDBFlushIndex = RaftLog.INVALID_LOG_INDEX;
@@ -215,7 +215,7 @@ public class OMPrepareRequest extends OMClientRequest {
           om.getOMNodeId(), lastRatisCommitIndex);
 
       // Check ratis-metadata commitIndex larger than lastOMDBFlushIndex
-      LogEntryProto lastMetadataEntry = raftLog.getLastMetadataEntry();
+      lastMetadataEntry = raftLog.getLastMetadataEntry();
       if (lastMetadataEntry != null) {
         ratisMetadataCommited = lastMetadataEntry.getMetadataEntry().getCommitIndex() >= minOMDBFlushIndex;
       }
@@ -241,9 +241,9 @@ public class OMPrepareRequest extends OMClientRequest {
           minRatisStateMachineIndex));
     } else if (!ratisMetadataCommited) {
       throw new IOException(String.format("After waiting for %d seconds, " +
-              "Ratis state machine applied metadataEntry with commitIndex %d which is less than" +
-              " the minimum required index %d.",
-          flushTimeout.getSeconds(), minRatisStateMachineIndex, minOMDBFlushIndex));
+              "commitIndex of metadataEntry is less than" +
+              " the minimum required index %d. metadataEntry = %s",
+          flushTimeout.getSeconds(), minOMDBFlushIndex, lastMetadataEntry));
     }
     return lastRatisCommitIndex;
   }
