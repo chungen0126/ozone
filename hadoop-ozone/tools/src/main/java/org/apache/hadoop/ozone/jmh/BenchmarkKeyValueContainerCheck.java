@@ -67,7 +67,7 @@ public class BenchmarkKeyValueContainerCheck {
   private static final int UNIT_LEN = 1024;
   private static final int CHUNK_LEN = 4 * UNIT_LEN * UNIT_LEN;
   private static final int CHUNKS_PER_BLOCK = 64;
-  private static final int BYTES_PER_CHECKSUM = 8 * UNIT_LEN;
+  private static final int BYTES_PER_CHECKSUM = 16 * UNIT_LEN;
   private static final int BLOCKS_PER_CONTAINER = 4;
   private static final String DEFAULT_TEST_DATA_DIR =
       "target" + File.separator + "test" + File.separator + "data";
