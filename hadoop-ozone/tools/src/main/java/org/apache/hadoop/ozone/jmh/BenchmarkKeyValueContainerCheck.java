@@ -106,7 +106,7 @@ public class BenchmarkKeyValueContainerCheck {
       return dir;
     }
 
-    @Setup(Level.Trial)
+    @Setup(Level.Iteration)
     public void setup() throws Exception {
       containerID = RandomUtils.nextLong();
       dir = getTestDir();
@@ -141,7 +141,7 @@ public class BenchmarkKeyValueContainerCheck {
       containerData = container.getContainerData();
     }
 
-    @TearDown(Level.Trial)
+    @TearDown(Level.Iteration)
     public void cleanup() throws IOException {
       FileUtils.deleteQuietly(dir);
     }
