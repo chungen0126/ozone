@@ -215,9 +215,11 @@ public class OMPrepareRequest extends OMClientRequest {
           om.getOMNodeId(), lastRatisCommitIndex);
 
       // Check ratis-metadata commitIndex larger than lastOMDBFlushIndex
-      lastMetadataEntry = raftLog.getLastMetadataEntry();
-      if (lastMetadataEntry != null) {
-        ratisMetadataCommited = lastMetadataEntry.getMetadataEntry().getCommitIndex() >= minOMDBFlushIndex;
+      if (ratisStateMachineApplied) {
+        lastMetadataEntry = raftLog.getLastMetadataEntry();
+        if (lastMetadataEntry != null) {
+          ratisMetadataCommited = lastMetadataEntry.getMetadataEntry().getCommitIndex() >= minOMDBFlushIndex;
+        }
       }
 
       if (!(omDBFlushed && ratisStateMachineApplied)) {
