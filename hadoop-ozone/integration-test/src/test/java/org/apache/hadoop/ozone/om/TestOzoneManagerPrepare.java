@@ -240,7 +240,8 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
       assertFalse(downedOM.isRunning());
     }
 
-    assertThrows(IOException.class,
+    org.apache.hadoop.test.LambdaTestUtils.intercept(IOException.class,
+        "Could not determine or connect to OM Leader.",
         () -> clientProtocol.getOzoneManagerClient().prepareOzoneManager(
             PREPARE_FLUSH_WAIT_TIMEOUT_SECONDS,
             PREPARE_FLUSH_INTERVAL_SECONDS));
