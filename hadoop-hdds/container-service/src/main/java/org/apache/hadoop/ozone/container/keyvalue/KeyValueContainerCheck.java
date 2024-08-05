@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+import org.apache.hadoop.util.DirectBufferPool;
 import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,9 +71,11 @@ public class KeyValueContainerCheck {
   private String metadataPath;
   private HddsVolume volume;
   private KeyValueContainer container;
+  private boolean isDirectBuffer;
+  private static final DirectBufferPool BUFFER_POOL = new DirectBufferPool();
 
   public KeyValueContainerCheck(String metadataPath, ConfigurationSource conf,
-      long containerID, HddsVolume volume, KeyValueContainer container) {
+      long containerID, HddsVolume volume, KeyValueContainer container, boolean isDirectBuffer) {
     Preconditions.checkArgument(metadataPath != null);
 
     this.checkConfig = conf;
@@ -81,6 +84,12 @@ public class KeyValueContainerCheck {
     this.metadataPath = metadataPath;
     this.volume = volume;
     this.container = container;
+    this.isDirectBuffer = isDirectBuffer;
+  }
+
+  public KeyValueContainerCheck(String metadataPath, ConfigurationSource conf,
+                                long containerID, HddsVolume volume, KeyValueContainer container) {
+    this (metadataPath, conf, containerID, volume, container, false);
   }
 
   /**
@@ -155,6 +164,7 @@ public class KeyValueContainerCheck {
   public ScanResult fullCheck(DataTransferThrottler throttler,
       Canceler canceler) throws InterruptedException {
     ScanResult result = fastCheck();
+
     if (result.isHealthy()) {
       result = scanData(throttler, canceler);
     }
@@ -364,8 +374,19 @@ public class KeyValueContainerCheck {
         }
       } else if (chunk.getChecksumData().getType()
           != ContainerProtos.ChecksumType.NONE) {
-        ScanResult result = verifyChecksum(block, chunk, chunkFile, layout,
+        int bytesPerChecksum = chunk.getChecksumData().getBytesPerChecksum();
+        ByteBuffer buffer;
+        if (isDirectBuffer) {
+          buffer = BUFFER_POOL.getBuffer(bytesPerChecksum);
+        } else {
+          buffer = ByteBuffer.allocate(bytesPerChecksum);
+        }
+        ScanResult result = verifyChecksum(block, chunk, chunkFile, layout, buffer,
             throttler, canceler);
+        if (isDirectBuffer) {
+          buffer.clear();
+          BUFFER_POOL.returnBuffer(buffer);
+        }
         if (!result.isHealthy()) {
           return result;
         }
@@ -377,7 +398,7 @@ public class KeyValueContainerCheck {
 
   private static ScanResult verifyChecksum(BlockData block,
       ContainerProtos.ChunkInfo chunk, File chunkFile,
-      ContainerLayoutVersion layout,
+      ContainerLayoutVersion layout, ByteBuffer buffer,
       DataTransferThrottler throttler, Canceler canceler) {
     ChecksumData checksumData =
         ChecksumData.getFromProtoBuf(chunk.getChecksumData());
@@ -385,7 +406,6 @@ public class KeyValueContainerCheck {
     int bytesPerChecksum = checksumData.getBytesPerChecksum();
     Checksum cal = new Checksum(checksumData.getChecksumType(),
         bytesPerChecksum);
-    ByteBuffer buffer = ByteBuffer.allocate(bytesPerChecksum);
     long bytesRead = 0;
     try (FileChannel channel = FileChannel.open(chunkFile.toPath(),
         ChunkUtils.READ_OPTIONS, ChunkUtils.NO_ATTRIBUTES)) {
