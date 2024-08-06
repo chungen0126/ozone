@@ -255,5 +255,17 @@ public class OMSnapshotMoveDeletedKeysResponse extends OMClientResponse {
     OmKeyInfo keyInfoFromRepeated = result.getOmKeyInfoList().get(size - 1);
     return omKeyInfo.equals(keyInfoFromRepeated);
   }
+
+  @Override
+  public String toString() {
+    return "OMSnapshotMoveDeletedKeysResponse{" +
+        "fromSnapshot=" + fromSnapshot +
+        ", nextSnapshot=" + nextSnapshot +
+        ", nextDBKeysList=" + nextDBKeysList +
+        ", reclaimKeysList=" + reclaimKeysList +
+        ", renamedKeysList=" + renamedKeysList +
+        ", movedDirs=" + movedDirs +
+        '}';
+  }
 }
 

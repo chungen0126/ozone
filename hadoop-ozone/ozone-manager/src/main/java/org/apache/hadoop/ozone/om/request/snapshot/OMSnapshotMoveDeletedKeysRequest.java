@@ -94,6 +94,7 @@ public class OMSnapshotMoveDeletedKeysRequest extends OMClientRequest {
       omClientResponse = new OMSnapshotMoveDeletedKeysResponse(
           omResponse.build(), fromSnapshot, nextSnapshot,
           nextDBKeysList, reclaimKeysList, renamedKeysList, movedDirs);
+      LOG.info(omClientResponse.toString());
 
     } catch (IOException ex) {
       omClientResponse = new OMSnapshotMoveDeletedKeysResponse(
