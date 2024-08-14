@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeOperationalState;
 import org.apache.hadoop.hdds.protocol.proto
     .StorageContainerDatanodeProtocolProtos.PipelineReportsProto;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutVersionManager;
@@ -154,6 +155,10 @@ public final class RegisterEndpointTask implements
         PipelineReportsProto pipelineReportsProto =
             datanodeContainerManager.getPipelineReport();
         // TODO : Add responses to the command Queue.
+        if (datanodeDetails.getPersistedOpState() == NodeOperationalState.DECOMMISSIONING) {
+          LOG.info("datanodeDetails = {}, nodeReport = {}, containerReport = {}, pipelineReport = {}, layoutInfo = {}",
+              datanodeDetails.toDebugString(), nodeReport, containerReport, pipelineReportsProto, layoutInfo);
+        }
         SCMRegisteredResponseProto response = rpcEndPoint.getEndPoint()
             .register(datanodeDetails.getExtendedProtoBufMessage(),
             nodeReport, containerReport, pipelineReportsProto, layoutInfo);

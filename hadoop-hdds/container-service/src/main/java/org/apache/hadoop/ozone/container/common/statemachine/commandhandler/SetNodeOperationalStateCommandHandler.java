@@ -89,6 +89,8 @@ public class SetNodeOperationalStateCommandHandler implements CommandHandler {
           Type.setNodeOperationalStateCommand, command.getType());
       return;
     }
+    LOG.info("command = {}", command.getProto());
+
     SetNodeOperationalStateCommand setNodeCmd =
         (SetNodeOperationalStateCommand) command;
     setNodeCmdProto = setNodeCmd.getProto();

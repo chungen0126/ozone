@@ -109,10 +109,9 @@ public class AbstractContainerReportHandler {
       throws IOException, InvalidStateTransitionException, TimeoutException {
     final ContainerID containerId = containerInfo.containerID();
 
-    if (logger.isDebugEnabled()) {
-      logger.debug("Processing replica of container {} from datanode {}",
-          containerId, datanodeDetails);
-    }
+    logger.info("Processing replica of container {} from datanode {}, replicaProto = {}",
+        containerId, datanodeDetails, replicaProto);
+
     // Synchronized block should be replaced by container lock,
     // once we have introduced lock inside ContainerInfo.
     synchronized (containerInfo) {

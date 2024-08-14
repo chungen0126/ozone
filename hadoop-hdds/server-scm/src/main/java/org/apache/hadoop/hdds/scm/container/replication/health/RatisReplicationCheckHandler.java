@@ -204,6 +204,7 @@ public class RatisReplicationCheckHandler extends AbstractCheck {
     RatisContainerReplicaCount replicaCount =
         new RatisContainerReplicaCount(container, replicas, replicaPendingOps,
             minReplicasForMaintenance, false);
+    LOG.info("replicaCount = {}", replicaCount);
     boolean sufficientlyReplicated
         = replicaCount.isSufficientlyReplicated(false);
     if (!sufficientlyReplicated) {

@@ -24,6 +24,7 @@ import com.google.protobuf.Message;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.DatanodeDetailsProto;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeOperationalState;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.CommandQueueReportProto;
 import org.apache.hadoop.hdds.protocol.proto
     .StorageContainerDatanodeProtocolProtos.LayoutVersionProto;
@@ -150,6 +151,9 @@ public class HeartbeatEndpointTask
    */
   public void setDatanodeDetailsProto(DatanodeDetailsProto
       datanodeDetailsProto) {
+    if (datanodeDetailsProto.getPersistedOpState() == NodeOperationalState.DECOMMISSIONING) {
+      LOG.info("datanode = {}", datanodeDetailsProto);
+    }
     this.datanodeDetailsProto = datanodeDetailsProto;
   }
 
