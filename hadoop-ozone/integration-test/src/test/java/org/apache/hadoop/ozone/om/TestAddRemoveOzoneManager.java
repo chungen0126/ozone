@@ -226,6 +226,8 @@ public class TestAddRemoveOzoneManager {
   @Test
   public void testBootstrapWithoutConfigUpdate() throws Exception {
     // Setup 1 node cluster
+    GenericTestUtils.setLogLevel(GrpcLogAppender.LOG, Level.TRACE);
+    GenericTestUtils.setLogLevel(FollowerInfo.LOG, Level.TRACE);
     setupCluster(1);
     cluster.setupExitManagerForTesting();
     OzoneManager existingOM = cluster.getOzoneManager(0);
@@ -289,8 +291,8 @@ public class TestAddRemoveOzoneManager {
   @Flaky("HDDS-11358")
   @Test
   public void testForceBootstrap() throws Exception {
-    GenericTestUtils.setLogLevel(GrpcLogAppender.LOG, Level.DEBUG);
-    GenericTestUtils.setLogLevel(FollowerInfo.LOG, Level.DEBUG);
+    GenericTestUtils.setLogLevel(GrpcLogAppender.LOG, Level.TRACE);
+    GenericTestUtils.setLogLevel(FollowerInfo.LOG, Level.TRACE);
     // Setup a 3 node cluster and stop 1 OM.
     setupCluster(3);
     OzoneManager downOM = cluster.getOzoneManager(2);
