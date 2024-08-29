@@ -51,10 +51,13 @@ import org.apache.ozone.test.tag.Flaky;
 import org.apache.ratis.grpc.server.GrpcLogAppender;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.protocol.RaftPeerId;
+import org.apache.ratis.server.RaftServer;
 import org.apache.ratis.server.leader.FollowerInfo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import static org.apache.hadoop.ozone.OzoneConsts.SCM_DUMMY_SERVICE_ID;
@@ -74,6 +77,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Timeout(500)
 public class TestAddRemoveOzoneManager {
 
+  private final static Logger LOG =
+      LoggerFactory.getLogger(TestAddRemoveOzoneManager.class);
   private MiniOzoneHAClusterImpl cluster = null;
   private ObjectStore objectStore;
   private OzoneConfiguration conf;
@@ -184,6 +189,9 @@ public class TestAddRemoveOzoneManager {
    */
   @Test
   public void testBootstrap() throws Exception {
+    GenericTestUtils.setLogLevel(GrpcLogAppender.LOG, Level.ERROR);
+    GenericTestUtils.setLogLevel(FollowerInfo.LOG, Level.ERROR);
+    GenericTestUtils.setLogLevel(RaftServer.Division.LOG, Level.ERROR);
     setupCluster(1);
     OzoneManager oldOM = cluster.getOzoneManager();
 
@@ -225,9 +233,11 @@ public class TestAddRemoveOzoneManager {
    */
   @Test
   public void testBootstrapWithoutConfigUpdate() throws Exception {
+    LOG.info("start testBootstrapWithoutConfigUpdate");
     // Setup 1 node cluster
     GenericTestUtils.setLogLevel(GrpcLogAppender.LOG, Level.TRACE);
     GenericTestUtils.setLogLevel(FollowerInfo.LOG, Level.TRACE);
+    GenericTestUtils.setLogLevel(RaftServer.Division.LOG, Level.TRACE);
     setupCluster(1);
     cluster.setupExitManagerForTesting();
     OzoneManager existingOM = cluster.getOzoneManager(0);
@@ -269,6 +279,7 @@ public class TestAddRemoveOzoneManager {
     omLog.clearOutput();
 
     String newNodeId1 = "omNode-bootstrap-2";
+    LOG.info("start bootstrapOzoneManager.");
     try {
       cluster.bootstrapOzoneManager(newNodeId1, false, true);
     } catch (IOException ex) {
@@ -281,6 +292,7 @@ public class TestAddRemoveOzoneManager {
       // Verify that the existing OM has stopped.
       assertFalse(cluster.getOzoneManager(existingOMNodeId).isRunning());
     }
+    LOG.info("finish bootstrapOzoneManager.");
   }
 
   /**
@@ -291,6 +303,8 @@ public class TestAddRemoveOzoneManager {
   @Flaky("HDDS-11358")
   @Test
   public void testForceBootstrap() throws Exception {
+    LOG.info("start testForceBootstrap.");
+    GenericTestUtils.setLogLevel(RaftServer.Division.LOG, Level.TRACE);
     GenericTestUtils.setLogLevel(GrpcLogAppender.LOG, Level.TRACE);
     GenericTestUtils.setLogLevel(FollowerInfo.LOG, Level.TRACE);
     // Setup a 3 node cluster and stop 1 OM.
@@ -339,7 +353,9 @@ public class TestAddRemoveOzoneManager {
 
     // Update configs on all active OMs and Force Bootstrap a new node
     String newNodeId1 = "omNode-bootstrap-2";
+    LOG.info("start bootstrapOzoneManager.");
     cluster.bootstrapOzoneManager(newNodeId1, true, true);
+    LOG.info("finish bootstrapOzoneManager.");
     OzoneManager newOM = cluster.getOzoneManager(newNodeId1);
 
     // Verify that the newly bootstrapped OM is running
@@ -354,6 +370,9 @@ public class TestAddRemoveOzoneManager {
    */
   @Test
   public void testDecommission() throws Exception {
+    GenericTestUtils.setLogLevel(GrpcLogAppender.LOG, Level.ERROR);
+    GenericTestUtils.setLogLevel(FollowerInfo.LOG, Level.ERROR);
+    GenericTestUtils.setLogLevel(RaftServer.Division.LOG, Level.ERROR);
     setupCluster(3);
     user = UserGroupInformation.getCurrentUser();
 
