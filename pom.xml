@@ -76,7 +76,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
     <!-- HDDS Rocks Native dependency version-->
     <hdds.rocks.native.version>${hdds.version}</hdds.rocks.native.version>
     <!-- Apache Ratis version -->
-    <ratis.version>3.1.0</ratis.version>
+    <ratis.version>3.2.0-SNAPSHOT</ratis.version>
 
     <!-- Apache Ratis thirdparty version -->
     <ratis.thirdparty.version>1.0.6</ratis.thirdparty.version>
@@ -707,56 +707,78 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
         <groupId>org.apache.ratis</groupId>
         <artifactId>ratis-proto-shaded</artifactId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-proto/target/ratis-proto-${ratis.version}-sources.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>org.apache.ratis</groupId>
         <artifactId>ratis-client</artifactId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-client/target/ratis-client-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>org.apache.ratis</groupId>
         <artifactId>ratis-server-api</artifactId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-server-api/target/ratis-server-api-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <artifactId>ratis-server</artifactId>
         <groupId>org.apache.ratis</groupId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-server/target/ratis-server-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>org.apache.ratis</groupId>
         <artifactId>ratis-metrics-api</artifactId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-metrics-api/target/ratis-metrics-api-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <artifactId>ratis-metrics-dropwizard3</artifactId>
         <groupId>org.apache.ratis</groupId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-metrics-dropwizard3/target/ratis-metrics-dropwizard3-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <artifactId>ratis-netty</artifactId>
         <groupId>org.apache.ratis</groupId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-netty/target/ratis-netty-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <artifactId>ratis-grpc</artifactId>
         <groupId>org.apache.ratis</groupId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-grpc/target/ratis-grpc-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>org.apache.ratis</groupId>
         <artifactId>ratis-proto</artifactId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-proto/target/ratis-proto-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>org.apache.ratis</groupId>
         <artifactId>ratis-tools</artifactId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-tools/target/ratis-tools-${ratis.version}.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>org.apache.ratis</groupId>
         <artifactId>ratis-common</artifactId>
         <version>${ratis.version}</version>
+        <scope>system</scope>
+        <systemPath>/Users/leechungen/ratis/ratis-common/target/ratis-common-${ratis.version}.jar</systemPath>
       </dependency>
 
       <dependency>
