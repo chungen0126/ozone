@@ -163,6 +163,7 @@ public class RootedOzoneFileSystem extends BasicRootedOzoneFileSystem
         leaseKeyInfo, getAdapter(), forceRecovery);
     // recover and commit file
     long keyLength = keyLocationInfoList.stream().mapToLong(OmKeyLocationInfo::getLength).sum();
+    keyLocationInfoList.forEach(omKeyLocationInfo -> LOG.debug("omKeyLocationInfo = {}", omKeyLocationInfo));
     OmKeyArgs keyArgs = new OmKeyArgs.Builder().setVolumeName(leaseKeyInfo.getKeyInfo().getVolumeName())
         .setBucketName(leaseKeyInfo.getKeyInfo().getBucketName()).setKeyName(leaseKeyInfo.getKeyInfo().getKeyName())
         .setReplicationConfig(leaseKeyInfo.getKeyInfo().getReplicationConfig()).setDataSize(keyLength)
