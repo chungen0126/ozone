@@ -52,6 +52,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import java.io.FileNotFoundException;
@@ -86,6 +88,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Flaky("HDDS-11323")
 public class TestLeaseRecovery {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TestLeaseRecovery.class);
   private MiniOzoneCluster cluster;
   private OzoneBucket bucket;
 
@@ -424,9 +427,11 @@ public class TestLeaseRecovery {
           GenericTestUtils.LogCapturer.captureLogs(XceiverClientGrpc.getLogger());
       fs.recoverLease(file);
 
-      assertEquals(2, StringUtils.countMatches(logs.getOutput(),
+      String str = logs.getOutput();
+      LOG.info("startLog:\n{}\n", str);
+      assertEquals(2, StringUtils.countMatches(str,
           "Executing command cmdType: GetCommittedBlockLength"));
-      assertEquals(1, StringUtils.countMatches(logs.getOutput(),
+      assertEquals(1, StringUtils.countMatches(str,
           "Failed to execute command cmdType: GetCommittedBlockLength"));
 
       // The lease should have been recovered.
