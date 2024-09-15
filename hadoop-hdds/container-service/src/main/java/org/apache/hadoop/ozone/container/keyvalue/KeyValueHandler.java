@@ -190,6 +190,7 @@ public class KeyValueHandler extends Handler {
     byteBufferToByteString =
         ByteStringConversion
             .createByteBufferConversion(isUnsafeByteBufferConversionEnabled);
+    injector = null;
   }
 
   @VisibleForTesting
