@@ -425,6 +425,7 @@ public class TestLeaseRecovery {
 
       GenericTestUtils.LogCapturer logs =
           GenericTestUtils.LogCapturer.captureLogs(XceiverClientGrpc.getLogger());
+      logs.clearOutput();
       fs.recoverLease(file);
 
       String str = logs.getOutput();
