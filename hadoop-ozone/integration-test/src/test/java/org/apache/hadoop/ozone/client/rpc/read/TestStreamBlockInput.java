@@ -230,8 +230,8 @@ public class TestStreamBlockInput {
         "ChunkInputStream does not have expected number of " +
             "ByteBuffers");
     for (int i = 0; i < buffers.length; i++) {
-        assertEquals(expectedBufferCapacity, buffers[i].capacity(),
-            "ChunkInputStream ByteBuffer capacity is wrong");
+      assertEquals(expectedBufferCapacity, buffers[i].capacity(),
+          "ChunkInputStream ByteBuffer capacity is wrong");
     }
   }
 }
