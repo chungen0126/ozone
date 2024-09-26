@@ -59,7 +59,7 @@ public class ExcludeList {
     return Collections.unmodifiableSet(containerIds);
   }
 
-  public Set<DatanodeDetails> getDatanodes() {
+  public synchronized Set<DatanodeDetails> getDatanodes() {
     Set<DatanodeDetails> dns = new HashSet<>();
     if (expiryTime > 0) {
       Iterator<Map.Entry<DatanodeDetails, Long>> iterator =
@@ -83,7 +83,7 @@ public class ExcludeList {
     dns.forEach(dn -> addDatanode(dn));
   }
 
-  public void addDatanode(DatanodeDetails dn) {
+  public synchronized void addDatanode(DatanodeDetails dn) {
     datanodes.put(dn, clock.millis() + expiryTime);
   }
 
@@ -133,7 +133,7 @@ public class ExcludeList {
         .isEmpty();
   }
 
-  public void clear() {
+  public synchronized void clear() {
     datanodes.clear();
     containerIds.clear();
     pipelineIds.clear();
