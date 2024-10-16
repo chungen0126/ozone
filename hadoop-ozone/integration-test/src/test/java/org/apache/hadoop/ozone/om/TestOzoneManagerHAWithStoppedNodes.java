@@ -20,6 +20,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.hadoop.hdds.client.ReplicationFactor;
 import org.apache.hadoop.hdds.client.ReplicationType;
+import org.apache.hadoop.hdds.utils.FaultInjector;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdfs.LogVerificationAppender;
@@ -38,6 +39,7 @@ import org.apache.hadoop.ozone.om.ha.OMHAMetrics;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadCompleteInfo;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
+import org.apache.hadoop.ozone.om.ratis.OzoneManagerStateMachine;
 import org.apache.hadoop.ozone.om.service.KeyDeletingService;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
@@ -53,6 +55,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import java.io.IOException;
 import java.net.ConnectException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -61,6 +64,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.hadoop.ozone.MiniOzoneHAClusterImpl.NODE_FAILURE_TIMEOUT;
@@ -607,4 +612,80 @@ public class TestOzoneManagerHAWithStoppedNodes extends TestOzoneManagerHA {
     assertEquals(expectedVolumes.size(), expectedCount);
   }
 
+  @Test
+  @Order(Integer.MAX_VALUE - 2)
+  public void testRenameKey() throws Exception {
+    OzoneBucket bucket = setupBucket();
+    OzoneManager leader = getCluster().getOMLeader();
+    createKey(bucket, "keyName1");
+    OzoneManagerStateMachine leaderSm = leader.getOmRatisServer().getOmStateMachine();
+    List<OzoneManager> ozoneManagerFollowers = getCluster().getOzoneManagersList()
+        .stream().filter(ozoneManager -> !ozoneManager.getOMNodeId().equals(leader.getOMNodeId()))
+        .collect(Collectors.toList());
+    FaultInjector injector = new OMStateMachinePauseInjection();
+    leaderSm.getHandler().setInjector(injector);
+
+    Thread thread = new Thread(() -> {
+      assertThrows(Exception.class, () -> bucket.renameKey("keyName1", "keyName2"));
+    });
+    thread.start();
+
+    for (OzoneManager ozoneManager : ozoneManagerFollowers) {
+      getCluster().shutdownOzoneManager(ozoneManager);
+    }
+
+    getCluster().shutdownOzoneManager(leader);
+    injector.resume();
+
+    for (OzoneManager ozoneManager : ozoneManagerFollowers) {
+      getCluster().restartOzoneManager(ozoneManager, true);
+    }
+
+    waitForLeaderToBeReady();
+    getCluster().restartOzoneManager(leader, true);
+    bucket.renameKey("keyName1", "keyName2");
+
+  }
+
+  private static class OMStateMachinePauseInjection extends FaultInjector {
+    private CountDownLatch ready;
+    private CountDownLatch wait;
+
+    OMStateMachinePauseInjection() {
+      init();
+    }
+
+    @Override
+    public void init() {
+      this.ready = new CountDownLatch(1);
+      this.wait = new CountDownLatch(1);
+    }
+
+    @Override
+    public void pause() throws IOException {
+      ready.countDown();
+      try {
+        wait.await();
+      } catch (InterruptedException e) {
+        throw new IOException(e);
+      }
+    }
+
+    @Override
+    public void resume() {
+      // Make sure injector pauses before resuming.
+      try {
+        ready.await();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        fail("resume interrupted");
+      }
+      wait.countDown();
+    }
+
+    @Override
+    public void reset() throws IOException {
+      init();
+    }
+  }
 }
