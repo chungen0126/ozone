@@ -34,6 +34,7 @@ import org.apache.hadoop.ozone.client.OzoneVolume;
 import org.apache.hadoop.ozone.client.VolumeArgs;
 import org.apache.hadoop.ozone.client.io.OzoneInputStream;
 import org.apache.hadoop.ozone.client.io.OzoneOutputStream;
+import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.om.ha.HadoopRpcOMFailoverProxyProvider;
 import org.apache.hadoop.ozone.om.ha.OMHAMetrics;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartInfo;
@@ -643,7 +644,7 @@ public class TestOzoneManagerHAWithStoppedNodes extends TestOzoneManagerHA {
 
     waitForLeaderToBeReady();
     getCluster().restartOzoneManager(leader, true);
-    bucket.renameKey("keyName1", "keyName2");
+    assertThrows(OMException.class, () -> bucket.renameKey("keyName1", "keyName2"));
 
   }
 
