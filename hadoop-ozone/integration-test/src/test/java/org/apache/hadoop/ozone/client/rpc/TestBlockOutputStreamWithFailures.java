@@ -29,7 +29,6 @@ import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.client.io.KeyOutputStream;
 import org.apache.hadoop.ozone.client.io.OzoneOutputStream;
 import org.apache.hadoop.ozone.container.TestHelper;
-import org.apache.ozone.test.tag.Flaky;
 
 import static org.apache.hadoop.hdds.scm.client.HddsClientUtils.checkForException;
 import static org.apache.hadoop.ozone.client.rpc.TestBlockOutputStream.BLOCK_SIZE;
@@ -187,7 +186,6 @@ class TestBlockOutputStreamWithFailures {
 
   @ParameterizedTest
   @MethodSource("clientParameters")
-  @Flaky("HDDS-6113")
   void testWatchForCommitDatanodeFailure(boolean flushDelay, boolean enablePiggybacking) throws Exception {
     OzoneClientConfig config = newClientConfig(cluster.getConf(), flushDelay, enablePiggybacking);
     try (OzoneClient client = newClient(cluster.getConf(), config)) {
@@ -578,7 +576,6 @@ class TestBlockOutputStreamWithFailures {
 
   @ParameterizedTest
   @MethodSource("clientParameters")
-  @Flaky("HDDS-6113")
   void testDatanodeFailureWithSingleNode(boolean flushDelay, boolean enablePiggybacking) throws Exception {
     OzoneClientConfig config = newClientConfig(cluster.getConf(), flushDelay, enablePiggybacking);
     try (OzoneClient client = newClient(cluster.getConf(), config)) {
