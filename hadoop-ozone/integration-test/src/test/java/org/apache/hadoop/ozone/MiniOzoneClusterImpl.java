@@ -55,6 +55,7 @@ import org.apache.hadoop.hdds.scm.ha.SCMHAUtils;
 import org.apache.hadoop.hdds.scm.ha.SCMRatisServerImpl;
 import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
+import org.apache.hadoop.hdds.scm.node.SCMNodeManager;
 import org.apache.hadoop.hdds.scm.node.states.NodeNotFoundException;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolClientSideTranslatorPB;
@@ -221,14 +222,14 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
           isNodeReady ? "Nodes are ready" : "Waiting for nodes to be ready",
           healthy, hddsDatanodes.size());
       if (!isNodeReady) {
-        List<DatanodeDetails> dns = activeScm.getScmNodeManager().getAllNodes();
+        List<DatanodeInfo> dns = ((SCMNodeManager)activeScm.getScmNodeManager()).getAllNodeInfos();
         StringBuilder sb = new StringBuilder();
         sb.append("dns: \n");
-        for (DatanodeDetails dn : dns) {
+        for (DatanodeInfo dn : dns) {
           sb.append("uuid: ")
               .append(dn.getUuid())
               .append("[state = ")
-              .append(((DatanodeInfo)dn).getNodeStatus())
+              .append(dn.getNodeStatus())
               .append("]\n");
         }
         LOG.info(sb.toString());

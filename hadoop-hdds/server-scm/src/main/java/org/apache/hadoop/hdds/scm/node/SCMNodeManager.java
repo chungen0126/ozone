@@ -261,6 +261,10 @@ public class SCMNodeManager implements NodeManager {
         .map(node -> (DatanodeDetails) node).collect(Collectors.toList());
   }
 
+  public List<DatanodeInfo> getAllNodeInfos() {
+    return nodeStateManager.getAllNodes();
+  }
+
   /**
    * Returns the Number of Datanodes by State they are in.
    *
