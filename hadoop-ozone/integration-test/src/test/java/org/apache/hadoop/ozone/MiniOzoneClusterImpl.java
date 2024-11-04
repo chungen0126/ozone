@@ -53,6 +53,7 @@ import org.apache.hadoop.hdds.scm.HddsTestUtils;
 import org.apache.hadoop.hdds.scm.ha.SCMHANodeDetails;
 import org.apache.hadoop.hdds.scm.ha.SCMHAUtils;
 import org.apache.hadoop.hdds.scm.ha.SCMRatisServerImpl;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.scm.node.states.NodeNotFoundException;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
@@ -227,7 +228,7 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
           sb.append("uuid: ")
               .append(dn.getUuid())
               .append("[state = ")
-              .append(dn.getPersistedOpState())
+              .append(((DatanodeInfo)dn).getNodeStatus())
               .append("]\n");
         }
         LOG.info(sb.toString());
