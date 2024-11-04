@@ -219,6 +219,19 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
       LOG.info("{}. Got {} of {} DN Heartbeats.",
           isNodeReady ? "Nodes are ready" : "Waiting for nodes to be ready",
           healthy, hddsDatanodes.size());
+      if (!isNodeReady) {
+        List<DatanodeDetails> dns = activeScm.getScmNodeManager().getAllNodes();
+        StringBuilder sb = new StringBuilder();
+        sb.append("dns: \n");
+        for (DatanodeDetails dn : dns) {
+          sb.append("uuid: ")
+              .append(dn.getUuid())
+              .append("[state = ")
+              .append(dn.getPersistedOpState())
+              .append("]\n");
+        }
+        LOG.info(sb.toString());
+      }
       LOG.info(exitSafeMode ? "Cluster exits safe mode" :
               "Waiting for cluster to exit safe mode");
       LOG.info(checkScmLeader ? "SCM became leader" :
