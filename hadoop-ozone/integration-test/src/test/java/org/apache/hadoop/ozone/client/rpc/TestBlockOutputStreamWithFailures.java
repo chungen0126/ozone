@@ -19,6 +19,7 @@ package org.apache.hadoop.ozone.client.rpc;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.hadoop.hdds.client.ReplicationFactor;
+import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.scm.OzoneClientConfig;
 import org.apache.hadoop.hdds.scm.XceiverClientRatis;
 import org.apache.hadoop.hdds.scm.container.common.helpers.ContainerNotOpenException;
@@ -244,7 +245,8 @@ class TestBlockOutputStreamWithFailures {
           (XceiverClientRatis) blockOutputStream.getXceiverClient();
       assertEquals(3, raftClient.getCommitInfoMap().size());
       Pipeline pipeline = raftClient.getPipeline();
-      cluster.shutdownHddsDatanode(pipeline.getNodes().get(0));
+      DatanodeDetails dn = pipeline.getNodes().get(0);
+      cluster.shutdownHddsDatanode(dn);
 
       // again write data with more than max buffer limit. This will call
       // watchForCommit again. Since the commit will happen 2 way, the
@@ -265,7 +267,7 @@ class TestBlockOutputStreamWithFailures {
       // Written the same data twice
       byte[] bytes = ArrayUtils.addAll(data1, data1);
       validateData(keyName, bytes, client.getObjectStore(), VOLUME, BUCKET);
-      cluster.restartHddsDatanode(pipeline.getNodes().get(0), true);
+      cluster.restartHddsDatanode(dn, true);
     }
   }
 
@@ -327,8 +329,10 @@ class TestBlockOutputStreamWithFailures {
           (XceiverClientRatis) blockOutputStream.getXceiverClient();
       assertEquals(3, raftClient.getCommitInfoMap().size());
       Pipeline pipeline = raftClient.getPipeline();
-      cluster.shutdownHddsDatanode(pipeline.getNodes().get(0));
-      cluster.shutdownHddsDatanode(pipeline.getNodes().get(1));
+      DatanodeDetails dn1 = pipeline.getNodes().get(0);
+      DatanodeDetails dn2 = pipeline.getNodes().get(1);
+      cluster.shutdownHddsDatanode(dn1);
+      cluster.shutdownHddsDatanode(dn2);
       // again write data with more than max buffer limit. This will call
       // watchForCommit again. Since the commit will happen 2 way, the
       // commitInfoMap will get updated for servers which are alive
@@ -365,8 +369,8 @@ class TestBlockOutputStreamWithFailures {
       assertEquals(0, blockOutputStream.getBufferPool().computeBufferData());
       assertEquals(0, keyOutputStream.getLocationInfoList().size());
       validateData(keyName, data1, client.getObjectStore(), VOLUME, BUCKET);
-      cluster.restartHddsDatanode(pipeline.getNodes().get(0), false);
-      cluster.restartHddsDatanode(pipeline.getNodes().get(1), true);
+      cluster.restartHddsDatanode(dn1, false);
+      cluster.restartHddsDatanode(dn2, true);
     }
   }
 
