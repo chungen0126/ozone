@@ -91,6 +91,8 @@ public class RunningDatanodeState implements DatanodeState {
         // the thread in executor from DatanodeStateMachine for a long time,
         // so that it won't affect the communication between datanode and
         // other EndpointStateMachine.
+        LOG.info("datanodeUuid: {}, endpointTask: {}",
+            context.getParent().getDatanodeDetails().getUuid(), endpoint.getState());
         long heartbeatFrequency;
         if (endpoint.isPassive()) {
           heartbeatFrequency = context.getReconHeartbeatFrequency();
