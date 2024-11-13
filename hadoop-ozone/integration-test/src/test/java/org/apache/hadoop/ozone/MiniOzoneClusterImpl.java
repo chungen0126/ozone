@@ -247,11 +247,17 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
   public void waitForPipelineTobeReady(HddsProtos.ReplicationFactor factor,
                                        int timeoutInMs) throws
       TimeoutException, InterruptedException {
+    waitForPipelineTobeReady(factor, timeoutInMs, 1);
+  }
+
+  public void waitForPipelineTobeReady(HddsProtos.ReplicationFactor factor,
+                                        int timeoutInMs, int count) throws
+      TimeoutException, InterruptedException {
     GenericTestUtils.waitFor(() -> {
       int openPipelineCount = scm.getPipelineManager().
           getPipelines(RatisReplicationConfig.getInstance(factor),
               Pipeline.PipelineState.OPEN).size();
-      return openPipelineCount >= 1;
+      return openPipelineCount >= count;
     }, 1000, timeoutInMs);
   }
 

@@ -27,6 +27,7 @@ import org.apache.hadoop.hdds.scm.container.common.helpers.ContainerNotOpenExcep
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.storage.RatisBlockOutputStream;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
+import org.apache.hadoop.ozone.MiniOzoneClusterImpl;
 import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.client.io.KeyOutputStream;
 import org.apache.hadoop.ozone.client.io.OzoneOutputStream;
@@ -79,8 +80,8 @@ class TestBlockOutputStreamWithFailures {
 
   @BeforeEach
   void setUp() throws Exception {
-    cluster.waitForPipelineTobeReady(HddsProtos.ReplicationFactor.THREE,
-        180000);
+    ((MiniOzoneClusterImpl)cluster).waitForPipelineTobeReady(HddsProtos.ReplicationFactor.THREE,
+        180000, 3);
   }
 
   @AfterAll
