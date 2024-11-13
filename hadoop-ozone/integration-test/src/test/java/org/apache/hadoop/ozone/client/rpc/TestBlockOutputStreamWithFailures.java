@@ -81,7 +81,7 @@ class TestBlockOutputStreamWithFailures {
   @BeforeEach
   void setUp() throws Exception {
     ((MiniOzoneClusterImpl)cluster).waitForPipelineTobeReady(HddsProtos.ReplicationFactor.THREE,
-        180000, 3);
+        180000);
   }
 
   @AfterAll
@@ -254,8 +254,8 @@ class TestBlockOutputStreamWithFailures {
           (XceiverClientRatis) blockOutputStream.getXceiverClient();
       assertEquals(3, raftClient.getCommitInfoMap().size());
       Pipeline pipeline = raftClient.getPipeline();
-      DatanodeDetails dn = pipeline.getNodes().get(0);
-      cluster.shutdownHddsDatanode(dn);
+      int dnIndex = cluster.getHddsDatanodeIndex(pipeline.getNodes().get(0));
+      cluster.shutdownHddsDatanode(dnIndex);
 
       // again write data with more than max buffer limit. This will call
       // watchForCommit again. Since the commit will happen 2 way, the
@@ -276,7 +276,7 @@ class TestBlockOutputStreamWithFailures {
       // Written the same data twice
       byte[] bytes = ArrayUtils.addAll(data1, data1);
       validateData(keyName, bytes, client.getObjectStore(), VOLUME, BUCKET);
-      cluster.restartHddsDatanode(dn, true);
+      cluster.restartHddsDatanode(dnIndex, true);
     }
   }
 
@@ -338,10 +338,10 @@ class TestBlockOutputStreamWithFailures {
           (XceiverClientRatis) blockOutputStream.getXceiverClient();
       assertEquals(3, raftClient.getCommitInfoMap().size());
       Pipeline pipeline = raftClient.getPipeline();
-      DatanodeDetails dn1 = pipeline.getNodes().get(0);
-      DatanodeDetails dn2 = pipeline.getNodes().get(1);
-      cluster.shutdownHddsDatanode(dn1);
-      cluster.shutdownHddsDatanode(dn2);
+      int dn1Index = cluster.getHddsDatanodeIndex(pipeline.getNodes().get(0));
+      int dn2Index = cluster.getHddsDatanodeIndex(pipeline.getNodes().get(1));
+      cluster.shutdownHddsDatanode(dn1Index);
+      cluster.shutdownHddsDatanode(dn2Index);
       // again write data with more than max buffer limit. This will call
       // watchForCommit again. Since the commit will happen 2 way, the
       // commitInfoMap will get updated for servers which are alive
@@ -378,8 +378,8 @@ class TestBlockOutputStreamWithFailures {
       assertEquals(0, blockOutputStream.getBufferPool().computeBufferData());
       assertEquals(0, keyOutputStream.getLocationInfoList().size());
       validateData(keyName, data1, client.getObjectStore(), VOLUME, BUCKET);
-      cluster.restartHddsDatanode(dn1, false);
-      cluster.restartHddsDatanode(dn2, true);
+      cluster.restartHddsDatanode(dn1Index, false);
+      cluster.restartHddsDatanode(dn2Index, true);
     }
   }
 
