@@ -80,8 +80,8 @@ class TestBlockOutputStreamWithFailures {
 
   @BeforeEach
   void setUp() throws Exception {
-    ((MiniOzoneClusterImpl)cluster).waitForPipelineTobeReady(HddsProtos.ReplicationFactor.THREE,
-        180000, 3);
+    cluster.waitForPipelineTobeReady(HddsProtos.ReplicationFactor.THREE,
+        180000);
   }
 
   @AfterAll
