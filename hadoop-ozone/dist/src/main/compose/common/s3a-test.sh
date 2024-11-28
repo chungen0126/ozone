@@ -97,9 +97,8 @@ EOF
   # - ITestS3AContractCreate: HDDS-11663
   # - ITestS3AContractDistCp: HDDS-10616
   # - ITestS3AContractMkdirWithCreatePerf: HDDS-11662
-  # - ITestS3AContractRename: HDDS-10665
   mvn -B -V --fail-never --no-transfer-progress \
-    -Dtest='ITestS3AContract*, ITestS3ACommitterMRJob, !ITestS3AContractBulkDelete, !ITestS3AContractCreate#testOverwrite*EmptyDirectory[*], !ITestS3AContractDistCp, !ITestS3AContractMkdirWithCreatePerf, !ITestS3AContractRename' \
+    -Dtest='ITestS3AContract*, ITestS3ACommitterMRJob, !ITestS3AContractBulkDelete, !ITestS3AContractCreate#testOverwrite*EmptyDirectory[*], !ITestS3AContractDistCp, !ITestS3AContractMkdirWithCreatePerf' \
     clean test
 
   local target="${RESULT_DIR}/junit/${bucket}/target"
