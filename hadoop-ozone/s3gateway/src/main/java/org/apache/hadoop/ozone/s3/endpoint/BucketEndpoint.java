@@ -170,7 +170,7 @@ public class BucketEndpoint extends EndpointBase {
         throw newError(S3ErrorTable.ACCESS_DENIED, bucketName, ex);
       } else if (ex.getResult() == ResultCodes.FILE_NOT_FOUND) {
         // File not found, continue and send normal response with 0 keyCount
-        LOG.debug("Key Not found prefix: {}", prefix);
+        LOG.info("Key Not found prefix: {}", prefix);
       } else {
         throw ex;
       }
