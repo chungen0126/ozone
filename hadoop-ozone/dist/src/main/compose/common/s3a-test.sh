@@ -92,6 +92,16 @@ execute_s3a_tests() {
   </configuration>
 EOF
 
+ # Add the strict exceptions property for fso-bucket
+  if [[ "${bucket}" == "fso-bucket" ]]; then
+    cat >> src/test/resources/auth-keys.xml <<-EOF
+    <property>
+      <name>fs.contract.supports-strict-exceptions</name>
+      <value>true</value>
+    </property>
+EOF
+  fi
+
   # Some tests are skipped due to known issues.
   # - ITestS3AContractBulkDelete: HDDS-11661
   # - ITestS3AContractDistCp: HDDS-10616
