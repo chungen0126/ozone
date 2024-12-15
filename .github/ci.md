@@ -7,7 +7,7 @@ The Ozone project uses Github Actions, (GA), for its CI system.  GA are implemen
 ### full-ci Workflow
 This is the most important [workflow](./workflows/ci.yml).  It runs the tests that verify the latest commits.
 
-It is triggered each time a pull request is created or synchronized (i.e. when the remote branch is pushed to).  These trigger events are defined in the [build-branch workflow](./workflows/post-commit.yml).
+It is triggered each time a pull request is created or synchronized (i.e. when the remote branch is pushed to).  These trigger events are defined in the [build-branch workflow](./workflows/post-commit.yml.disable).
 
 The full-ci workflow is divided into a number of different jobs, most of which run in parallel.  Each job is described below.
 
