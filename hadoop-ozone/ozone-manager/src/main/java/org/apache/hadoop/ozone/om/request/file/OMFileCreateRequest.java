@@ -430,7 +430,9 @@ public class OMFileCreateRequest extends OMKeyRequest {
       if (keyArgs.hasVolumeName() && keyArgs.hasBucketName()) {
         BucketLayout bucketLayout = ctx.getBucketLayout(
             keyArgs.getVolumeName(), keyArgs.getBucketName());
+        LOG.info("block create file: {}", req);
         bucketLayout.validateSupportedOperation();
+        LOG.info("not block file: {}", req);
       }
     }
     return req;
