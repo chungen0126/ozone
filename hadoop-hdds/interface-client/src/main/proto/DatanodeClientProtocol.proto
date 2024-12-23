@@ -24,7 +24,7 @@
 
 // This file contains protocol buffers that are used to transfer data
 // to and from the datanode.
-syntax = "proto2";
+syntax = "proto3";
 option java_package = "org.apache.hadoop.hdds.protocol.datanode.proto";
 option java_outer_classname = "ContainerProtos";
 option java_generate_equals_and_hash = true;
@@ -80,7 +80,7 @@ package hadoop.hdds.datanode;
  */
 
 enum Type {
-  CreateContainer = 1;
+  CreateContainer = 0;
   ReadContainer = 2;
   UpdateContainer = 3;
   DeleteContainer = 4;
@@ -112,7 +112,7 @@ enum Type {
 
 
 enum Result {
-  SUCCESS = 1;
+  SUCCESS = 0;
   UNSUPPORTED_REQUEST = 2;
   MALFORMED_REQUEST = 3;
   CONTAINER_INTERNAL_ERROR = 4;
@@ -164,28 +164,28 @@ enum Result {
  * Block ID that uniquely identify a block in Datanode.
  */
 message DatanodeBlockID {
-  required int64 containerID = 1;
-  required int64 localID = 2;
-  optional uint64 blockCommitSequenceId = 3 [default = 0];
+  int64 containerID = 1;
+  int64 localID = 2;
+  uint64 blockCommitSequenceId = 3;
   optional int32 replicaIndex = 4;
 
 }
 
 message KeyValue {
-  required string key = 1;
+  string key = 1;
   optional string value = 2;
 }
 
 message ContainerCommandRequestProto {
-  required   Type cmdType = 1; // Type of the command
+  Type cmdType = 1; // Type of the command
 
   // A string that identifies this command, we generate  Trace ID in Ozone
   // frontend and this allows us to trace that command all over ozone.
   optional   string traceID = 2;
 
-  required   int64 containerID = 3;
-  required   string datanodeUuid = 4;
-  optional   string pipelineID = 5;
+  int64 containerID = 3;
+  string datanodeUuid = 4;
+  optional string pipelineID = 5;
 
   // One of the following command is available when the corresponding
   // cmdType is set. At the protocol level we allow only
@@ -220,10 +220,10 @@ message ContainerCommandRequestProto {
 }
 
 message ContainerCommandResponseProto {
-  required   Type cmdType = 1;
+  Type cmdType = 1;
   optional   string traceID = 2;
 
-  required   Result result = 3;
+  Result result = 3;
   optional   string message = 4;
 
   optional   CreateContainerResponseProto createContainer = 5;
@@ -254,7 +254,7 @@ message ContainerCommandResponseProto {
 
 message ContainerDataProto {
   enum State {
-    OPEN = 1;
+    OPEN = 0;
     CLOSING = 2;
     QUASI_CLOSED =3;
     CLOSED = 4;
@@ -263,14 +263,14 @@ message ContainerDataProto {
     DELETED = 7;
     RECOVERING = 8;
   }
-  required int64 containerID = 1;
+  int64 containerID = 1;
   repeated KeyValue metadata = 2;
   optional string containerPath = 4;
   optional int64 bytesUsed = 6;
   optional int64 size = 7;
   optional int64 blockCount = 8;
-  optional State state = 9 [default = OPEN];
-  optional ContainerType containerType = 10 [default = KeyValueContainer];
+  State state = 9;
+  ContainerType containerType = 10;
 }
 
 message Container2BCSIDMapProto {
@@ -279,14 +279,14 @@ message Container2BCSIDMapProto {
 }
 
 enum ContainerType {
-  KeyValueContainer = 1;
+  KeyValueContainer = 0;
 }
 
 
 // Container Messages.
 message  CreateContainerRequestProto {
   repeated KeyValue metadata = 2;
-  optional ContainerType containerType = 3 [default = KeyValueContainer];
+  ContainerType containerType = 3;
   optional int32 replicaIndex = 4;
   optional ContainerDataProto.State state = 5;
 }
@@ -303,14 +303,14 @@ message  ReadContainerResponseProto {
 
 message  UpdateContainerRequestProto {
   repeated KeyValue metadata = 2;
-  optional bool forceUpdate = 3 [default = false];
+  bool forceUpdate = 3;
 }
 
 message  UpdateContainerResponseProto {
 }
 
 message  DeleteContainerRequestProto {
-  optional bool forceDelete = 2 [default = false];
+  bool forceDelete = 2;
 }
 
 message  DeleteContainerResponseProto {
@@ -333,7 +333,7 @@ message CloseContainerResponseProto {
 }
 
 message BlockData {
-  required DatanodeBlockID blockID = 1;
+  DatanodeBlockID blockID = 1;
   optional int64 flags = 2; // for future use.
   repeated KeyValue metadata = 3;
   repeated ChunkInfo chunks = 4;
@@ -342,42 +342,42 @@ message BlockData {
 
 // Block Messages.
 message  PutBlockRequestProto {
-  required BlockData blockData = 1;
+  BlockData blockData = 1;
   optional bool eof = 2;
 }
 
 message  PutBlockResponseProto {
-  required GetCommittedBlockLengthResponseProto committedBlockLength = 1;
+  GetCommittedBlockLengthResponseProto committedBlockLength = 1;
 }
 
 message  FinalizeBlockRequestProto  {
-  required DatanodeBlockID blockID = 1;
+  DatanodeBlockID blockID = 1;
 }
 
 message  FinalizeBlockResponseProto  {
-  required BlockData blockData = 1;
+  BlockData blockData = 1;
 }
 
 message  GetBlockRequestProto  {
-  required DatanodeBlockID blockID = 1;
+  DatanodeBlockID blockID = 1;
 }
 
 message  GetBlockResponseProto  {
-  required BlockData blockData = 1;
+  BlockData blockData = 1;
 }
 
 
 message  DeleteBlockRequestProto {
-  required DatanodeBlockID blockID = 1;
+  DatanodeBlockID blockID = 1;
 }
 
 message  GetCommittedBlockLengthRequestProto {
-  required DatanodeBlockID blockID = 1;
+  DatanodeBlockID blockID = 1;
 }
 
 message  GetCommittedBlockLengthResponseProto {
-  required DatanodeBlockID blockID = 1;
-  required int64 blockLength = 2;
+  DatanodeBlockID blockID = 1;
+  int64 blockLength = 2;
 }
 
 message   DeleteBlockResponseProto {
@@ -385,7 +385,7 @@ message   DeleteBlockResponseProto {
 
 message  ListBlockRequestProto {
   optional int64 startLocalID = 2;
-  required uint32 count = 3;
+  uint32 count = 3;
 
 }
 
@@ -407,11 +407,11 @@ message  EchoResponseProto {
 // Chunk Operations
 
 message ChunkInfo {
-  required string chunkName = 1;
-  required uint64 offset = 2;
-  required uint64 len = 3;
+  string chunkName = 1;
+  uint64 offset = 2;
+  uint64 len = 3;
   repeated KeyValue metadata = 4;
-  required ChecksumData checksumData =5;
+  ChecksumData checksumData =5;
   optional bytes stripeChecksum = 6;
 }
 
@@ -420,13 +420,13 @@ message ChunkInfoList {
 }
 
 message ChecksumData {
-  required ChecksumType type = 1;
-  required uint32 bytesPerChecksum = 2;
+  ChecksumType type = 1;
+  uint32 bytesPerChecksum = 2;
   repeated bytes checksums = 3;
 }
 
 enum ChecksumType {
-    NONE = 1;
+    NONE = 0;
     CRC32 = 2;
     CRC32C = 3;
     SHA256 = 4;
@@ -434,7 +434,7 @@ enum ChecksumType {
 }
 
 message  WriteChunkRequestProto  {
-  required DatanodeBlockID blockID = 1;
+  DatanodeBlockID blockID = 1;
   optional ChunkInfo chunkData = 2;
   optional bytes data = 3;
   optional PutBlockRequestProto block = 4;
@@ -450,14 +450,14 @@ enum ReadChunkVersion {
 }
 
 message  ReadChunkRequestProto  {
-  required DatanodeBlockID blockID = 1;
-  required ChunkInfo chunkData = 2;
+  DatanodeBlockID blockID = 1;
+  ChunkInfo chunkData = 2;
   optional ReadChunkVersion readChunkVersion = 3;
 }
 
 message  ReadChunkResponseProto {
-  required DatanodeBlockID blockID = 1;
-  required ChunkInfo chunkData = 2;
+  DatanodeBlockID blockID = 1;
+  ChunkInfo chunkData = 2;
   // Chunk data should be returned in one of the two for
   oneof responseData {
     bytes data = 3; // Chunk data is returned as single buffer for V0
@@ -470,17 +470,17 @@ message DataBuffers {
 }
 
 message  DeleteChunkRequestProto {
-  required DatanodeBlockID blockID = 1;
-  required ChunkInfo chunkData = 2;
+  DatanodeBlockID blockID = 1;
+  ChunkInfo chunkData = 2;
 }
 
 message  DeleteChunkResponseProto {
 }
 
 message  ListChunkRequestProto {
-  required DatanodeBlockID blockID = 1;
-  required string prevChunkName = 2;
-  required uint32 count = 3;
+  DatanodeBlockID blockID = 1;
+  string prevChunkName = 2;
+  uint32 count = 3;
 }
 
 message  ListChunkResponseProto {
@@ -491,27 +491,27 @@ message  ListChunkResponseProto {
 RPC */
 
 message PutSmallFileRequestProto {
-  required PutBlockRequestProto block = 1;
-  required ChunkInfo chunkInfo = 2;
-  required bytes data = 3;
+  PutBlockRequestProto block = 1;
+  ChunkInfo chunkInfo = 2;
+  bytes data = 3;
 }
 
 
 message PutSmallFileResponseProto {
-  required GetCommittedBlockLengthResponseProto committedBlockLength = 1;
+  GetCommittedBlockLengthResponseProto committedBlockLength = 1;
 }
 
 message GetSmallFileRequestProto {
-  required GetBlockRequestProto block = 1;
+  GetBlockRequestProto block = 1;
   optional ReadChunkVersion readChunkVersion = 2;
 }
 
 message GetSmallFileResponseProto {
-  required ReadChunkResponseProto data = 1;
+  ReadChunkResponseProto data = 1;
 }
 
 enum CopyContainerCompressProto {
-  NO_COMPRESSION = 1;
+  NO_COMPRESSION = 0;
   GZIP = 2;
   LZ4 = 3;
   SNAPPY = 4;
@@ -519,26 +519,26 @@ enum CopyContainerCompressProto {
 }
 
 message CopyContainerRequestProto {
-  required int64 containerID = 1;
-  required uint64 readOffset = 2;
+  int64 containerID = 1;
+  uint64 readOffset = 2;
   optional uint64 len = 3;
   optional uint32 version = 4;
   optional CopyContainerCompressProto compression = 5;
 }
 
 message CopyContainerResponseProto {
-  required int64 containerID = 1;
-  required uint64 readOffset = 2;
-  required uint64 len = 3;
-  required bool eof = 4;
-  required bytes data = 5;
+  int64 containerID = 1;
+  uint64 readOffset = 2;
+  uint64 len = 3;
+  bool eof = 4;
+  bytes data = 5;
   optional int64 checksum = 6;
 }
 
 message SendContainerRequest {
-  required int64 containerID = 1;
-  required uint64 offset = 2;
-  required bytes data = 3;
+  int64 containerID = 1;
+  uint64 offset = 2;
+  bytes data = 3;
   optional int64 checksum = 4;
   optional CopyContainerCompressProto compression = 5;
 }
