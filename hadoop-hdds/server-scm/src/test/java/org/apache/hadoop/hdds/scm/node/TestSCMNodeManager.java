@@ -278,7 +278,6 @@ public class TestSCMNodeManager {
    * @throws TimeoutException
    */
   @Test
-  @Unhealthy
   public void testScmLayoutOnHeartbeat() throws Exception {
     OzoneConfiguration conf = getConf();
     conf.setTimeDuration(ScmConfigKeys.OZONE_SCM_PIPELINE_CREATION_INTERVAL,
@@ -396,7 +395,6 @@ public class TestSCMNodeManager {
    * @throws TimeoutException
    */
   @Test
-  @Unhealthy()
   public void testScmLayoutOnRegister()
       throws Exception {
 
