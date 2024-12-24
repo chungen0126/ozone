@@ -80,7 +80,8 @@ package hadoop.hdds.datanode;
  */
 
 enum Type {
-  CreateContainer = 0;
+  InitialType = 0;
+  CreateContainer = 1;
   ReadContainer = 2;
   UpdateContainer = 3;
   DeleteContainer = 4;
@@ -112,7 +113,8 @@ enum Type {
 
 
 enum Result {
-  SUCCESS = 0;
+  INITIAL = 0;
+  SUCCESS = 1;
   UNSUPPORTED_REQUEST = 2;
   MALFORMED_REQUEST = 3;
   CONTAINER_INTERNAL_ERROR = 4;
@@ -254,7 +256,8 @@ message ContainerCommandResponseProto {
 
 message ContainerDataProto {
   enum State {
-    OPEN = 0;
+    INITIAL_STATE = 0;
+    OPEN = 1;
     CLOSING = 2;
     QUASI_CLOSED =3;
     CLOSED = 4;
@@ -279,7 +282,8 @@ message Container2BCSIDMapProto {
 }
 
 enum ContainerType {
-  KeyValueContainer = 0;
+  InitialContainer = 0;
+  KeyValueContainer = 1;
 }
 
 
@@ -426,7 +430,8 @@ message ChecksumData {
 }
 
 enum ChecksumType {
-    NONE = 0;
+    INITIAL_TYPE = 0;
+    NONE = 1;
     CRC32 = 2;
     CRC32C = 3;
     SHA256 = 4;
@@ -511,7 +516,8 @@ message GetSmallFileResponseProto {
 }
 
 enum CopyContainerCompressProto {
-  NO_COMPRESSION = 0;
+  INITIAL_COMPRESSION = 0;
+  NO_COMPRESSION = 1;
   GZIP = 2;
   LZ4 = 3;
   SNAPPY = 4;
