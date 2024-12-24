@@ -232,7 +232,6 @@ final class TestSecureOzoneCluster {
       conf.setInt(OZONE_SCM_GRPC_PORT_KEY, getFreePort());
       conf.set(OZONE_OM_ADDRESS_KEY,
           InetAddress.getLocalHost().getCanonicalHostName() + ":" + getFreePort());
-      conf.setBoolean(ScmConfigKeys.OZONE_SCM_HA_ENABLE_KEY, false);
 
       DefaultMetricsSystem.setMiniClusterMode(true);
       ExitUtils.disableSystemExit();

@@ -709,7 +709,6 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
       Path metaDir = Paths.get(path, "ozone-meta");
       Files.createDirectories(metaDir);
       conf.set(HddsConfigKeys.OZONE_METADATA_DIRS, metaDir.toString());
-      // conf.setBoolean(ScmConfigKeys.OZONE_SCM_HA_ENABLE_KEY, true);
 
       conf.setTimeDuration(OMConfigKeys.OZONE_OM_RATIS_MINIMUM_TIMEOUT_KEY,
           DEFAULT_RATIS_RPC_TIMEOUT_SEC, TimeUnit.SECONDS);
@@ -766,18 +765,11 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
       scmStore.setClusterId(clusterId);
       scmStore.setScmId(scmId);
       scmStore.initialize();
-      //TODO: HDDS-6897
-      //Disabling Ratis for only of MiniOzoneClusterImpl.
-      //MiniOzoneClusterImpl doesn't work with Ratis enabled SCM
-      if (StringUtils.isNotEmpty(
-          conf.get(ScmConfigKeys.OZONE_SCM_HA_ENABLE_KEY))
-              && SCMHAUtils.isSCMHAEnabled(conf)) {
-        scmStore.setSCMHAFlag(true);
-        scmStore.persistCurrentState();
-        SCMRatisServerImpl.initialize(clusterId, scmId,
-                SCMHANodeDetails.loadSCMHAConfig(conf, scmStore)
-                        .getLocalNodeDetails(), conf);
-      }
+      scmStore.setSCMHAFlag(true);
+      scmStore.persistCurrentState();
+      SCMRatisServerImpl.initialize(clusterId, scmId,
+              SCMHANodeDetails.loadSCMHAConfig(conf, scmStore)
+                      .getLocalNodeDetails(), conf);
     }
 
     void initializeOmStorage(OMStorage omStorage) throws IOException {
