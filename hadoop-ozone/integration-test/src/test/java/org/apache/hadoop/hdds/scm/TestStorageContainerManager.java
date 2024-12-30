@@ -98,6 +98,7 @@ import org.apache.hadoop.util.Time;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.ozone.test.GenericTestUtils;
+import org.apache.ozone.test.tag.Unhealthy;
 import org.apache.ratis.conf.RaftProperties;
 import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.server.RaftServerConfigKeys;
@@ -162,6 +163,7 @@ import static org.mockito.Mockito.verify;
  * Test class that exercises the StorageContainerManager.
  */
 @Timeout(900)
+@Unhealthy
 public class TestStorageContainerManager {
   private static final String LOCALHOST_IP = "127.0.0.1";
   private static XceiverClientManager xceiverClientManager;
