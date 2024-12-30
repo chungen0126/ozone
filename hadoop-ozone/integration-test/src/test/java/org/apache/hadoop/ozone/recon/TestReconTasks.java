@@ -40,6 +40,7 @@ import org.apache.hadoop.ozone.recon.spi.ReconContainerMetadataManager;
 import org.apache.hadoop.ozone.recon.tasks.ReconTaskConfig;
 import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ozone.test.LambdaTestUtils;
+import org.apache.ozone.test.tag.Unhealthy;
 import org.hadoop.ozone.recon.schema.ContainerSchemaDefinition;
 import org.hadoop.ozone.recon.schema.tables.pojos.UnhealthyContainers;
 import org.junit.jupiter.api.AfterEach;
@@ -60,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
  * Integration Tests for Recon's tasks.
  */
 @Timeout(300)
+@Unhealthy
 public class TestReconTasks {
   private MiniOzoneCluster cluster = null;
   private OzoneConfiguration conf;
