@@ -195,10 +195,8 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
 
   public void waitForSCMToBeReady() throws TimeoutException,
       InterruptedException {
-    if (SCMHAUtils.isSCMHAEnabled(conf)) {
       GenericTestUtils.waitFor(scm::checkLeader,
           1000, waitForClusterToBeReadyTimeout);
-    }
   }
 
   public StorageContainerManager getActiveSCM() {

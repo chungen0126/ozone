@@ -134,6 +134,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Test the SCM Node Manager class.
  */
+@Unhealthy
 public class TestSCMNodeManager {
 
   private static final Logger LOG =

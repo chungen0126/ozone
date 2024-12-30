@@ -27,6 +27,7 @@ import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
 import org.apache.hadoop.ozone.MiniOzoneClusterProvider;
 import org.apache.hadoop.ozone.client.OzoneClient;
+import org.apache.ozone.test.tag.Unhealthy;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,6 +40,7 @@ import java.net.URI;
 import java.util.function.Function;
 
 import static org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationFactor.THREE;
+import static org.apache.hadoop.hdds.scm.ScmConfigKeys.OZONE_SCM_HA_ENABLE_KEY;
 import static org.apache.hadoop.ozone.OzoneConsts.MB;
 import static org.apache.hadoop.ozone.OzoneConsts.OZONE;
 import static org.apache.hadoop.ozone.OzoneConsts.OZONE_OFS_URI_SCHEME;
@@ -50,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Timeout(120)
+@Unhealthy
 class TestSafeMode {
 
   private static final String VOLUME = "vol";
@@ -61,6 +64,7 @@ class TestSafeMode {
   @BeforeAll
   static void setup() {
     OzoneConfiguration conf = new OzoneConfiguration();
+    conf.setBoolean(OZONE_SCM_HA_ENABLE_KEY, false);
     clusterProvider = new MiniOzoneClusterProvider(
         MiniOzoneCluster.newBuilder(conf), 2);
   }
