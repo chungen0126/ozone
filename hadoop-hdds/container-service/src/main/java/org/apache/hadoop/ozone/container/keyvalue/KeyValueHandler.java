@@ -93,6 +93,8 @@ import org.apache.hadoop.ozone.container.upgrade.VersionedDatanodeFeatures;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
+import static org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto.State.INITIAL_STATE;
+import static org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto.State.OPEN;
 import static org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto.State.RECOVERING;
 import static org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.Result.CLOSED_CONTAINER_IO;
 import static org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.Result.CONTAINER_ALREADY_EXISTS;
@@ -388,7 +390,11 @@ public class KeyValueHandler extends Handler {
         getDatanodeId());
     State state = request.getCreateContainer().getState();
     if (state != null) {
-      newContainerData.setState(state);
+      if (state == INITIAL_STATE) {
+        newContainerData.setState(OPEN);
+      } else {
+        newContainerData.setState(state);
+      }
     }
     newContainerData.setReplicaIndex(request.getCreateContainer()
         .getReplicaIndex());

@@ -20,6 +20,7 @@ import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ChecksumTy
 import org.apache.hadoop.ozone.common.Checksum.Algorithm;
 import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
@@ -38,6 +39,10 @@ class TestChecksumCache {
   @ParameterizedTest
   @EnumSource(ChecksumType.class)
   void testComputeChecksum(ChecksumType checksumType) throws Exception {
+    Assumptions.assumeTrue(checksumType != ChecksumType.INITIAL_TYPE,
+        "Skip default value.");
+    Assumptions.assumeTrue(checksumType != ChecksumType.UNRECOGNIZED,
+        "Skip unknown enum values.");
     final int bytesPerChecksum = 16;
     ChecksumCache checksumCache = new ChecksumCache(bytesPerChecksum);
 
