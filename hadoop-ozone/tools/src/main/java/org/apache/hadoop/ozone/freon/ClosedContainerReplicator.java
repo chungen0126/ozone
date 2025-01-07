@@ -199,6 +199,10 @@ public class ClosedContainerReplicator extends BaseFreonGenerator implements
     Map<ContainerType, Handler> handlers = new HashMap<>();
 
     for (ContainerType containerType : ContainerType.values()) {
+      if (containerType == ContainerType.InitialContainer ||
+          containerType == ContainerType.UNRECOGNIZED) {
+        continue;
+      }
       final Handler handler =
           Handler.getHandlerForContainerType(
               containerType,

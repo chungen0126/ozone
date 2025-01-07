@@ -18,6 +18,7 @@
 package org.apache.hadoop.ozone.container.common.utils;
 
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
+import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerType;
 import org.apache.hadoop.ozone.container.common.impl.ContainerData;
 import org.apache.hadoop.ozone.container.common.interfaces.ContainerInspector;
 import org.apache.hadoop.ozone.container.metadata.DatanodeStore;
@@ -40,6 +41,10 @@ public final class ContainerInspectorUtil {
   static {
     for (ContainerProtos.ContainerType type:
         ContainerProtos.ContainerType.values()) {
+      if (type == ContainerType.InitialContainer
+          || type == ContainerType.UNRECOGNIZED) {
+        continue;
+      }
       INSPECTORS.put(type, new ArrayList<>());
     }
 

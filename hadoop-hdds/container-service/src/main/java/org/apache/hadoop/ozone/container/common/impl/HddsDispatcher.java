@@ -340,6 +340,8 @@ public class HddsDispatcher implements ContainerDispatcher, Auditor {
         return malformedRequest(msg);
       }
       containerType = msg.getCreateContainer().getContainerType();
+      containerType = containerType == ContainerType.InitialContainer ?
+          ContainerType.KeyValueContainer : containerType;
     }
     // Small performance optimization. We check if the operation is of type
     // write before trying to send CloseContainerAction.

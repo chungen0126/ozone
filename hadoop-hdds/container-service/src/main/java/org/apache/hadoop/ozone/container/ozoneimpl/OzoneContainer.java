@@ -210,6 +210,10 @@ public class OzoneContainer {
     };
 
     for (ContainerType containerType : ContainerType.values()) {
+      if (containerType == ContainerType.InitialContainer ||
+          containerType == ContainerType.UNRECOGNIZED) {
+        continue;
+      }
       handlers.put(containerType,
           Handler.getHandlerForContainerType(
               containerType, conf,

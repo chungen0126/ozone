@@ -146,6 +146,10 @@ public class TestHddsDispatcher {
       ContainerMetrics metrics = ContainerMetrics.create(conf);
       Map<ContainerType, Handler> handlers = Maps.newHashMap();
       for (ContainerType containerType : ContainerType.values()) {
+        if (containerType == ContainerType.InitialContainer ||
+            containerType == ContainerType.UNRECOGNIZED) {
+          continue;
+        }
         handlers.put(containerType,
             Handler.getHandlerForContainerType(containerType, conf,
                 context.getParent().getDatanodeDetails().getUuidString(),
@@ -282,6 +286,10 @@ public class TestHddsDispatcher {
       ContainerMetrics metrics = ContainerMetrics.create(conf);
       Map<ContainerType, Handler> handlers = Maps.newHashMap();
       for (ContainerType containerType : ContainerType.values()) {
+        if (containerType == ContainerType.InitialContainer ||
+            containerType == ContainerType.UNRECOGNIZED) {
+          continue;
+        }
         handlers.put(containerType,
             Handler.getHandlerForContainerType(containerType, conf,
                 context.getParent().getDatanodeDetails().getUuidString(),
@@ -531,6 +539,10 @@ public class TestHddsDispatcher {
     ContainerMetrics metrics = ContainerMetrics.create(conf);
     Map<ContainerType, Handler> handlers = Maps.newHashMap();
     for (ContainerType containerType : ContainerType.values()) {
+      if (containerType == ContainerType.InitialContainer ||
+          containerType == ContainerType.UNRECOGNIZED) {
+        continue;
+      }
       handlers.put(containerType,
           Handler.getHandlerForContainerType(containerType, conf,
               context.getParent().getDatanodeDetails().getUuidString(),

@@ -22,6 +22,8 @@ import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
+import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto;
+import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto.State;
 import org.apache.hadoop.hdds.scm.pipeline.MockPipeline;
 import org.apache.hadoop.ozone.ClientVersion;
 import org.apache.hadoop.ozone.container.common.ContainerTestUtils;
@@ -267,7 +269,7 @@ public class TestKeyValueHandlerWithUnhealthyContainer {
         ContainerProtos.ContainerDataProto.State.UNHEALTHY);
     when(containerData.getBlockCommitSequenceId()).thenReturn(100L);
     when(containerData.getProtoBufMessage()).thenReturn(ContainerProtos
-        .ContainerDataProto.newBuilder().setContainerID(1).build());
+        .ContainerDataProto.newBuilder().setContainerID(1).setState(State.OPEN).build());
     return new KeyValueContainer(containerData, new OzoneConfiguration());
   }
 
@@ -278,7 +280,7 @@ public class TestKeyValueHandlerWithUnhealthyContainer {
     when(containerData.getBlockCommitSequenceId()).thenReturn(100L);
     when(containerData.getReplicaIndex()).thenReturn(replicaIndex);
     when(containerData.getProtoBufMessage()).thenReturn(ContainerProtos
-        .ContainerDataProto.newBuilder().setContainerID(1).build());
+        .ContainerDataProto.newBuilder().setContainerID(1).setState(State.OPEN).build());
     return new KeyValueContainer(containerData, new OzoneConfiguration());
   }
 }
