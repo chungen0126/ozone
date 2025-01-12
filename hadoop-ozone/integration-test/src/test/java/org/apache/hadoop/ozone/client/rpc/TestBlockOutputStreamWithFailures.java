@@ -638,7 +638,8 @@ class TestBlockOutputStreamWithFailures {
           (XceiverClientRatis) blockOutputStream.getXceiverClient();
       assertEquals(1, raftClient.getCommitInfoMap().size());
       Pipeline pipeline = raftClient.getPipeline();
-      cluster.shutdownHddsDatanode(pipeline.getNodes().get(0));
+      DatanodeDetails dn1 = pipeline.getNodes().get(0);
+      cluster.shutdownHddsDatanode(dn1);
 
       // again write data with more than max buffer limit. This will call
       // watchForCommit again. No write will happen in the current block and
@@ -663,7 +664,7 @@ class TestBlockOutputStreamWithFailures {
       assertEquals(0, keyOutputStream.getLocationInfoList().size());
       // Written the same data twice
       byte[] bytes = ArrayUtils.addAll(data1, data1);
-      cluster.restartHddsDatanode(pipeline.getNodes().get(0), true);
+      cluster.restartHddsDatanode(dn1, true);
       validateData(keyName, bytes, client.getObjectStore(), VOLUME, BUCKET);
     }
   }
@@ -730,7 +731,8 @@ class TestBlockOutputStreamWithFailures {
           (XceiverClientRatis) blockOutputStream.getXceiverClient();
       assertEquals(1, raftClient.getCommitInfoMap().size());
       Pipeline pipeline = raftClient.getPipeline();
-      cluster.shutdownHddsDatanode(pipeline.getNodes().get(0));
+      DatanodeDetails dn1 = pipeline.getNodes().get(0);
+      cluster.shutdownHddsDatanode(dn1);
 
       // again write data with more than max buffer limit. This will call
       // watchForCommit again. No write will happen and
@@ -754,7 +756,7 @@ class TestBlockOutputStreamWithFailures {
       assertEquals(0, blockOutputStream.getCommitIndex2flushedDataMap().size());
       assertEquals(0, keyOutputStream.getLocationInfoList().size());
 
-      cluster.restartHddsDatanode(pipeline.getNodes().get(0), true);
+      cluster.restartHddsDatanode(dn1, true);
 
       // Written the same data twice
       byte[] bytes = ArrayUtils.addAll(data1, data1);
