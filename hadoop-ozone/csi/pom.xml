@@ -43,10 +43,12 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
+      <version>${grpc.protobuf-compile.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java-util</artifactId>
+      <version>${grpc.protobuf-compile.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.findbugs</groupId>
