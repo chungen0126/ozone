@@ -1,13 +1,12 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,18 +18,14 @@
 package org.apache.hadoop.hdds.scm.container;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
-
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
-import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos
-    .ContainerReplicaProto;
+import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.ContainerReplicaProto;
 import org.apache.hadoop.hdds.scm.container.report.ContainerReportValidator;
 import org.apache.hadoop.hdds.scm.exceptions.SCMException;
 import org.apache.hadoop.hdds.scm.ha.SCMContext;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
 import org.apache.hadoop.hdds.scm.node.states.NodeNotFoundException;
-import org.apache.hadoop.hdds.scm.server.SCMDatanodeHeartbeatDispatcher
-    .IncrementalContainerReportFromDatanode;
+import org.apache.hadoop.hdds.scm.server.SCMDatanodeHeartbeatDispatcher.IncrementalContainerReportFromDatanode;
 import org.apache.hadoop.hdds.server.events.EventHandler;
 import org.apache.hadoop.hdds.server.events.EventPublisher;
 import org.apache.hadoop.ozone.common.statemachine.InvalidStateTransitionException;
@@ -62,11 +57,9 @@ public class IncrementalContainerReportHandler extends
                         final EventPublisher publisher) {
     final DatanodeDetails dnFromReport = report.getDatanodeDetails();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Processing incremental container report from data node {}",
-          dnFromReport.getUuid());
+      LOG.debug("Processing incremental container report from data node {}", dnFromReport);
     }
-    DatanodeDetails dd =
-        nodeManager.getNodeByUuid(dnFromReport.getUuid());
+    final DatanodeDetails dd = nodeManager.getNode(dnFromReport.getID());
     if (dd == null) {
       LOG.warn("Received container report from unknown datanode {}",
           dnFromReport);
@@ -116,8 +109,7 @@ public class IncrementalContainerReportHandler extends
             LOG.error("Exception while processing ICR for container {}",
                 replicaProto.getContainerID(), ex);
           }
-        } catch (IOException | InvalidStateTransitionException |
-                 TimeoutException e) {
+        } catch (IOException | InvalidStateTransitionException e) {
           LOG.error("Exception while processing ICR for container {}",
               replicaProto.getContainerID(), e);
         }

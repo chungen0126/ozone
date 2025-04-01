@@ -62,7 +62,7 @@ Datanode Recommission is Finished
                             Should Not Contain   ${result}   ENTERING_MAINTENANCE
 
 Run Container Balancer
-    ${result} =             Execute                         ozone admin containerbalancer start -t 0.1 -d 100 -i 1
+    ${result} =             Execute                         ozone admin containerbalancer start -t 0.1 -d 100 -i 3
                             Should Contain                  ${result}             Container Balancer started successfully.
 
 Wait Finish Of Balancing
@@ -71,35 +71,42 @@ Wait Finish Of Balancing
 
                             Sleep                   60000ms
 
-Verify Verbose Balancer Status
-    [arguments]    ${output}
-
+Verify Balancer Iteration
+    [arguments]       ${output}    ${number}
     Should Contain    ${output}    ContainerBalancer is Running.
     Should Contain    ${output}    Started at:
     Should Contain    ${output}    Container Balancer Configuration values:
+    Should Contain    ${output}    Iteration number ${number}                    collapse_spaces=True
+    Should Contain    ${output}    Scheduled to move containers                  collapse_spaces=True
+    Should Contain    ${output}    Balancing duration:
+    Should Contain    ${output}    Iteration duration
+    Should Contain    ${output}    Current iteration info:
 
-Verify Balancer Iteration
-    [arguments]    ${output}    ${number}    ${status}    ${containers}
-
-    Should Contain    ${output}    Iteration number                                   ${number}
-    Should Contain    ${output}    Iteration result                                   ${status}
-    Should Contain    ${output}    Scheduled to move containers                       ${containers}
+Verify Balancer Iteration History
+    [arguments]       ${output}
+    Should Contain                  ${output}             Iteration history list:
+    Should Contain X Times          ${output}             Size scheduled to move                    1      collapse_spaces=True
+    Should Contain X Times          ${output}             Moved data size                           1      collapse_spaces=True
+    Should Contain X Times          ${output}             Scheduled to move containers              1      collapse_spaces=True
+    Should Contain X Times          ${output}             Already moved containers                  1      collapse_spaces=True
+    Should Contain X Times          ${output}             Failed to move containers 0               1      collapse_spaces=True
+    Should Contain X Times          ${output}             Failed to move containers by timeout 0    1      collapse_spaces=True
+    Should Contain                  ${output}             Iteration result ITERATION_COMPLETED             collapse_spaces=True
 
 Run Balancer Status
     ${result} =      Execute                         ozone admin containerbalancer status
                      Should Contain                  ${result}             ContainerBalancer is Running.
 
 Run Balancer Verbose Status
-    ${result} =      Execute                         ozone admin containerbalancer status -v
-                     Verify Verbose Balancer Status    ${result}
-                     Verify Balancer Iteration    ${result}    1    IN_PROGRESS    3
-                     Should Contain                  ${result}             Current iteration info:
+    ${result} =      Execute                         ozone admin containerbalancer status --verbose
+                     Verify Balancer Iteration       ${result}             1
+                     Should Contain                  ${result}             Iteration result -    collapse_spaces=True
+
 
 Run Balancer Verbose History Status
-    ${result} =    Execute                         ozone admin containerbalancer status -v --history
-                   Verify Verbose Balancer Status          ${result}
-                   Verify Balancer Iteration    ${result}    1    IN_PROGRESS    3
-                   Should Contain                  ${result}             Iteration history list:
+    ${result} =    Execute                         ozone admin containerbalancer status --verbose --history
+                   Verify Balancer Iteration            ${result}             1
+                   Verify Balancer Iteration History    ${result}
 
 ContainerBalancer is Not Running
     ${result} =         Execute          ozone admin containerbalancer status
@@ -127,7 +134,7 @@ Get Uuid
 
 Close All Containers
     FOR     ${INDEX}    IN RANGE    15
-        ${container} =      Execute          ozone admin container list --state OPEN | jq -r 'select(.replicationConfig.data == 3) | .containerID' | head -1
+        ${container} =      Execute          ozone admin container list --state OPEN | jq -r '.[] | select(.replicationConfig.data == 3) | .containerID' | head -1
         EXIT FOR LOOP IF    "${container}" == "${EMPTY}"
                             ${message} =    Execute And Ignore Error    ozone admin container close "${container}"
                             Run Keyword If    '${message}' != '${EMPTY}'      Should Contain   ${message}   is in closing state
@@ -138,7 +145,7 @@ Close All Containers
 
 All container is closed
     ${output} =         Execute           ozone admin container list --state OPEN
-                        Should Be Empty   ${output}
+                        Should Be Equal   ${output}   [ ]
 
 Get Datanode Ozone Used Bytes Info
     [arguments]             ${uuid}
@@ -170,7 +177,7 @@ Verify Container Balancer for RATIS/EC containers
 
     Run Balancer Verbose Status
 
-    Run Balancer Verbose History Status
+    Wait Until Keyword Succeeds    40sec    5sec   Run Balancer Verbose History Status
 
     Wait Finish Of Balancing
 
@@ -180,8 +187,3 @@ Verify Container Balancer for RATIS/EC containers
     #{SIZE}*3 < used < {SIZE}*3.5 for RATIS containers, and {SIZE}*0.7 < used < {SIZE}*1.5 for EC containers.
     Should Be True    ${datanodeOzoneUsedBytesInfoAfterContainerBalancing} < ${SIZE} * ${UPPER_LIMIT}
     Should Be True    ${datanodeOzoneUsedBytesInfoAfterContainerBalancing} > ${SIZE} * ${LOWER_LIMIT}
-
-
-
-
-
