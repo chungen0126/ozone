@@ -102,6 +102,10 @@
               </transformers>
               <relocations>
                 <relocation>
+                  <pattern>org.apache.hadoop.ozone.protocol</pattern>
+                  <shadedPattern>${proto.shaded.prefix}.com.google.protobuf</shadedPattern>
+                </relocation>
+                <relocation>
                   <pattern>com.google.protobuf</pattern>
                   <shadedPattern>${proto.shaded.prefix}.com.google.protobuf</shadedPattern>
                   <includes>
