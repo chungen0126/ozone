@@ -36,6 +36,11 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.apache.ozone</groupId>
       <artifactId>ozone-filesystem-hadoop2</artifactId>
       <optional>true</optional>
@@ -100,7 +105,19 @@
                   <resource>ozone-default-generated.xml</resource>
                 </transformer>
               </transformers>
+              <filters>
+                <filter>
+                  <artifact>org.apache.hadoop:hadoop-common</artifact>
+                  <includes>
+                    <include>org/apache/hadoop/ipc/**</include>
+                  </includes>
+                </filter>
+              </filters>
               <relocations>
+                <relocation>
+                  <pattern>org.apache.hadoop.ipc</pattern>
+                  <shadedPattern>${proto.shaded.prefix}.ipc</shadedPattern>
+                </relocation>
                 <relocation>
                   <pattern>org.apache.hadoop.ozone.protocol</pattern>
                   <shadedPattern>${proto.shaded.prefix}.com.google.protobuf</shadedPattern>
