@@ -111,6 +111,7 @@
                   <artifact>org.apache.hadoop:hadoop-common</artifact>
                   <includes>
                     <include>org/apache/hadoop/ipc/**</include>
+                    <include>org/apache/hadoop/util/ProtoUtil.class</include>
                   </includes>
                 </filter>
               </filters>
@@ -118,6 +119,10 @@
                 <relocation>
                   <pattern>org.apache.hadoop.ipc</pattern>
                   <shadedPattern>${proto.shaded.prefix}.ipc</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.hadoop.util.ProtoUtil</pattern>
+                  <shadedPattern>${proto.shaded.prefix}.util.ProtoUtil</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.apache.hadoop.ozone.protocol</pattern>
