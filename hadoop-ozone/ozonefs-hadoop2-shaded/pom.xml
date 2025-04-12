@@ -111,7 +111,7 @@
                   <artifact>org.apache.hadoop:hadoop-common</artifact>
                   <includes>
                     <include>org/apache/hadoop/ipc/**</include>
-                    <include>org/apache/hadoop/util/ProtoUtil.class</include>
+                    <include>org/apache/hadoop/util/ProtoUtil*.class</include>
                   </includes>
                 </filter>
               </filters>
