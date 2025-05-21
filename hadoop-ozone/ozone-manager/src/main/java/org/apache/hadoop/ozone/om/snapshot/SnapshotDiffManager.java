@@ -1500,7 +1500,9 @@ public class SnapshotDiffManager implements AutoCloseable {
     final WithObjectID fromObject = fromSnapshotTable.get(fromObjectName);
     final WithObjectID toObject = toSnapshotTable.get(toObjectName);
     if ((fromObject instanceof OmKeyInfo) && (toObject instanceof OmKeyInfo)) {
-      return isKeyModified((OmKeyInfo) fromObject, (OmKeyInfo) toObject);
+      return isKeyModified((OmKeyInfo) fromObject, (OmKeyInfo) toObject) ||
+          !isModificationTimeSame((OmKeyInfo) fromObject, (OmKeyInfo) toObject)
+              && fromObjectName.compareTo(toObjectName) == 0;
     } else if ((fromObject instanceof OmDirectoryInfo)
         && (toObject instanceof OmDirectoryInfo)) {
       return !areAclsSame((OmDirectoryInfo) fromObject,
@@ -1511,6 +1513,11 @@ public class SnapshotDiffManager implements AutoCloseable {
           fromObject.getClass().getName() + "toObject type: " +
           toObject.getClass().getName());
     }
+  }
+
+  private boolean isModificationTimeSame(OmKeyInfo fromObject,
+      OmKeyInfo toObject) {
+    return fromObject.getModificationTime() == toObject.getModificationTime();
   }
 
   private boolean areAclsSame(OmDirectoryInfo fromObject,
