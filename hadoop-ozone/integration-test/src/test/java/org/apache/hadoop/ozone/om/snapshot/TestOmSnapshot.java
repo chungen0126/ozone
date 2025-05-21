@@ -2676,4 +2676,29 @@ public abstract class TestOmSnapshot {
       assertEquals(0, diff.getDiffList().size());
     }
   }
+
+  @Test
+  public void testSnapDiffWithTime() throws Exception {
+    String testVolumeName = "vol" + RandomStringUtils.secure().nextNumeric(5);
+    String testBucketName = "bucket1";
+    store.createVolume(testVolumeName);
+    OzoneVolume volume = store.getVolume(testVolumeName);
+    createBucket(volume, testBucketName);
+    OzoneBucket bucket = volume.getBucket(testBucketName);
+    String key1 = "k1";
+    key1 = createFileKeyWithPrefix(bucket, key1);
+    String snap1 = "snap1";
+    createSnapshot(testVolumeName, testBucketName, snap1);
+    getOmKeyInfo(testVolumeName, testBucketName, key1);
+
+    bucket.setTimes(key1, 1, 1);
+    String snap2 = "snap2";
+    createSnapshot(testVolumeName, testBucketName, snap2);
+    SnapshotDiffReportOzone diff = getSnapDiffReport(testVolumeName,
+        testBucketName, snap1, snap2);
+    assertEquals(1, diff.getDiffList().size());
+    assertEquals(Lists.newArrayList(
+        SnapshotDiffReportOzone.getDiffReportEntry(
+            SnapshotDiffReport.DiffType.MODIFY, key1)), diff.getDiffList());
+  }
 }
