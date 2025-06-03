@@ -33,7 +33,6 @@ import org.apache.hadoop.ozone.failure.Failures;
 import org.apache.hadoop.ozone.freon.FreonReplicationOptions;
 import org.apache.hadoop.ozone.loadgenerators.LoadGenerator;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
-import org.apache.ozone.test.tag.Unhealthy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import picocli.CommandLine;
