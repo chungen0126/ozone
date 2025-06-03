@@ -46,7 +46,6 @@ import picocli.CommandLine.Option;
 @Command(description = "Starts IO with MiniOzoneChaosCluster",
     name = "chaos", mixinStandardHelpOptions = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Unhealthy("HDDS-3131")
 public class TestMiniChaosOzoneCluster extends GenericCli {
 
   private final List<Class<? extends Failures>> failureClasses
