@@ -485,7 +485,7 @@ public class SnapshotDiffManager implements AutoCloseable {
     try {
       return JobStatus.valueOf(jobStatus.toUpperCase());
     } catch (IllegalArgumentException ex) {
-      LOG.info(ex.toString());
+      LOG.info("Invalid job status: {}, exception message: {}", jobStatus, ex.toString());
       throw new IOException("Invalid job status: " + jobStatus);
     }
   }
