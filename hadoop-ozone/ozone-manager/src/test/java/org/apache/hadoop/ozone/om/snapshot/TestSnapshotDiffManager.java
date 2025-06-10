@@ -151,6 +151,7 @@ import org.apache.ozone.rocksdb.util.SstFileSetReader;
 import org.apache.ozone.rocksdiff.DifferSnapshotInfo;
 import org.apache.ozone.rocksdiff.RocksDBCheckpointDiffer;
 import org.apache.ozone.rocksdiff.RocksDiffUtils;
+import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ratis.util.ExitUtils;
 import org.apache.ratis.util.TimeDuration;
 import org.apache.ratis.util.function.UncheckedAutoCloseableSupplier;
@@ -178,6 +179,9 @@ import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 /**
  * Tests for SnapshotDiffManager.
@@ -976,7 +980,9 @@ public class TestSnapshotDiffManager {
    */
   @Test
   public void testGetSnapshotDiffReportForCancelledJob() throws IOException {
-
+    final Logger log = LoggerFactory.getLogger(
+        "org.apache.hadoop.ozone.om.snapshot.RocksDbPersistentMap");
+    GenericTestUtils.setLogLevel(log, Level.DEBUG);
     String volumeName = "vol-" + RandomStringUtils.secure().nextNumeric(5);
     String bucketName = "bucket-" + RandomStringUtils.secure().nextNumeric(5);
 
@@ -1139,6 +1145,9 @@ public class TestSnapshotDiffManager {
                                        boolean listAllStatus,
                                        boolean containsJob)
       throws IOException {
+    final Logger log = LoggerFactory.getLogger(
+        "org.apache.hadoop.ozone.om.snapshot.RocksDbPersistentMap");
+    GenericTestUtils.setLogLevel(log, Level.DEBUG);
     String volumeName = "vol-" + RandomStringUtils.secure().nextNumeric(5);
     String bucketName = "bucket-" + RandomStringUtils.secure().nextNumeric(5);
     String fromSnapshotName = "snap-" + RandomStringUtils.secure().nextNumeric(5);

@@ -30,6 +30,7 @@ import org.apache.hadoop.hdds.utils.db.managed.ManagedSlice;
 import org.apache.hadoop.ozone.util.ClosableIterator;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDBException;
+import org.slf4j.Logger;
 
 /**
  * Persistent map backed by RocksDB.
@@ -40,6 +41,8 @@ public class RocksDbPersistentMap<K, V> implements PersistentMap<K, V> {
   private final CodecRegistry codecRegistry;
   private final Class<K> keyType;
   private final Class<V> valueType;
+  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(
+      RocksDbPersistentMap.class);
 
   public RocksDbPersistentMap(@Nonnull ManagedRocksDB db,
                               @Nonnull ColumnFamilyHandle columnFamilyHandle,
@@ -56,6 +59,7 @@ public class RocksDbPersistentMap<K, V> implements PersistentMap<K, V> {
   @Override
   public V get(K key) {
     try {
+      LOG.debug("Getting key: {}", key);
       byte[] rawKey = codecRegistry.asRawData(key);
       byte[] rawValue = db.get().get(columnFamilyHandle, rawKey);
       return codecRegistry.asObject(rawValue, valueType);
@@ -68,6 +72,7 @@ public class RocksDbPersistentMap<K, V> implements PersistentMap<K, V> {
   @Override
   public void put(K key, V value) {
     try {
+      LOG.debug("Putting key: {}, value: {}", key, value);
       byte[] rawKey = codecRegistry.asRawData(key);
       byte[] rawValue = codecRegistry.asRawData(value);
       db.get().put(columnFamilyHandle, rawKey, rawValue);
