@@ -278,7 +278,7 @@ public class TestDecommissionAndMaintenance {
     try {
       cluster.restartStorageContainerManager(true);
     } catch (TimeoutException te) {
-      GenericTestUtils.setLogLevel(SCMSafeModeManager.getLogger(), Level.DEBUG);
+      GenericTestUtils.setLogLevel(ECContainerSafeModeRule.class, Level.DEBUG);
       cluster.getStorageContainerManager().getScmSafeModeManager().refreshAndValidate();
       throw te;
     }
