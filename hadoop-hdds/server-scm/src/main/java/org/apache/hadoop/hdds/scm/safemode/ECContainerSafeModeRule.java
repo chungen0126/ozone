@@ -125,6 +125,7 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
        * Safemode rule doesn't have to log/fix this. We will just exclude this
        * from the rule validation.
        */
+      LOG.debug("Container ID: {} not found", id);
       return false;
     }
   }
