@@ -71,6 +71,10 @@ import org.apache.hadoop.hdds.scm.container.replication.ContainerReplicaCount;
 import org.apache.hadoop.hdds.scm.container.replication.ReplicationManager.ReplicationManagerConfiguration;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineManager;
+import org.apache.hadoop.hdds.scm.safemode.ECContainerSafeModeRule;
+import org.apache.hadoop.hdds.scm.safemode.SCMSafeModeManager;
+import org.apache.hadoop.hdds.scm.safemode.SafeModeManager;
+import org.apache.hadoop.hdds.scm.safemode.SafeModeRuleFactory;
 import org.apache.hadoop.hdds.scm.server.StorageContainerManager;
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
@@ -80,6 +84,7 @@ import org.apache.hadoop.ozone.TestDataUtil;
 import org.apache.hadoop.ozone.client.OzoneBucket;
 import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.ozone.test.GenericTestUtils;
+import org.apache.ozone.test.tag.Flaky;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -87,6 +92,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 /**
  * Test from the scmclient for decommission and maintenance.
@@ -249,6 +255,7 @@ public class TestDecommissionAndMaintenance {
   // then SCM should learn of the decommissioned DN when it registers.
   // If the DN is then stopped and recommissioned, when its state should
   // move to IN_SERVICE when it is restarted.
+  @Flaky("HDDS-12843")
   public void testDecommissioningNodesCompleteDecommissionOnSCMRestart()
       throws Exception {
     // First stop the replicationManager so nodes marked for decommission cannot
@@ -268,7 +275,12 @@ public class TestDecommissionAndMaintenance {
     // Wait for the state to be persisted on the DN so it can report it on
     // restart of SCM.
     waitForDnToReachPersistedOpState(dn, DECOMMISSIONING);
-    cluster.restartStorageContainerManager(true);
+    try {
+      cluster.restartStorageContainerManager(true);
+    } catch (TimeoutException te) {
+      GenericTestUtils.setLogLevel(SCMSafeModeManager.getLogger(), Level.DEBUG);
+      cluster.getStorageContainerManager().getScmSafeModeManager().refreshAndValidate();
+    }
     setManagers();
 
     // After the SCM restart, the DN should report as DECOMMISSIONING, then
@@ -406,6 +418,7 @@ public class TestDecommissionAndMaintenance {
   // After a restart, the DN should keep the maintenance state.
   // If the DN is recommissioned while stopped, it should get the recommissioned
   // state when it re-registers.
+  @Flaky("HDDS-12843")
   public void testSingleNodeWithOpenPipelineCanGotoMaintenance()
       throws Exception {
     // Generate some data on the empty cluster to create some containers

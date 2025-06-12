@@ -92,7 +92,10 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
   @Override
   protected synchronized boolean validate() {
     if (validateBasedOnReportProcessing()) {
-      return getCurrentContainerThreshold() >= safeModeCutoff;
+      final double currentThreshold = getCurrentContainerThreshold();
+      LOG.debug("currentThreshold: {}, safeModeCutoff: {}",
+          currentThreshold, safeModeCutoff);
+      return currentThreshold >= safeModeCutoff;
     }
 
     final List<ContainerInfo> containers = containerManager.getContainers(
@@ -110,7 +113,11 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
   private boolean isMissing(ContainerID id) {
     try {
       int minReplica = getMinReplica(id.getId());
-      return containerManager.getContainerReplicas(id).size() < minReplica;
+      int size = containerManager.getContainerReplicas(id).size();
+      LOG.debug("Container ID: {}, Number of replicas: {}, Minimum required replicas: {}",
+          id, size, minReplica);
+      LOG.debug("ContainerInfo = {}", containerManager.getContainer(id));
+      return size < minReplica;
     } catch (ContainerNotFoundException ex) {
       /*
        * This should never happen, in case this happens the container
