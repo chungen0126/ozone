@@ -62,6 +62,7 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.DatanodeID;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.cli.ContainerOperationClient;
 import org.apache.hadoop.hdds.scm.container.ContainerInfo;
@@ -258,6 +259,9 @@ public class TestDecommissionAndMaintenance {
   @Flaky("HDDS-12843")
   public void testDecommissioningNodesCompleteDecommissionOnSCMRestart()
       throws Exception {
+    GenericTestUtils.setLogLevel(ECContainerSafeModeRule.class, Level.DEBUG);
+    GenericTestUtils.setLogLevel(LOG, Level.DEBUG);
+    LOG.info("Running testDecommissioningNodesCompleteDecommissionOnSCMRestart");
     // First stop the replicationManager so nodes marked for decommission cannot
     // make any progress. THe node will be stuck DECOMMISSIONING
     stopReplicationManager();
@@ -278,8 +282,9 @@ public class TestDecommissionAndMaintenance {
     try {
       cluster.restartStorageContainerManager(true);
     } catch (TimeoutException te) {
-      GenericTestUtils.setLogLevel(ECContainerSafeModeRule.class, Level.DEBUG);
-      cluster.getStorageContainerManager().getScmSafeModeManager().refreshAndValidate();
+      LOG.info("Restarted SCM after decommissioning node.");
+      cluster.getStorageContainerManager().getContainerManager().getContainers(ReplicationType.EC)
+          .stream().forEach(containerInfo -> LOG.debug("EC Container: {}", containerInfo));
       throw te;
     }
     setManagers();

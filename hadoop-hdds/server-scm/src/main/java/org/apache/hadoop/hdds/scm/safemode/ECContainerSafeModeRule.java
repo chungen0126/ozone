@@ -132,6 +132,8 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
 
   @VisibleForTesting
   public double getCurrentContainerThreshold() {
+    LOG.debug("ecContainerWithMinReplicas: {}, ecMaxContainer: {}",
+        ecContainerWithMinReplicas, ecMaxContainer);
     return ecMaxContainer == 0 ? 1 : (ecContainerWithMinReplicas.doubleValue() / ecMaxContainer);
   }
 
@@ -156,6 +158,8 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
 
   @Override
   protected void process(NodeRegistrationContainerReport report) {
+    LOG.debug("Processing NodeRegistrationContainerReport: {}",
+        report);
     DatanodeDetails datanodeDetails = report.getDatanodeDetails();
     UUID datanodeUUID = datanodeDetails.getUuid();
 

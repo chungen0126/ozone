@@ -289,6 +289,7 @@ public final class ContainerInfo implements Comparable<ContainerInfo> {
         + ", stateEnterTime=" + stateEnterTime
         + ", pipelineID=" + pipelineID
         + ", owner=" + owner
+        + ", numberOfKeys=" + numberOfKeys
         + '}';
   }
 
