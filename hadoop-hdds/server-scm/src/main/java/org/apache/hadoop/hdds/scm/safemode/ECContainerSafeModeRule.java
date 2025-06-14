@@ -158,8 +158,8 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
 
   @Override
   protected void process(NodeRegistrationContainerReport report) {
-    LOG.debug("Processing NodeRegistrationContainerReport: {}",
-        report);
+    LOG.debug("datanodeDetails: {}, report: {}",
+        report.getDatanodeDetails().getUuidString(), report.getReport());
     DatanodeDetails datanodeDetails = report.getDatanodeDetails();
     UUID datanodeUUID = datanodeDetails.getUuid();
 
