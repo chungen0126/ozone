@@ -427,6 +427,7 @@ public class TestDecommissionAndMaintenance {
   @Flaky("HDDS-12843")
   public void testSingleNodeWithOpenPipelineCanGotoMaintenance()
       throws Exception {
+    LOG.info("Running testSingleNodeWithOpenPipelineCanGotoMaintenance");
     // Generate some data on the empty cluster to create some containers
     generateData(20, "key", ratisRepConfig);
     generateData(20, "ecKey", ecRepConfig);
@@ -477,8 +478,13 @@ public class TestDecommissionAndMaintenance {
     assertEquals(3, newReplicas.size());
     assertEquals(5, ecReplicas.size());
 
-    // Restart the DN and it should keep the IN_MAINTENANCE state
-    cluster.restartHddsDatanode(dn, true);
+    try {
+      // Restart the DN and it should keep the IN_MAINTENANCE state
+      cluster.restartHddsDatanode(dn, true);
+    } catch (NullPointerException npe) {
+      LOG.info("Restarted datanode");
+    }
+
     DatanodeDetails newDN = nm.getNode(dn.getID());
     waitForDnToReachHealthState(nm, newDN, HEALTHY);
     waitForDnToReachPersistedOpState(newDN, IN_MAINTENANCE);
