@@ -483,6 +483,7 @@ public class TestDecommissionAndMaintenance {
       cluster.restartHddsDatanode(dn, true);
     } catch (NullPointerException npe) {
       LOG.info("Restarted datanode");
+      throw npe;
     }
 
     DatanodeDetails newDN = nm.getNode(dn.getID());
