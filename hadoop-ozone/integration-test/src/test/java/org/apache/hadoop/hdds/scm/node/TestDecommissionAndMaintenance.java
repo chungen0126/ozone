@@ -43,8 +43,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +59,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.hdds.HddsConfigKeys;
 import org.apache.hadoop.hdds.client.ECReplicationConfig;
 import org.apache.hadoop.hdds.client.RatisReplicationConfig;
@@ -77,6 +83,7 @@ import org.apache.hadoop.hdds.scm.safemode.SCMSafeModeManager;
 import org.apache.hadoop.hdds.scm.safemode.SafeModeManager;
 import org.apache.hadoop.hdds.scm.safemode.SafeModeRuleFactory;
 import org.apache.hadoop.hdds.scm.server.StorageContainerManager;
+import org.apache.hadoop.hdds.utils.HddsServerUtil;
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
 import org.apache.hadoop.ozone.MiniOzoneClusterProvider;
@@ -84,6 +91,7 @@ import org.apache.hadoop.ozone.OzoneConfigKeys;
 import org.apache.hadoop.ozone.TestDataUtil;
 import org.apache.hadoop.ozone.client.OzoneBucket;
 import org.apache.hadoop.ozone.client.OzoneClient;
+import org.apache.hadoop.ozone.container.common.helpers.ContainerUtils;
 import org.apache.hadoop.ozone.container.common.helpers.DatanodeIdYaml;
 import org.apache.hadoop.ozone.container.common.statemachine.commandhandler.SetNodeOperationalStateCommandHandler;
 import org.apache.ozone.test.GenericTestUtils;
@@ -487,6 +495,22 @@ public class TestDecommissionAndMaintenance {
       cluster.restartHddsDatanode(dn, true);
       LOG.info("Restarted datanode");
     } catch (NullPointerException npe) {
+      String idFilePath = HddsServerUtil.getDatanodeIdFilePath(cluster.getConf());
+      Preconditions.checkNotNull(idFilePath);
+      File idFile = new File(idFilePath);
+      try (InputStream inputFileStream = Files.newInputStream(idFile.toPath())) {
+        if (idFile.exists()) {
+          BufferedReader reader = new BufferedReader(new InputStreamReader(inputFileStream));
+          String line;
+          StringBuilder sb = new StringBuilder();
+          while ((line = reader.readLine()) != null) {
+            sb.append(line).append("\n");
+          }
+          LOG.info("Datanode ID file contents: {}", sb);
+        } else {
+          LOG.warn("Datanode ID file does not exist at path: {}", idFilePath);
+        }
+      }
       LOG.info("Restarted datanode failed");
       throw npe;
     }
