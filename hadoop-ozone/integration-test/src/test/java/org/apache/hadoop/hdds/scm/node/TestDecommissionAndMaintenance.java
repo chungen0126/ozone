@@ -94,6 +94,7 @@ import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.container.common.helpers.ContainerUtils;
 import org.apache.hadoop.ozone.container.common.helpers.DatanodeIdYaml;
 import org.apache.hadoop.ozone.container.common.statemachine.commandhandler.SetNodeOperationalStateCommandHandler;
+import org.apache.hadoop.ozone.container.common.states.endpoint.HeartbeatEndpointTask;
 import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ozone.test.tag.Flaky;
 import org.junit.jupiter.api.AfterAll;
@@ -439,6 +440,7 @@ public class TestDecommissionAndMaintenance {
       throws Exception {
     GenericTestUtils.setLogLevel(DatanodeIdYaml.class, Level.DEBUG);
     GenericTestUtils.setLogLevel(SetNodeOperationalStateCommandHandler.class, Level.DEBUG);
+    GenericTestUtils.setLogLevel(HeartbeatEndpointTask.class, Level.DEBUG);
     LOG.info("Running testSingleNodeWithOpenPipelineCanGotoMaintenance");
     // Generate some data on the empty cluster to create some containers
     generateData(20, "key", ratisRepConfig);
