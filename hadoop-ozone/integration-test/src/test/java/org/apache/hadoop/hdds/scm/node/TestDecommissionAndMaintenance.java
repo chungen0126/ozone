@@ -497,21 +497,23 @@ public class TestDecommissionAndMaintenance {
       cluster.restartHddsDatanode(dn, true);
       LOG.info("Restarted datanode");
     } catch (NullPointerException npe) {
-      String idFilePath = HddsServerUtil.getDatanodeIdFilePath(cluster.getConf());
+      String idFilePath = HddsServerUtil.getDatanodeIdFilePath(cluster.getHddsDatanode(dn).getConf());
       Preconditions.checkNotNull(idFilePath);
       File idFile = new File(idFilePath);
-      try (InputStream inputFileStream = Files.newInputStream(idFile.toPath())) {
-        if (idFile.exists()) {
-          BufferedReader reader = new BufferedReader(new InputStreamReader(inputFileStream));
-          String line;
-          StringBuilder sb = new StringBuilder();
-          while ((line = reader.readLine()) != null) {
-            sb.append(line).append("\n");
-          }
-          LOG.info("Datanode ID file contents: {}", sb);
-        } else {
-          LOG.warn("Datanode ID file does not exist at path: {}", idFilePath);
+      if (idFile.exists()) {
+        try (InputStream inputFileStream = Files.newInputStream(idFile.toPath())) {
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputFileStream));
+            String line;
+            StringBuilder sb = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+              sb.append(line).append("\n");
+            }
+            LOG.info("Datanode ID file contents: {}", sb);
+
         }
+      } else {
+        LOG.warn("Datanode ID file does not exist at path: {}", idFilePath);
       }
       LOG.info("Restarted datanode failed");
       throw npe;
