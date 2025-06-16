@@ -85,6 +85,7 @@ import org.apache.hadoop.hdds.scm.safemode.SafeModeRuleFactory;
 import org.apache.hadoop.hdds.scm.server.StorageContainerManager;
 import org.apache.hadoop.hdds.utils.HddsServerUtil;
 import org.apache.hadoop.hdds.utils.IOUtils;
+import org.apache.hadoop.ozone.HddsDatanodeService;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
 import org.apache.hadoop.ozone.MiniOzoneClusterProvider;
 import org.apache.hadoop.ozone.OzoneConfigKeys;
@@ -99,6 +100,7 @@ import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ozone.test.tag.Flaky;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -497,7 +499,16 @@ public class TestDecommissionAndMaintenance {
       cluster.restartHddsDatanode(dn, true);
       LOG.info("Restarted datanode");
     } catch (NullPointerException npe) {
-      String idFilePath = HddsServerUtil.getDatanodeIdFilePath(cluster.getHddsDatanode(dn).getConf());
+      LOG.info("Restarted datanode failed");
+      OzoneConfiguration c = null;
+      for (HddsDatanodeService d : cluster.getHddsDatanodes()) {
+        DatanodeDetails datanodeDetails = d.getDatanodeDetails();
+        if (datanodeDetails == null || datanodeDetails.equals(dn)) {
+          c = d.getConf();
+        }
+      }
+      Assertions.assertNotNull(c);
+      String idFilePath = HddsServerUtil.getDatanodeIdFilePath(c);
       Preconditions.checkNotNull(idFilePath);
       File idFile = new File(idFilePath);
       if (idFile.exists()) {
@@ -515,7 +526,6 @@ public class TestDecommissionAndMaintenance {
       } else {
         LOG.warn("Datanode ID file does not exist at path: {}", idFilePath);
       }
-      LOG.info("Restarted datanode failed");
       throw npe;
     }
 
