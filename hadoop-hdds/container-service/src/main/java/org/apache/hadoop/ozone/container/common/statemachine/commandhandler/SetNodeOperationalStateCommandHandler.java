@@ -90,6 +90,11 @@ public class SetNodeOperationalStateCommandHandler implements CommandHandler {
         (SetNodeOperationalStateCommand) command;
     SetNodeOperationalStateCommandProto setNodeCmdProto = setNodeCmd.getProto();
     DatanodeDetails dni = context.getParent().getDatanodeDetails();
+    LOG.debug("Handling command {} in SetNodeOperationalStateCommandHandler\n" +
+            "datanode: {}\n" +
+            "persisted state: {}\n" +
+            "command: {}",
+        command.getType(), dni, dni.getPersistedOpState(), setNodeCmdProto);
     HddsProtos.NodeOperationalState state =
         setNodeCmdProto.getNodeOperationalState();
     dni.setPersistedOpState(state);
@@ -97,6 +102,8 @@ public class SetNodeOperationalStateCommandHandler implements CommandHandler {
         setNodeCmd.getStateExpiryEpochSeconds());
     try {
       persistDatanodeDetails(dni);
+      LOG.debug("Persisted datanode details: {}, persisted state: {}",
+          dni, dni.getPersistedOpState());
     } catch (IOException ioe) {
       LOG.error("Failed to persist the datanode state", ioe);
       // TODO - this should probably be raised, but it will break the command

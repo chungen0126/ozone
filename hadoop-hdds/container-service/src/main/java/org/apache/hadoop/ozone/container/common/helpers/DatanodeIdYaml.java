@@ -63,6 +63,7 @@ public final class DatanodeIdYaml {
                                           File path,
                                           ConfigurationSource conf)
       throws IOException {
+    LOG.debug("Creating datanode.id file {}", path);
     DumperOptions options = new DumperOptions();
     options.setPrettyFlow(true);
     options.setDefaultFlowStyle(DumperOptions.FlowStyle.FLOW);
@@ -78,6 +79,7 @@ public final class DatanodeIdYaml {
   public static DatanodeDetails readDatanodeIdFile(File path)
       throws IOException {
     DatanodeDetails datanodeDetails;
+    LOG.debug("Reading datanode.id file {}", path);
     try (InputStream inputFileStream = Files.newInputStream(path.toPath())) {
       DatanodeDetailsYaml datanodeDetailsYaml;
       try {

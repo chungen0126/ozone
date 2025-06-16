@@ -84,6 +84,8 @@ import org.apache.hadoop.ozone.OzoneConfigKeys;
 import org.apache.hadoop.ozone.TestDataUtil;
 import org.apache.hadoop.ozone.client.OzoneBucket;
 import org.apache.hadoop.ozone.client.OzoneClient;
+import org.apache.hadoop.ozone.container.common.helpers.DatanodeIdYaml;
+import org.apache.hadoop.ozone.container.common.statemachine.commandhandler.SetNodeOperationalStateCommandHandler;
 import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ozone.test.tag.Flaky;
 import org.junit.jupiter.api.AfterAll;
@@ -427,6 +429,8 @@ public class TestDecommissionAndMaintenance {
   @Flaky("HDDS-12843")
   public void testSingleNodeWithOpenPipelineCanGotoMaintenance()
       throws Exception {
+    GenericTestUtils.setLogLevel(DatanodeIdYaml.class, Level.DEBUG);
+    GenericTestUtils.setLogLevel(SetNodeOperationalStateCommandHandler.class, Level.DEBUG);
     LOG.info("Running testSingleNodeWithOpenPipelineCanGotoMaintenance");
     // Generate some data on the empty cluster to create some containers
     generateData(20, "key", ratisRepConfig);
@@ -481,8 +485,9 @@ public class TestDecommissionAndMaintenance {
     try {
       // Restart the DN and it should keep the IN_MAINTENANCE state
       cluster.restartHddsDatanode(dn, true);
-    } catch (NullPointerException npe) {
       LOG.info("Restarted datanode");
+    } catch (NullPointerException npe) {
+      LOG.info("Restarted datanode failed");
       throw npe;
     }
 
