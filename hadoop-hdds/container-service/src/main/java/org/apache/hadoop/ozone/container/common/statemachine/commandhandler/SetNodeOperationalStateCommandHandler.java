@@ -97,11 +97,8 @@ public class SetNodeOperationalStateCommandHandler implements CommandHandler {
         command.getType(), dni, dni.getPersistedOpState(), setNodeCmdProto);
     HddsProtos.NodeOperationalState state =
         setNodeCmdProto.getNodeOperationalState();
-    dni.setPersistedOpState(state);
-    dni.setPersistedOpStateExpiryEpochSec(
-        setNodeCmd.getStateExpiryEpochSeconds());
     try {
-      persistDatanodeDetails(dni);
+      persistUpdatedDatanodeDetails(dni, state, setNodeCmd.getStateExpiryEpochSeconds());
       LOG.debug("Persisted datanode details: {}, persisted state: {}",
           dni, dni.getPersistedOpState());
     } catch (IOException ioe) {
@@ -111,6 +108,17 @@ public class SetNodeOperationalStateCommandHandler implements CommandHandler {
     }
     replicationSupervisor.accept(state);
     this.opsLatencyMs.add(Time.monotonicNow() - startTime);
+  }
+
+  private void persistUpdatedDatanodeDetails(
+      DatanodeDetails dnDetails, HddsProtos.NodeOperationalState state, long stateExpiryEpochSeconds)
+      throws IOException {
+    DatanodeDetails persistedDni = new DatanodeDetails(dnDetails);
+    persistedDni.setPersistedOpState(state);
+    persistedDni.setPersistedOpStateExpiryEpochSec(stateExpiryEpochSeconds);
+    persistDatanodeDetails(persistedDni);
+    dnDetails.setPersistedOpState(state);
+    dnDetails.setPersistedOpStateExpiryEpochSec(stateExpiryEpochSeconds);
   }
 
   // TODO - this duplicates code in HddsDatanodeService and InitDatanodeState
