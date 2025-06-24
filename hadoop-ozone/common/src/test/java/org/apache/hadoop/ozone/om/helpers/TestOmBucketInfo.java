@@ -168,4 +168,32 @@ public class TestOmBucketInfo {
         recovered.getDefaultReplicationConfig().getReplicationConfig();
     assertEquals(new ECReplicationConfig(3, 2), config);
   }
+
+  @Test
+  public void testS3NotificationInfoProtobufConversion() {
+    // 创建带有 S3NotificationInfo 的 OmBucketInfo
+    S3NotificationInfo notificationInfo = new S3NotificationInfo(
+        "test-target", S3NotificationInfo.EventType.S3ObjectCreate);
+
+    OmBucketInfo bucket = OmBucketInfo.newBuilder()
+        .setBucketName("bucket")
+        .setVolumeName("vol1")
+        .setCreationTime(1L)
+        .setIsVersionEnabled(false)
+        .setStorageType(StorageType.ARCHIVE)
+        .setS3NotificationInfo(Collections.singletonList(notificationInfo))
+        .build();
+
+    // 转换为 protobuf 并返回
+    OmBucketInfo copyBucket =
+        OmBucketInfo.getFromProtobuf(bucket.getProtobuf());
+
+    // 验证转换后的对象
+    assertEquals(1, copyBucket.getS3NotificationInfos().size());
+    S3NotificationInfo notification =
+        copyBucket.getS3NotificationInfos().get(0);
+    assertEquals("test-target", notification.getTargetId());
+    assertEquals(S3NotificationInfo.EventType.S3ObjectCreate,
+        notification.getEventType());
+  }
 }

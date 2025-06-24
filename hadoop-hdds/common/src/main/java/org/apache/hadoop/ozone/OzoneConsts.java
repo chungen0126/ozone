@@ -297,6 +297,7 @@ public final class OzoneConsts {
   public static final String FORCE_FULL_DIFF = "forceFullDiff";
   public static final String DISABLE_NATIVE_DIFF = "disableNativeDiff";
   public static final String JOB_STATUS = "jobStatus";
+  public static final String S3_NOTIFICATION_INFO = "notificationInfo";
 
   // For multi-tenancy
   public static final String TENANT_ID_USERNAME_DELIMITER = "$";
