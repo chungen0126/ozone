@@ -409,7 +409,7 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     private BucketLayout bucketLayout = BucketLayout.DEFAULT;
     private String owner;
     private DefaultReplicationConfig defaultReplicationConfig;
-    private List<S3NotificationInfo> s3NotificationInfos;
+    private List<S3NotificationInfo> s3NotificationInfos = new ArrayList<>();
 
     public Builder() {
     }

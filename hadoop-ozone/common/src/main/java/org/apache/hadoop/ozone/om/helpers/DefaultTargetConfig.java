@@ -34,7 +34,7 @@ public class DefaultTargetConfig {
       TargetConfig proto) {
     switch (proto.getType()) {
     case Kafka:
-      return KafkaTargetConfig.newbBuilder()
+      return KafkaTargetConfig.newBuilder()
           .setTopic(proto.getKafkaTargetConfig().getTopic())
           .setEndpoints(proto.getKafkaTargetConfig().getEndpointsList())
           .setIsSaslEnabled(proto.getKafkaTargetConfig().getIsSaslEnabled())

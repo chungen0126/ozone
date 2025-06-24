@@ -93,7 +93,7 @@ public class TestTargetConfig {
     String clientTlsCert = "cert";
     String clientTlsKey = "key";
 
-    KafkaTargetConfig kafkaConfig = KafkaTargetConfig.newbBuilder()
+    KafkaTargetConfig kafkaConfig = KafkaTargetConfig.newBuilder()
             .setTopic(topic)
             .setEndpoints(endpoints)
             .setIsSaslEnabled(isSaslEnabled)

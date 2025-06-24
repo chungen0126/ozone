@@ -35,7 +35,7 @@ public final class KafkaTargetConfig extends DefaultTargetConfig {
   private final String clientTlsCert;
   private final String clientTlsKey;
 
-  public static Builder newbBuilder() {
+  public static Builder newBuilder() {
     return new Builder();
   }
 
