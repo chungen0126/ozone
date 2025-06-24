@@ -17,17 +17,14 @@
 
 package org.apache.hadoop.ozone.om.helpers;
 
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig;
-import org.junit.jupiter.api.Test;
+import static org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig.Type.Kafka;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig.Type.Kafka;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for TargetConfig.
@@ -96,11 +93,18 @@ public class TestTargetConfig {
     String clientTlsCert = "cert";
     String clientTlsKey = "key";
 
-    KafkaTargetConfig kafkaConfig =
-        new KafkaTargetConfig(
-            topic, endpoints, isSaslEnabled, saslUsername, saslPassword,
-            saslMechanism, isTlsEnabled, tlsSkipVerify, clientTlsCert,
-            clientTlsKey);
+    KafkaTargetConfig kafkaConfig = KafkaTargetConfig.newbBuilder()
+            .setTopic(topic)
+            .setEndpoints(endpoints)
+            .setIsSaslEnabled(isSaslEnabled)
+            .setSaslUsername(saslUsername)
+            .setSaslPassword(saslPassword)
+            .setSaslMechanism(saslMechanism)
+            .setIsTlsEnabled(isTlsEnabled)
+            .setTlsSkipVerify(tlsSkipVerify)
+            .setClientTlsCert(clientTlsCert)
+            .setClientTlsKey(clientTlsKey)
+            .build();
 
     TargetConfig proto = kafkaConfig.toProtobuf();
 

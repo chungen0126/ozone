@@ -17,10 +17,14 @@
 
 package org.apache.hadoop.ozone.om.helpers;
 
+import java.util.Objects;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.Event;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.NotificationInfo;
-import java.util.Objects;
 
+/**
+ * S3 Notification Info.
+ * This class encapsulates the information required for S3 notifications.
+ */
 public class S3NotificationInfo {
   private final String targetId;
   private final EventType eventType;
@@ -75,6 +79,9 @@ public class S3NotificationInfo {
     return eventType;
   }
 
+  /**
+   * Enum representing the type of S3 events for notifications.
+   */
   public enum EventType {
     S3TEST,
     S3ObjectCreate,
@@ -85,6 +92,5 @@ public class S3NotificationInfo {
     S3ObjectTaggingPut,
     S3ObjectTaggingDelete
   }
-
 
 }

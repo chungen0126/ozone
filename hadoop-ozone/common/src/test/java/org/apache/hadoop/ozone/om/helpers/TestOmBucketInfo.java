@@ -181,7 +181,7 @@ public class TestOmBucketInfo {
         .setCreationTime(1L)
         .setIsVersionEnabled(false)
         .setStorageType(StorageType.ARCHIVE)
-        .setS3NotificationInfo(Collections.singletonList(notificationInfo))
+        .setS3NotificationInfos(Collections.singletonList(notificationInfo))
         .build();
 
     // 转换为 protobuf 并返回

@@ -19,7 +19,10 @@ package org.apache.hadoop.ozone.om.helpers;
 
 import java.util.List;
 
-public class KafkaTargetConfig extends DefaultTargetConfig {
+/**
+ * Configuration for Kafka target.
+ */
+public final class KafkaTargetConfig extends DefaultTargetConfig {
 
   private final String topic;
   private final List<String> endpoints;
@@ -32,35 +35,91 @@ public class KafkaTargetConfig extends DefaultTargetConfig {
   private final String clientTlsCert;
   private final String clientTlsKey;
 
-  public KafkaTargetConfig(String topic, List<String> endpoints, boolean isSaslEnabled,
-                           String saslUsername, String saslPassword, String saslMechanism, boolean isTlsEnabled,
-                           boolean tlsSkipVerify, String clientTlsCert, String clientTlsKey) {
-    this.topic = topic;
-    this.endpoints = endpoints;
-    this.isSaslEnabled = isSaslEnabled;
-    this.saslUsername = saslUsername;
-    this.saslPassword = saslPassword;
-    this.saslMechanism = saslMechanism;
-    this.isTlsEnabled = isTlsEnabled;
-    this.tlsSkipVerify = tlsSkipVerify;
-    this.clientTlsCert = clientTlsCert;
-    this.clientTlsKey = clientTlsKey;
+  public static Builder newbBuilder() {
+    return new Builder();
   }
 
-  public KafkaTargetConfig(String topic, List<String> endpoints) {
-    this(topic, endpoints, false, null, null, null, false, false, null, null);
+  /**
+   * Builder for KafkaTargetConfig.
+   */
+  public static class Builder {
+    private String topic;
+    private List<String> endpoints;
+    private boolean isSaslEnabled;
+    private String saslUsername;
+    private String saslPassword;
+    private String saslMechanism;
+    private boolean isTlsEnabled;
+    private boolean tlsSkipVerify;
+    private String clientTlsCert;
+    private String clientTlsKey;
+
+    public Builder setTopic(String topic) {
+      this.topic = topic;
+      return this;
+    }
+
+    public Builder setEndpoints(List<String> endpoints) {
+      this.endpoints = endpoints;
+      return this;
+    }
+
+    public Builder setIsSaslEnabled(boolean isSaslEnabled) {
+      this.isSaslEnabled = isSaslEnabled;
+      return this;
+    }
+
+    public Builder setSaslUsername(String saslUsername) {
+      this.saslUsername = saslUsername;
+      return this;
+    }
+
+    public Builder setSaslPassword(String saslPassword) {
+      this.saslPassword = saslPassword;
+      return this;
+    }
+
+    public Builder setSaslMechanism(String saslMechanism) {
+      this.saslMechanism = saslMechanism;
+      return this;
+    }
+
+    public Builder setIsTlsEnabled(boolean isTlsEnabled) {
+      this.isTlsEnabled = isTlsEnabled;
+      return this;
+    }
+
+    public Builder setTlsSkipVerify(boolean tlsSkipVerify) {
+      this.tlsSkipVerify = tlsSkipVerify;
+      return this;
+    }
+
+    public Builder setClientTlsCert(String clientTlsCert) {
+      this.clientTlsCert = clientTlsCert;
+      return this;
+    }
+
+    public Builder setClientTlsKey(String clientTlsKey) {
+      this.clientTlsKey = clientTlsKey;
+      return this;
+    }
+
+    public KafkaTargetConfig build() {
+      return new KafkaTargetConfig(this);
+    }
   }
 
-  public KafkaTargetConfig(
-      String topic, List<String> endpoints, String saslUsername,
-      String saslPassword, String saslMechanism) {
-    this(topic, endpoints, true, saslUsername, saslPassword, saslMechanism, false, false, null, null);
-  }
-
-  public KafkaTargetConfig(
-      String topic, List<String> endpoints,
-      boolean tlsSkipVerify, String clientTlsCert, String clientTlsKey) {
-    this(topic, endpoints, false, null, null, null, true, tlsSkipVerify, clientTlsCert, clientTlsKey);
+  private KafkaTargetConfig(Builder builder) {
+    this.topic = builder.topic;
+    this.endpoints = builder.endpoints;
+    this.isSaslEnabled = builder.isSaslEnabled;
+    this.saslUsername = builder.saslUsername;
+    this.saslPassword = builder.saslPassword;
+    this.saslMechanism = builder.saslMechanism;
+    this.isTlsEnabled = builder.isTlsEnabled;
+    this.tlsSkipVerify = builder.tlsSkipVerify;
+    this.clientTlsCert = builder.clientTlsCert;
+    this.clientTlsKey = builder.clientTlsKey;
   }
 
   public String getTopic() {
@@ -94,8 +153,7 @@ public class KafkaTargetConfig extends DefaultTargetConfig {
   public String getClientTlsKey() {
     return clientTlsKey;
   }
-
-
+  
   public boolean isTlsEnabled() {
     return isTlsEnabled;
   }
