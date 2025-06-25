@@ -17,6 +17,9 @@
 
 package org.apache.hadoop.ozone.om.helpers;
 
+import org.apache.hadoop.hdds.utils.db.Codec;
+import org.apache.hadoop.hdds.utils.db.DelegatedCodec;
+import org.apache.hadoop.hdds.utils.db.Proto2Codec;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig.Type;
 
@@ -24,6 +27,11 @@ import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetC
  * Default configuration for a target in Ozone Manager.
  */
 public abstract class TargetConfig {
+  private static final Codec<TargetConfig> CODEC = new DelegatedCodec<>(
+      Proto2Codec.get(OzoneManagerProtocolProtos.TargetConfig.getDefaultInstance()),
+      TargetConfig::fromProtobuf,
+      TargetConfig::toProtobuf,
+      TargetConfig.class);
 
   private final Type type;
   private final String targetId;
@@ -31,6 +39,10 @@ public abstract class TargetConfig {
   public TargetConfig(Type type, String targetId) {
     this.type = type;
     this.targetId = targetId;
+  }
+
+  public static Codec<TargetConfig> getCodec() {
+    return CODEC;
   }
 
   public Type getType() {

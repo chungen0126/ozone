@@ -104,6 +104,7 @@ import org.apache.hadoop.ozone.om.helpers.OzoneFSUtils;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.WithMetadata;
 import org.apache.hadoop.ozone.om.lock.IOzoneManagerLock;
 import org.apache.hadoop.ozone.om.lock.OmReadOnlyLock;
@@ -152,6 +153,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
   private TypedTable<String, OmKeyInfo> deletedDirTable;
 
   private TypedTable<String, S3SecretValue> s3SecretTable;
+  private TypedTable<String, TargetConfig> targetTable;
   private TypedTable<OzoneTokenIdentifier, Long> dTokenTable;
   private TypedTable<String, OmPrefixInfo> prefixTable;
   private TypedTable<String, TransactionInfo> transactionInfoTable;
@@ -458,6 +460,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
 
     dTokenTable = initializer.get(OMDBDefinition.DELEGATION_TOKEN_TABLE_DEF);
     s3SecretTable = initializer.get(OMDBDefinition.S3_SECRET_TABLE_DEF);
+    targetTable = initializer.get(OMDBDefinition.TARGET_TABLE_DEF);
     prefixTable = initializer.get(OMDBDefinition.PREFIX_TABLE_DEF);
 
     transactionInfoTable = initializer.get(OMDBDefinition.TRANSACTION_INFO_TABLE_DEF);
