@@ -18,20 +18,31 @@
 package org.apache.hadoop.ozone.om.helpers;
 
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig.Type;
 
 /**
  * Default configuration for a target in Ozone Manager.
  */
-public class DefaultTargetConfig {
+public abstract class TargetConfig {
 
-  public Type getType() {
-    return Type.Kafka;
+  private final Type type;
+  private final String targetId;
+
+  public TargetConfig(Type type, String targetId) {
+    this.type = type;
+    this.targetId = targetId;
   }
 
-  public static DefaultTargetConfig fromProtobuf(
-      TargetConfig proto) {
+  public Type getType() {
+    return type;
+  }
+
+  public String getTargetId() {
+    return targetId;
+  }
+
+  public static TargetConfig fromProtobuf(
+      OzoneManagerProtocolProtos.TargetConfig proto) {
     switch (proto.getType()) {
     case Kafka:
       return KafkaTargetConfig.newBuilder()
@@ -51,27 +62,5 @@ public class DefaultTargetConfig {
     }
   }
 
-  public TargetConfig toProtobuf() {
-    Type type = getType();
-    switch (type) {
-    case Kafka:
-      KafkaTargetConfig kafkaTargetConfig = (KafkaTargetConfig)this;
-      return TargetConfig.newBuilder()
-          .setType(type)
-          .setKafkaTargetConfig(OzoneManagerProtocolProtos.KafkaTargetConfig.newBuilder()
-              .addAllEndpoints(kafkaTargetConfig.getEndpoints())
-              .setTopic(kafkaTargetConfig.getTopic())
-              .setIsSaslEnabled(kafkaTargetConfig.isSaslEnabled())
-              .setSaslUsername(kafkaTargetConfig.getSaslUsername())
-              .setSaslPassword(kafkaTargetConfig.getSaslPassword())
-              .setSaslMechanism(kafkaTargetConfig.getSaslMechanism())
-              .setIsTlsEnabled(kafkaTargetConfig.isTlsEnabled())
-              .setTlsSkipVerify(kafkaTargetConfig.isTlsSkipVerify())
-              .setClientTlsCert(kafkaTargetConfig.getClientTlsCert())
-              .setClientTlsKey(kafkaTargetConfig.getClientTlsKey()))
-          .build();
-    default:
-      throw new IllegalArgumentException("Unknown target type: " + getType());
-    }
-  }
+  public abstract OzoneManagerProtocolProtos.TargetConfig toProtobuf();
 }

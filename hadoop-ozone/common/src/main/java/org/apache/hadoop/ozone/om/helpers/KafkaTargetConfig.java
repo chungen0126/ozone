@@ -17,12 +17,15 @@
 
 package org.apache.hadoop.ozone.om.helpers;
 
+import static org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig.Type.Kafka;
+
 import java.util.List;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 
 /**
  * Configuration for Kafka target.
  */
-public final class KafkaTargetConfig extends DefaultTargetConfig {
+public final class KafkaTargetConfig extends TargetConfig {
 
   private final String topic;
   private final List<String> endpoints;
@@ -37,6 +40,25 @@ public final class KafkaTargetConfig extends DefaultTargetConfig {
 
   public static Builder newBuilder() {
     return new Builder();
+  }
+
+  @Override
+  public OzoneManagerProtocolProtos.TargetConfig toProtobuf() {
+    return OzoneManagerProtocolProtos.TargetConfig.newBuilder()
+        .setType(getType())
+        .setKafkaTargetConfig(OzoneManagerProtocolProtos.KafkaTargetConfig.newBuilder()
+            .addAllEndpoints(endpoints)
+            .setTopic(topic)
+            .setIsSaslEnabled(isSaslEnabled)
+            .setSaslUsername(saslUsername)
+            .setSaslPassword(saslPassword)
+            .setSaslMechanism(saslMechanism)
+            .setIsTlsEnabled(isTlsEnabled)
+            .setTlsSkipVerify(tlsSkipVerify)
+            .setClientTlsCert(clientTlsCert)
+            .setClientTlsKey(clientTlsKey)
+            .build())
+        .build();
   }
 
   /**
@@ -110,6 +132,7 @@ public final class KafkaTargetConfig extends DefaultTargetConfig {
   }
 
   private KafkaTargetConfig(Builder builder) {
+    super(Kafka, "target-id");
     this.topic = builder.topic;
     this.endpoints = builder.endpoints;
     this.isSaslEnabled = builder.isSaslEnabled;

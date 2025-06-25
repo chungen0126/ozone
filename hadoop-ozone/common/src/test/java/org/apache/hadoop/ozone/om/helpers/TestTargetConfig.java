@@ -19,11 +19,11 @@ package org.apache.hadoop.ozone.om.helpers;
 
 import static org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig.Type.Kafka;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -58,24 +58,25 @@ public class TestTargetConfig {
         .setClientTlsKey(clientTlsKey)
         .build();
 
-    TargetConfig proto = TargetConfig.newBuilder()
+    OzoneManagerProtocolProtos.TargetConfig proto = OzoneManagerProtocolProtos.TargetConfig.newBuilder()
         .setType(Kafka)
         .setKafkaTargetConfig(kafkaConfig)
         .build();
 
-    KafkaTargetConfig config =
-        (KafkaTargetConfig) DefaultTargetConfig.fromProtobuf(proto);
+    TargetConfig config = TargetConfig.fromProtobuf(proto);
 
-    assertEquals(TargetConfig.Type.Kafka, config.getType());
-    assertEquals(topic, config.getTopic());
-    assertEquals(isSaslEnabled, config.isSaslEnabled());
-    assertEquals(saslUsername, config.getSaslUsername());
-    assertEquals(saslPassword, config.getSaslPassword());
-    assertEquals(saslMechanism, config.getSaslMechanism());
-    assertEquals(isTlsEnabled, config.isTlsEnabled());
-    assertEquals(tlsSkipVerify, config.isTlsSkipVerify());
-    assertEquals(clientTlsCert, config.getClientTlsCert());
-    assertEquals(clientTlsKey, config.getClientTlsKey());
+    assertEquals(OzoneManagerProtocolProtos.TargetConfig.Type.Kafka, config.getType());
+    assertInstanceOf(KafkaTargetConfig.class, config);
+    KafkaTargetConfig kafkaTargetConfig = (KafkaTargetConfig) config;
+    assertEquals(topic, kafkaTargetConfig.getTopic());
+    assertEquals(isSaslEnabled, kafkaTargetConfig.isSaslEnabled());
+    assertEquals(saslUsername, kafkaTargetConfig.getSaslUsername());
+    assertEquals(saslPassword, kafkaTargetConfig.getSaslPassword());
+    assertEquals(saslMechanism, kafkaTargetConfig.getSaslMechanism());
+    assertEquals(isTlsEnabled, kafkaTargetConfig.isTlsEnabled());
+    assertEquals(tlsSkipVerify, kafkaTargetConfig.isTlsSkipVerify());
+    assertEquals(clientTlsCert, kafkaTargetConfig.getClientTlsCert());
+    assertEquals(clientTlsKey, kafkaTargetConfig.getClientTlsKey());
   }
 
   @Test
@@ -106,7 +107,7 @@ public class TestTargetConfig {
             .setClientTlsKey(clientTlsKey)
             .build();
 
-    TargetConfig proto = kafkaConfig.toProtobuf();
+    OzoneManagerProtocolProtos.TargetConfig proto = kafkaConfig.toProtobuf();
 
     assertEquals(Kafka, proto.getType());
 
