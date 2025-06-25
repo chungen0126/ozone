@@ -981,7 +981,8 @@ message TargetConfig {
     Kafka = 1;
   }
   required Type type = 1;
-  optional KafkaTargetConfig kafkaTargetConfig = 2;
+  required string targetId = 2;
+  optional KafkaTargetConfig kafkaTargetConfig = 3;
 }
 
 message KafkaTargetConfig {

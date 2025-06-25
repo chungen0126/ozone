@@ -46,6 +46,8 @@ public abstract class TargetConfig {
     switch (proto.getType()) {
     case Kafka:
       return KafkaTargetConfig.newBuilder()
+          .setTargetId(proto.getTargetId())
+          .setType(proto.getType())
           .setTopic(proto.getKafkaTargetConfig().getTopic())
           .setEndpoints(proto.getKafkaTargetConfig().getEndpointsList())
           .setIsSaslEnabled(proto.getKafkaTargetConfig().getIsSaslEnabled())

@@ -548,8 +548,19 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
       return this;
     }
 
-    public Builder setS3NotificationInfos(List<S3NotificationInfo> s3NotificationInfos) {
-      this.s3NotificationInfos = s3NotificationInfos;
+    public Builder addS3NotificationInfo(
+        S3NotificationInfo s3NotificationInfo) {
+      if (s3NotificationInfo != null) {
+        this.s3NotificationInfos.add(s3NotificationInfo);
+      }
+      return this;
+    }
+
+    public Builder setS3NotificationInfos(
+        List<S3NotificationInfo> s3NotificationInfos) {
+      if (s3NotificationInfos != null) {
+        this.s3NotificationInfos.addAll(s3NotificationInfos);
+      }
       return this;
     }
 

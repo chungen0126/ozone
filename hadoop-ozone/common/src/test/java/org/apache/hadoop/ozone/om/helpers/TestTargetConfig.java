@@ -21,7 +21,7 @@ import static org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.junit.jupiter.api.Test;
@@ -31,35 +31,39 @@ import org.junit.jupiter.api.Test;
  */
 public class TestTargetConfig {
 
+  private static final String TARGET_ID = "test-target-id";
+  private static final String TOPIC = "test-topic";
+  private static final List<String> ENDPOINTS = Arrays.asList("endpoint1", "endpoint2");
+  private static final boolean IS_SASL_ENABLED = true;
+  private static final String SASL_USERNAME = "testuser";
+  private static final String SASL_PASSWORD = "testpass";
+  private static final String SASL_MECHANISM = "PLAIN";
+  private static final boolean IS_TLS_ENABLED = true;
+  private static final boolean TLS_SKIP_VERIFY = false;
+  private static final String CLIENT_TLS_CERT = "cert";
+  private static final String CLIENT_TLS_KEY = "key";
+
   @Test
   public void testGetTargetConfigFromProto() {
     String[] endpoints = new String[]{"endpoint1", "endpoint2"};
-    String topic = "test-topic";
-    boolean isSaslEnabled = true;
-    String saslUsername = "testuser";
-    String saslPassword = "testpass";
-    String saslMechanism = "PLAIN";
-    boolean isTlsEnabled = true;
-    boolean tlsSkipVerify = false;
-    String clientTlsCert = "cert";
-    String clientTlsKey = "key";
 
     OzoneManagerProtocolProtos.KafkaTargetConfig kafkaConfig =
         OzoneManagerProtocolProtos.KafkaTargetConfig.newBuilder()
-        .addAllEndpoints(java.util.Arrays.asList(endpoints))
-        .setTopic(topic)
-        .setIsSaslEnabled(isSaslEnabled)
-        .setSaslUsername(saslUsername)
-        .setSaslPassword(saslPassword)
-        .setSaslMechanism(saslMechanism)
-        .setIsTlsEnabled(isTlsEnabled)
-        .setTlsSkipVerify(tlsSkipVerify)
-        .setClientTlsCert(clientTlsCert)
-        .setClientTlsKey(clientTlsKey)
+        .addAllEndpoints(Arrays.asList(endpoints))
+        .setTopic(TOPIC)
+        .setIsSaslEnabled(IS_SASL_ENABLED)
+        .setSaslUsername(SASL_USERNAME)
+        .setSaslPassword(SASL_PASSWORD)
+        .setSaslMechanism(SASL_MECHANISM)
+        .setIsTlsEnabled(IS_TLS_ENABLED)
+        .setTlsSkipVerify(TLS_SKIP_VERIFY)
+        .setClientTlsCert(CLIENT_TLS_CERT)
+        .setClientTlsKey(CLIENT_TLS_KEY)
         .build();
 
     OzoneManagerProtocolProtos.TargetConfig proto = OzoneManagerProtocolProtos.TargetConfig.newBuilder()
         .setType(Kafka)
+        .setTargetId(TARGET_ID)
         .setKafkaTargetConfig(kafkaConfig)
         .build();
 
@@ -68,59 +72,49 @@ public class TestTargetConfig {
     assertEquals(OzoneManagerProtocolProtos.TargetConfig.Type.Kafka, config.getType());
     assertInstanceOf(KafkaTargetConfig.class, config);
     KafkaTargetConfig kafkaTargetConfig = (KafkaTargetConfig) config;
-    assertEquals(topic, kafkaTargetConfig.getTopic());
-    assertEquals(isSaslEnabled, kafkaTargetConfig.isSaslEnabled());
-    assertEquals(saslUsername, kafkaTargetConfig.getSaslUsername());
-    assertEquals(saslPassword, kafkaTargetConfig.getSaslPassword());
-    assertEquals(saslMechanism, kafkaTargetConfig.getSaslMechanism());
-    assertEquals(isTlsEnabled, kafkaTargetConfig.isTlsEnabled());
-    assertEquals(tlsSkipVerify, kafkaTargetConfig.isTlsSkipVerify());
-    assertEquals(clientTlsCert, kafkaTargetConfig.getClientTlsCert());
-    assertEquals(clientTlsKey, kafkaTargetConfig.getClientTlsKey());
+    assertEquals(TOPIC, kafkaTargetConfig.getTopic());
+    assertEquals(IS_SASL_ENABLED, kafkaTargetConfig.isSaslEnabled());
+    assertEquals(SASL_USERNAME, kafkaTargetConfig.getSaslUsername());
+    assertEquals(SASL_PASSWORD, kafkaTargetConfig.getSaslPassword());
+    assertEquals(SASL_MECHANISM, kafkaTargetConfig.getSaslMechanism());
+    assertEquals(IS_TLS_ENABLED, kafkaTargetConfig.isTlsEnabled());
+    assertEquals(TLS_SKIP_VERIFY, kafkaTargetConfig.isTlsSkipVerify());
+    assertEquals(CLIENT_TLS_CERT, kafkaTargetConfig.getClientTlsCert());
+    assertEquals(CLIENT_TLS_KEY, kafkaTargetConfig.getClientTlsKey());
   }
 
   @Test
   public void testToProto() {
-    List<String> endpoints = new ArrayList<>();
-    endpoints.add("endpoint1");
-    endpoints.add("endpoint2");
-    String topic = "test-topic";
-    boolean isSaslEnabled = true;
-    String saslUsername = "testuser";
-    String saslPassword = "testpass";
-    String saslMechanism = "PLAIN";
-    boolean isTlsEnabled = true;
-    boolean tlsSkipVerify = false;
-    String clientTlsCert = "cert";
-    String clientTlsKey = "key";
 
     KafkaTargetConfig kafkaConfig = KafkaTargetConfig.newBuilder()
-            .setTopic(topic)
-            .setEndpoints(endpoints)
-            .setIsSaslEnabled(isSaslEnabled)
-            .setSaslUsername(saslUsername)
-            .setSaslPassword(saslPassword)
-            .setSaslMechanism(saslMechanism)
-            .setIsTlsEnabled(isTlsEnabled)
-            .setTlsSkipVerify(tlsSkipVerify)
-            .setClientTlsCert(clientTlsCert)
-            .setClientTlsKey(clientTlsKey)
-            .build();
+        .setTargetId(TARGET_ID)
+        .setType(Kafka)
+        .setTopic(TOPIC)
+        .setEndpoints(ENDPOINTS)
+        .setIsSaslEnabled(IS_SASL_ENABLED)
+        .setSaslUsername(SASL_USERNAME)
+        .setSaslPassword(SASL_PASSWORD)
+        .setSaslMechanism(SASL_MECHANISM)
+        .setIsTlsEnabled(IS_TLS_ENABLED)
+        .setTlsSkipVerify(TLS_SKIP_VERIFY)
+        .setClientTlsCert(CLIENT_TLS_CERT)
+        .setClientTlsKey(CLIENT_TLS_KEY)
+        .build();
 
     OzoneManagerProtocolProtos.TargetConfig proto = kafkaConfig.toProtobuf();
 
     assertEquals(Kafka, proto.getType());
-
+    assertEquals(TARGET_ID, proto.getTargetId());
     OzoneManagerProtocolProtos.KafkaTargetConfig kafkaProto =
         proto.getKafkaTargetConfig();
-    assertEquals(topic, kafkaProto.getTopic());
-    assertEquals(isSaslEnabled, kafkaProto.getIsSaslEnabled());
-    assertEquals(saslUsername, kafkaProto.getSaslUsername());
-    assertEquals(saslPassword, kafkaProto.getSaslPassword());
-    assertEquals(saslMechanism, kafkaProto.getSaslMechanism());
-    assertEquals(isTlsEnabled, kafkaProto.getIsTlsEnabled());
-    assertEquals(tlsSkipVerify, kafkaProto.getTlsSkipVerify());
-    assertEquals(clientTlsCert, kafkaProto.getClientTlsCert());
-    assertEquals(clientTlsKey, kafkaProto.getClientTlsKey());
+    assertEquals(TOPIC, kafkaProto.getTopic());
+    assertEquals(IS_SASL_ENABLED, kafkaProto.getIsSaslEnabled());
+    assertEquals(SASL_USERNAME, kafkaProto.getSaslUsername());
+    assertEquals(SASL_PASSWORD, kafkaProto.getSaslPassword());
+    assertEquals(SASL_MECHANISM, kafkaProto.getSaslMechanism());
+    assertEquals(IS_TLS_ENABLED, kafkaProto.getIsTlsEnabled());
+    assertEquals(TLS_SKIP_VERIFY, kafkaProto.getTlsSkipVerify());
+    assertEquals(CLIENT_TLS_CERT, kafkaProto.getClientTlsCert());
+    assertEquals(CLIENT_TLS_KEY, kafkaProto.getClientTlsKey());
   }
 }
