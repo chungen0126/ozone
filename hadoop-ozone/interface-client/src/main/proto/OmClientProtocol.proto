@@ -772,6 +772,7 @@ message BucketInfo {
     optional BucketLayoutProto bucketLayout = 18;
     optional string owner = 19;
     optional hadoop.hdds.DefaultReplicationConfig defaultReplicationConfig = 20;
+    repeated NotificationInfo notificationInfo = 21;
 }
 
 enum BucketLayoutProto {
@@ -949,6 +950,52 @@ message OzoneAclInfo {
     required string name = 2;
     required bytes rights = 3;
     required OzoneAclScope aclScope = 4 [default = ACCESS];
+}
+
+/**
+ * NotificationInfo is used to send notifications to clients
+ * about events that happen in Ozone.
+ */
+message NotificationInfo {
+  required string targetId = 1;
+  required Event event = 2;
+}
+
+enum Event {
+  S3TEST = 1;
+  S3ObjectCreate = 2;
+  S3ObjectCreatePut = 3;
+  S3ObjectCreateCompleteMultipartUpload = 6;
+  S3ObjectRemovedDelete = 7;
+  S3ObjectTagging = 8;
+  S3ObjectTaggingPut = 9;
+  S3ObjectTaggingDelete = 10;
+}
+
+/**
+ * TargetConfig is used to configure the target for notifications.
+ * Currently, only Kafka is supported as a target.
+ */
+message TargetConfig {
+  enum Type {
+    Kafka = 1;
+  }
+  required Type type = 1;
+  required string targetId = 2;
+  optional KafkaTargetConfig kafkaTargetConfig = 3;
+}
+
+message KafkaTargetConfig {
+  repeated string endpoints = 1;
+  required string topic = 2;
+  required bool isSaslEnabled = 3 [default = false];
+  optional string saslUsername = 4;
+  optional string saslPassword = 5;
+  optional string saslMechanism = 6;
+  required bool isTlsEnabled = 7 [default = false];
+  optional bool tlsSkipVerify = 8;
+  optional string clientTlsCert = 9;
+  optional string clientTlsKey = 10;
 }
 
 message GetAclRequest {

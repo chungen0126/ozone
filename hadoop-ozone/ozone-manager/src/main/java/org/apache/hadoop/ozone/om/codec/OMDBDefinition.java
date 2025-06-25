@@ -38,6 +38,7 @@ import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.service.SnapshotDeletingService;
 import org.apache.hadoop.ozone.security.OzoneTokenIdentifier;
 import org.apache.hadoop.ozone.storage.proto.OzoneManagerStorageProtos.PersistedUserVolumeInfo;
@@ -158,6 +159,13 @@ public final class OMDBDefinition extends DBDefinition.WithMap {
       = new DBColumnFamilyDefinition<>(S3_SECRET_TABLE,
           StringCodec.get(),
           S3SecretValue.getCodec());
+
+  public static final String TARGET_TABLE = "targetTable";
+  /** targetTable: targetId :- TargetConfig. */
+  public static final DBColumnFamilyDefinition<String, TargetConfig> TARGET_TABLE_DEF
+      = new DBColumnFamilyDefinition<>(TARGET_TABLE,
+          StringCodec.get(),
+      TargetConfig.getCodec());
 
   //---------------------------------------------------------------------------
   // Volume, Bucket, Prefix and Transaction Tables:

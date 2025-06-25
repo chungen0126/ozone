@@ -88,6 +88,11 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
    */
   private final DefaultReplicationConfig defaultReplicationConfig;
 
+  /**
+   * S3NotificationInfo Information (mutable).
+   */
+  private final CopyOnWriteArrayList<S3NotificationInfo> s3NotificationInfos;
+
   private final String sourceVolume;
 
   private final String sourceBucket;
@@ -123,6 +128,7 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     this.bucketLayout = b.bucketLayout;
     this.owner = b.owner;
     this.defaultReplicationConfig = b.defaultReplicationConfig;
+    this.s3NotificationInfos = new CopyOnWriteArrayList<>(b.s3NotificationInfos);
   }
 
   public static Codec<OmBucketInfo> getCodec() {
@@ -289,6 +295,10 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     this.owner = ownerName;
   }
 
+  public List<S3NotificationInfo> getS3NotificationInfos() {
+    return s3NotificationInfos;
+  }
+
   /**
    * Returns new builder class that builds a OmBucketInfo.
    *
@@ -335,6 +345,9 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     auditMap.put(OzoneConsts.QUOTA_IN_BYTES, String.valueOf(this.quotaInBytes));
     auditMap.put(OzoneConsts.QUOTA_IN_NAMESPACE,
         String.valueOf(this.quotaInNamespace));
+    auditMap.put(OzoneConsts.S3_NOTIFICATION_INFO,
+        (this.s3NotificationInfos != null) ?
+            this.s3NotificationInfos.toString() : null);
     return auditMap;
   }
 
@@ -371,7 +384,8 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         .setQuotaInNamespace(quotaInNamespace)
         .setBucketLayout(bucketLayout)
         .setOwner(owner)
-        .setDefaultReplicationConfig(defaultReplicationConfig);
+        .setDefaultReplicationConfig(defaultReplicationConfig)
+        .setS3NotificationInfos(s3NotificationInfos);
   }
 
   /**
@@ -395,6 +409,7 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     private BucketLayout bucketLayout = BucketLayout.DEFAULT;
     private String owner;
     private DefaultReplicationConfig defaultReplicationConfig;
+    private List<S3NotificationInfo> s3NotificationInfos = new ArrayList<>();
 
     public Builder() {
     }
@@ -533,6 +548,22 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
       return this;
     }
 
+    public Builder addS3NotificationInfo(
+        S3NotificationInfo s3NotificationInfo) {
+      if (s3NotificationInfo != null) {
+        this.s3NotificationInfos.add(s3NotificationInfo);
+      }
+      return this;
+    }
+
+    public Builder setS3NotificationInfos(
+        List<S3NotificationInfo> s3NotificationInfos) {
+      if (s3NotificationInfos != null) {
+        this.s3NotificationInfos.addAll(s3NotificationInfos);
+      }
+      return this;
+    }
+
     /**
      * Constructs the OmBucketInfo.
      * @return instance of OmBucketInfo.
@@ -564,7 +595,9 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         .setUsedNamespace(usedNamespace)
         .addAllMetadata(KeyValueUtil.toProtobuf(getMetadata()))
         .setQuotaInBytes(quotaInBytes)
-        .setQuotaInNamespace(quotaInNamespace);
+        .setQuotaInNamespace(quotaInNamespace)
+        .addAllNotificationInfo(s3NotificationInfos.stream().map(
+            S3NotificationInfo::toProtobuf).collect(Collectors.toList()));
     if (bucketLayout != null) {
       bib.setBucketLayout(bucketLayout.toProto());
     }
@@ -614,7 +647,9 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         .setModificationTime(bucketInfo.getModificationTime())
         .setQuotaInBytes(bucketInfo.getQuotaInBytes())
         .setUsedNamespace(bucketInfo.getUsedNamespace())
-        .setQuotaInNamespace(bucketInfo.getQuotaInNamespace());
+        .setQuotaInNamespace(bucketInfo.getQuotaInNamespace())
+        .setS3NotificationInfos(bucketInfo.getNotificationInfoList().stream().map(
+            S3NotificationInfo::fromProtobuf).collect(Collectors.toList()));
     if (buckLayout != null) {
       obib.setBucketLayout(buckLayout);
     } else if (bucketInfo.getBucketLayout() != null) {
@@ -698,7 +733,8 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         Objects.equals(getMetadata(), that.getMetadata()) &&
         Objects.equals(bekInfo, that.bekInfo) &&
         Objects.equals(owner, that.owner) &&
-        Objects.equals(defaultReplicationConfig, that.defaultReplicationConfig);
+        Objects.equals(defaultReplicationConfig, that.defaultReplicationConfig) &&
+        Objects.equals(s3NotificationInfos, that.s3NotificationInfos);
   }
 
   @Override
@@ -728,6 +764,7 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         ", bucketLayout=" + bucketLayout +
         ", owner=" + owner +
         ", defaultReplicationConfig=" + defaultReplicationConfig +
+        ", s3NotificationInfos=" + s3NotificationInfos +
         '}';
   }
 }

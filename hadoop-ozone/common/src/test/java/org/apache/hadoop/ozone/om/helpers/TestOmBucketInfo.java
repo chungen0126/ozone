@@ -168,4 +168,29 @@ public class TestOmBucketInfo {
         recovered.getDefaultReplicationConfig().getReplicationConfig();
     assertEquals(new ECReplicationConfig(3, 2), config);
   }
+
+  @Test
+  public void testS3NotificationInfoProtobufConversion() {
+    S3NotificationInfo notificationInfo = new S3NotificationInfo(
+        "test-target", S3NotificationInfo.EventType.S3ObjectCreate);
+
+    OmBucketInfo bucket = OmBucketInfo.newBuilder()
+        .setBucketName("bucket")
+        .setVolumeName("vol1")
+        .setCreationTime(1L)
+        .setIsVersionEnabled(false)
+        .setStorageType(StorageType.ARCHIVE)
+        .setS3NotificationInfos(Collections.singletonList(notificationInfo))
+        .build();
+
+    OmBucketInfo copyBucket =
+        OmBucketInfo.getFromProtobuf(bucket.getProtobuf());
+
+    assertEquals(1, copyBucket.getS3NotificationInfos().size());
+    S3NotificationInfo notification =
+        copyBucket.getS3NotificationInfos().get(0);
+    assertEquals("test-target", notification.getTargetId());
+    assertEquals(S3NotificationInfo.EventType.S3ObjectCreate,
+        notification.getEventType());
+  }
 }
