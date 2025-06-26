@@ -299,6 +299,7 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     return s3NotificationInfos;
   }
 
+  public
   /**
    * Returns new builder class that builds a OmBucketInfo.
    *

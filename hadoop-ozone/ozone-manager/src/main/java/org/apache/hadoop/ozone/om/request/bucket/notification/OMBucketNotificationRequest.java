@@ -49,14 +49,14 @@ import org.apache.hadoop.ozone.security.acl.OzoneObj;
 /**
  * Base class for Bucket Notification request.
  */
-public abstract class OmBucketNotificationRequest extends OMClientRequest {
+public abstract class OMBucketNotificationRequest extends OMClientRequest {
 
   private final BiPredicate<OmBucketInfo, List<S3NotificationInfo>> bucketNotificationOp;
   private final String volumeName;
   private final String bucketName;
   private final List<S3NotificationInfo> s3NotificationInfo;
 
-  public OmBucketNotificationRequest(
+  public OMBucketNotificationRequest(
       OMRequest omRequest, BiPredicate<OmBucketInfo, List<S3NotificationInfo>> bucketNotificationOp,
       String volumeName, String bucketName, List<S3NotificationInfo> s3NotificationInfo) {
     super(omRequest);
