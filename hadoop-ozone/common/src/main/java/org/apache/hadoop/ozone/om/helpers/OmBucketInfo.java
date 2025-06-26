@@ -296,7 +296,50 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
   }
 
   public List<S3NotificationInfo> getS3NotificationInfos() {
-    return s3NotificationInfos;
+    return ImmutableList.copyOf(s3NotificationInfos);
+  }
+
+  public boolean setS3NotificationInfos(List<S3NotificationInfo> s3NotificationInfos) {
+    if (this.s3NotificationInfos == null) {
+      return false;
+    } else {
+      this.s3NotificationInfos.clear();
+      if (s3NotificationInfos != null) {
+        this.s3NotificationInfos.addAll(s3NotificationInfos);
+      }
+    }
+    return true;
+  }
+
+  public boolean addS3NotificationInfo(S3NotificationInfo s3NotificationInfo) {
+    if (this.s3NotificationInfos == null || s3NotificationInfo == null) {
+      return false;
+    }
+
+    for (S3NotificationInfo existingNotification : this.s3NotificationInfos) {
+      if (existingNotification.getTargetId().compareTo(s3NotificationInfo.getTargetId()) == 0 &&
+          existingNotification.getEventType() == s3NotificationInfo.getEventType()) {
+        return false;
+      }
+    }
+
+    s3NotificationInfos.add(s3NotificationInfo);
+    return true;
+  }
+
+  public boolean removeS3NotificationInfo(S3NotificationInfo s3NotificationInfo) {
+    if (this.s3NotificationInfos == null || this.s3NotificationInfos.isEmpty() || s3NotificationInfo == null) {
+      return false;
+    }
+
+    for (S3NotificationInfo existingNotification : this.s3NotificationInfos) {
+      if (existingNotification.getTargetId().compareTo(s3NotificationInfo.getTargetId()) == 0 &&
+          existingNotification.getEventType() == s3NotificationInfo.getEventType()) {
+        s3NotificationInfos.remove(existingNotification);
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
