@@ -304,6 +304,11 @@ message OMRequest {
   optional PutObjectTaggingRequest          putObjectTaggingRequest        = 141;
   optional DeleteObjectTaggingRequest       deleteObjectTaggingRequest     = 142;
   repeated SetSnapshotPropertyRequest       SetSnapshotPropertyRequests    = 143;
+
+  optional GetNotificationRequest           getNotificationRequest          = 144;
+  optional SetNotificationRequest           setNotificationRequest          = 145;
+  optional AddNotificationRequest           addNotificationRequest          = 146;
+  optional RemoveNotificationRequest        removeNotificationRequest       = 147;
 }
 
 message OMResponse {
@@ -437,6 +442,11 @@ message OMResponse {
   optional GetObjectTaggingResponse          getObjectTaggingResponse      = 140;
   optional PutObjectTaggingResponse          putObjectTaggingResponse      = 141;
   optional DeleteObjectTaggingResponse       deleteObjectTaggingResponse   = 142;
+
+  optional GetNotificationResponse           getNotificationResponse       = 144;
+  optional SetNotificationResponse           setNotificationResponse       = 145;
+  optional AddNotificationResponse           addNotificationResponse       = 146;
+  optional RemoveNotificationResponse        removeNotificationResponse    = 147;
 }
 
 enum Status {
@@ -963,11 +973,9 @@ message NotificationInfo {
 
 enum Event {
   S3TEST = 1;
-  S3ObjectCreate = 2;
   S3ObjectCreatePut = 3;
   S3ObjectCreateCompleteMultipartUpload = 6;
   S3ObjectRemovedDelete = 7;
-  S3ObjectTagging = 8;
   S3ObjectTaggingPut = 9;
   S3ObjectTaggingDelete = 10;
 }
@@ -2359,6 +2367,48 @@ message DeleteObjectTaggingRequest {
 }
 
 message DeleteObjectTaggingResponse {
+}
+
+message SetNotificationRequest {
+  required string volumeName = 1;
+  required string bucketName = 2;
+  required NotificationInfo notificationInfo = 3;
+  optional uint64 modificationTime = 4;
+}
+
+message SetNotificationResponse {
+  optional bool success = 1;
+}
+
+message AddNotificationRequest {
+  required string volumeName = 1;
+  required string bucketName = 2;
+  required NotificationInfo notificationInfo = 3;
+  optional uint64 modificationTime = 4;
+}
+
+message AddNotificationResponse {
+  optional bool success = 1;
+}
+
+message RemoveNotificationRequest {
+  required string volumeName = 1;
+  required string bucketName = 2;
+  required NotificationInfo notificationInfo = 3;
+  optional uint64 modificationTime = 4;
+}
+
+message RemoveNotificationResponse {
+  optional bool success = 1;
+}
+
+message GetNotificationRequest {
+  required string volumeName = 1;
+  required string bucketName = 2;
+}
+
+message GetNotificationResponse {
+  repeated NotificationInfo notificationInfo = 1;
 }
 
 /**
