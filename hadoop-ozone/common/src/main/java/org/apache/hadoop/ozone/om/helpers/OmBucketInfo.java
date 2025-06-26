@@ -300,12 +300,12 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
   }
 
   public boolean setS3NotificationInfos(List<S3NotificationInfo> notificationInfoList) {
-    if (this.s3NotificationInfos == null) {
+    if (s3NotificationInfos == null) {
       return false;
     } else {
       this.s3NotificationInfos.clear();
-      if (s3NotificationInfos != null) {
-        this.s3NotificationInfos.addAll(s3NotificationInfos);
+      if (notificationInfoList != null) {
+        s3NotificationInfos.addAll(notificationInfoList);
       }
     }
     return true;
