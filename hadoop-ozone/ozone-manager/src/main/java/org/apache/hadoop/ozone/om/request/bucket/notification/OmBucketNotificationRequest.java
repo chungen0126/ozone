@@ -22,6 +22,7 @@ import static org.apache.hadoop.ozone.om.lock.OzoneManagerLock.LeveledResource.B
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import org.apache.commons.lang3.tuple.Pair;
@@ -50,10 +51,10 @@ import org.apache.hadoop.ozone.security.acl.OzoneObj;
  */
 public abstract class OmBucketNotificationRequest extends OMClientRequest {
 
-  private final BiPredicate<OmBucketInfo, S3NotificationInfo> bucketNotificationOp;
+  private final BiPredicate<OmBucketInfo, List<S3NotificationInfo>> bucketNotificationOp;
 
   public OmBucketNotificationRequest(OMRequest omRequest,
-      BiPredicate<OmBucketInfo, S3NotificationInfo> bucketNotificationOp) {
+      BiPredicate<OmBucketInfo, List<S3NotificationInfo>> bucketNotificationOp) {
     super(omRequest);
     this.bucketNotificationOp = bucketNotificationOp;
   }
@@ -63,7 +64,7 @@ public abstract class OmBucketNotificationRequest extends OMClientRequest {
     final long transactionLogIndex = context.getIndex();
 
     // protobuf guarantees notifications are non-null.
-    S3NotificationInfo s3NotificationInfo = getS3Notification();
+    List<S3NotificationInfo> s3NotificationInfo = getS3Notification();
 
     OMMetrics omMetrics = ozoneManager.getMetrics();
     omMetrics.incNumBucketUpdates();
@@ -157,7 +158,7 @@ public abstract class OmBucketNotificationRequest extends OMClientRequest {
    * @return List of Notifications, for add/remove it is a single element list
    * for a set it can be a non-single element list.
    */
-  abstract S3NotificationInfo getS3Notification();
+  abstract List<S3NotificationInfo> getS3Notification();
 
   /**
    * Get a response builder for the request.

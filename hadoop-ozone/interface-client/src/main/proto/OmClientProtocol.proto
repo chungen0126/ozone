@@ -2372,7 +2372,7 @@ message DeleteObjectTaggingResponse {
 message SetNotificationRequest {
   required string volumeName = 1;
   required string bucketName = 2;
-  required NotificationInfo notificationInfo = 3;
+  repeated NotificationInfo notificationInfo = 3;
   optional uint64 modificationTime = 4;
 }
 
