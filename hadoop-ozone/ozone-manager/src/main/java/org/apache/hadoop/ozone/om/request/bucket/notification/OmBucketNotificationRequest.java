@@ -52,19 +52,23 @@ import org.apache.hadoop.ozone.security.acl.OzoneObj;
 public abstract class OmBucketNotificationRequest extends OMClientRequest {
 
   private final BiPredicate<OmBucketInfo, List<S3NotificationInfo>> bucketNotificationOp;
+  private final String volumeName;
+  private final String bucketName;
+  private final List<S3NotificationInfo> s3NotificationInfo;
 
-  public OmBucketNotificationRequest(OMRequest omRequest,
-      BiPredicate<OmBucketInfo, List<S3NotificationInfo>> bucketNotificationOp) {
+  public OmBucketNotificationRequest(
+      OMRequest omRequest, BiPredicate<OmBucketInfo, List<S3NotificationInfo>> bucketNotificationOp,
+      String volumeName, String bucketName, List<S3NotificationInfo> s3NotificationInfo) {
     super(omRequest);
     this.bucketNotificationOp = bucketNotificationOp;
+    this.volumeName = volumeName;
+    this.bucketName = bucketName;
+    this.s3NotificationInfo = s3NotificationInfo;
   }
 
   @Override
   public OMClientResponse validateAndUpdateCache(OzoneManager ozoneManager, ExecutionContext context) {
     final long transactionLogIndex = context.getIndex();
-
-    // protobuf guarantees notifications are non-null.
-    List<S3NotificationInfo> s3NotificationInfo = getS3Notification();
 
     OMMetrics omMetrics = ozoneManager.getMetrics();
     omMetrics.incNumBucketUpdates();
@@ -76,12 +80,11 @@ public abstract class OmBucketNotificationRequest extends OMClientRequest {
 
     OMMetadataManager omMetadataManager = ozoneManager.getMetadataManager();
     boolean lockAcquired = false;
-    Pair<String, String> volumeAndBucketNames = getVolumeAndBucketNames();
     String volume = null;
     String bucket = null;
     boolean operationResult = false;
     try {
-      ResolvedBucket resolvedBucket = ozoneManager.resolveBucketLink(volumeAndBucketNames);
+      ResolvedBucket resolvedBucket = ozoneManager.resolveBucketLink(Pair.of(volumeName, bucketName));
       volume = resolvedBucket.realVolume();
       bucket = resolvedBucket.realBucket();
 
@@ -154,22 +157,10 @@ public abstract class OmBucketNotificationRequest extends OMClientRequest {
   }
 
   /**
-   * Get the Notifications from the request.
-   * @return List of Notifications, for add/remove it is a single element list
-   * for a set it can be a non-single element list.
-   */
-  abstract List<S3NotificationInfo> getS3Notification();
-
-  /**
    * Get a response builder for the request.
    * @return OMResponse builder
    */
   abstract OMResponse.Builder getResBuilder();
-
-  /**
-   * Get the volume and bucket names from the request.
-   */
-  abstract Pair<String, String> getVolumeAndBucketNames();
 
   /**
    * Get the OM client response on a success case with lock.
@@ -197,9 +188,8 @@ public abstract class OmBucketNotificationRequest extends OMClientRequest {
 
   private Map<String, String> toAuditMap() {
     Map<String, String> auditMap = new LinkedHashMap<>();
-    Pair<String, String> volumeAndBucketNames = getVolumeAndBucketNames();
-    auditMap.put(OzoneConsts.VOLUME, volumeAndBucketNames.getLeft());
-    auditMap.put(OzoneConsts.BUCKET, volumeAndBucketNames.getRight());
+    auditMap.put(OzoneConsts.VOLUME, volumeName);
+    auditMap.put(OzoneConsts.BUCKET, bucketName);
     return auditMap;
   }
 }
