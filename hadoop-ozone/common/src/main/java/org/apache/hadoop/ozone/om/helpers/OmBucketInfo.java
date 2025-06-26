@@ -299,7 +299,7 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     return ImmutableList.copyOf(s3NotificationInfos);
   }
 
-  public boolean setS3NotificationInfos(List<S3NotificationInfo> s3NotificationInfos) {
+  public boolean setS3NotificationInfos(List<S3NotificationInfo> notificationInfoList) {
     if (this.s3NotificationInfos == null) {
       return false;
     } else {
