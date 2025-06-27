@@ -61,6 +61,7 @@ import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadCompleteInfo;
 import org.apache.hadoop.ozone.om.helpers.OzoneFSUtils;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.helpers.WithMetadata;
 import org.apache.hadoop.ozone.security.acl.OzoneObj;
 import org.apache.hadoop.ozone.security.acl.OzoneObjInfo;
@@ -1089,6 +1090,10 @@ public class OzoneBucket extends WithMetadata {
    */
   public void deleteObjectTagging(String keyName) throws IOException {
     proxy.deleteObjectTagging(volumeName, name, keyName);
+  }
+
+  public boolean setS3Notification(List<S3NotificationInfo> notificationInfos) throws IOException {
+    return proxy.setS3Notification(volumeName, name, notificationInfos);
   }
 
   public void setSourcePathExist(boolean b) {

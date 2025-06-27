@@ -57,6 +57,7 @@ import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadCompleteInfo;
 import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
 import org.apache.hadoop.ozone.om.helpers.TenantStateList;
@@ -1359,4 +1360,14 @@ public interface ClientProtocol {
   void deleteObjectTagging(String volumeName, String bucketName, String keyName)
       throws IOException;
 
+  /**
+   * Sets S3 notification configuration for a bucket.
+   * @param volumeName Name of the volume
+   * @param bucketName Name of the bucket
+   * @param notification S3 notification configuration to be set
+   * @return true if the notification configuration is set successfully,
+   * @throws IOException
+   */
+  boolean setS3Notification(String volumeName, String bucketName,
+      List<S3NotificationInfo> notification) throws IOException;
 }

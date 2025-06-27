@@ -342,6 +342,7 @@ public final class OmUtils {
     case PutObjectTagging:
     case DeleteObjectTagging:
     case UnknownCommand:
+    case SetNotification:
       return false;
     case EchoRPC:
       return omRequest.getEchoRPCRequest().getReadOnly();
