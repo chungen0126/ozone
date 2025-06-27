@@ -70,6 +70,7 @@ import org.apache.hadoop.ozone.om.helpers.OmPrefixInfo;
 import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.OzoneFSUtils;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.AddAclRequest;
@@ -1728,4 +1729,31 @@ public final class OMRequestTestUtils {
         .build();
   }
 
+  /**
+   * Create OMRequest for setting bucket notification.
+   *
+   * @param volumeName         Name of the volume
+   * @param bucketName         Name of the bucket
+   * @param notificationInfos  List of S3NotificationInfo to be set
+   * @return OMRequest with SetNotificationRequest
+   */
+  public static OMRequest createBucketSetNotificationRequest(
+      String volumeName, String bucketName, List<S3NotificationInfo> notificationInfos) {
+    OzoneManagerProtocolProtos.SetNotificationRequest.Builder setNotificationRequestBuilder =
+        OzoneManagerProtocolProtos.SetNotificationRequest.newBuilder()
+            .setVolumeName(volumeName)
+            .setBucketName(bucketName);
+
+    if (notificationInfos != null) {
+      notificationInfos.forEach(
+          notification -> setNotificationRequestBuilder.addNotificationInfo(
+              notification.toProtobuf()));
+    }
+
+    return OMRequest.newBuilder()
+        .setClientId(UUID.randomUUID().toString())
+        .setCmdType(Type.SetNotification)
+        .setSetNotificationRequest(setNotificationRequestBuilder.build())
+        .build();
+  }
 }

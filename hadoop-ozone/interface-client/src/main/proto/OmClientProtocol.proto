@@ -156,6 +156,7 @@ enum Type {
   PutObjectTagging = 140;
   GetObjectTagging = 141;
   DeleteObjectTagging = 142;
+  SetNotification = 143;
 }
 
 enum SafeMode {
@@ -968,10 +969,10 @@ message OzoneAclInfo {
  */
 message NotificationInfo {
   required string targetId = 1;
-  required Event event = 2;
+  required S3Event event = 2;
 }
 
-enum Event {
+enum S3Event {
   S3TEST = 1;
   S3ObjectCreatePut = 3;
   S3ObjectCreateCompleteMultipartUpload = 6;

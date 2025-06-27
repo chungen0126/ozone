@@ -172,7 +172,7 @@ public class TestOmBucketInfo {
   @Test
   public void testS3NotificationInfoProtobufConversion() {
     S3NotificationInfo notificationInfo = new S3NotificationInfo(
-        "test-target", S3NotificationInfo.EventType.S3ObjectCreate);
+        "test-target", S3NotificationInfo.EventType.S3ObjectCreatePut);
 
     OmBucketInfo bucket = OmBucketInfo.newBuilder()
         .setBucketName("bucket")
@@ -190,7 +190,7 @@ public class TestOmBucketInfo {
     S3NotificationInfo notification =
         copyBucket.getS3NotificationInfos().get(0);
     assertEquals("test-target", notification.getTargetId());
-    assertEquals(S3NotificationInfo.EventType.S3ObjectCreate,
+    assertEquals(S3NotificationInfo.EventType.S3ObjectCreatePut,
         notification.getEventType());
   }
 }

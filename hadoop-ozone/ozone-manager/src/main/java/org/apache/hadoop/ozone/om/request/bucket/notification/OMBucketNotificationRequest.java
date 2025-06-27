@@ -39,6 +39,7 @@ import org.apache.hadoop.ozone.om.execution.flowcontrol.ExecutionContext;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
 import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.request.OMClientRequest;
+import org.apache.hadoop.ozone.om.request.util.OmResponseUtil;
 import org.apache.hadoop.ozone.om.response.OMClientResponse;
 import org.apache.hadoop.ozone.om.response.bucket.notification.OmBucketNotificationResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.OMRequest;
@@ -74,7 +75,7 @@ public abstract class OMBucketNotificationRequest extends OMClientRequest {
     omMetrics.incNumBucketUpdates();
     OmBucketInfo omBucketInfo;
 
-    OMResponse.Builder omResponse = getResBuilder();
+    OMResponse.Builder omResponse = OmResponseUtil.getOMResponseBuilder(getOmRequest());
     OMClientResponse omClientResponse = null;
     Exception exception = null;
 
@@ -157,12 +158,6 @@ public abstract class OMBucketNotificationRequest extends OMClientRequest {
   }
 
   /**
-   * Get a response builder for the request.
-   * @return OMResponse builder
-   */
-  abstract OMResponse.Builder getResBuilder();
-
-  /**
    * Get the OM client response on a success case with lock.
    */
   abstract OMClientResponse onSuccess(
@@ -191,5 +186,17 @@ public abstract class OMBucketNotificationRequest extends OMClientRequest {
     auditMap.put(OzoneConsts.VOLUME, volumeName);
     auditMap.put(OzoneConsts.BUCKET, bucketName);
     return auditMap;
+  }
+
+  protected String getVolumeName() {
+    return volumeName;
+  }
+
+  protected String getBucketName() {
+    return bucketName;
+  }
+
+  protected List<S3NotificationInfo> getS3NotificationInfo() {
+    return s3NotificationInfo;
   }
 }

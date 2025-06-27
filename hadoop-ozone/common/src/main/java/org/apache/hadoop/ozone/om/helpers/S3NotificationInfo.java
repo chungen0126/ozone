@@ -18,8 +18,8 @@
 package org.apache.hadoop.ozone.om.helpers;
 
 import java.util.Objects;
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.Event;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.NotificationInfo;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.S3Event;
 
 /**
  * S3 Notification Info.
@@ -44,7 +44,7 @@ public class S3NotificationInfo {
   public NotificationInfo toProtobuf() {
     return NotificationInfo.newBuilder()
         .setTargetId(targetId)
-        .setEvent(Event.valueOf(eventType.name()))
+        .setEvent(S3Event.valueOf(eventType.name()))
         .build();
   }
 
@@ -84,11 +84,9 @@ public class S3NotificationInfo {
    */
   public enum EventType {
     S3TEST,
-    S3ObjectCreate,
     S3ObjectCreatePut,
     S3ObjectCreateCompleteMultipartUpload,
     S3ObjectRemovedDelete,
-    S3ObjectTagging,
     S3ObjectTaggingPut,
     S3ObjectTaggingDelete
   }
