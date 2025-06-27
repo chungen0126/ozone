@@ -1096,6 +1096,10 @@ public class OzoneBucket extends WithMetadata {
     return proxy.setS3Notification(volumeName, name, notificationInfos);
   }
 
+  public List<S3NotificationInfo> getS3Notification() throws IOException {
+    return proxy.getS3Notification(volumeName, name);
+  }
+
   public void setSourcePathExist(boolean b) {
     this.sourcePathExist = b;
   }

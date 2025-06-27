@@ -50,4 +50,6 @@ public interface OmMetadataReaderMetrics {
   void incNumGetObjectTagging();
 
   void incNumGetObjectTaggingFails();
+
+  void incNumGetNotification();
 }

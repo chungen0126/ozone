@@ -41,6 +41,7 @@ import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OmKeyLocationInfoGroup;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
 import org.apache.hadoop.ozone.security.acl.IAccessAuthorizer;
 import org.apache.hadoop.ozone.security.acl.OzoneAuthorizerFactory;
@@ -188,6 +189,11 @@ public class OmSnapshot implements IOmMetadataReader, Closeable {
   @Override
   public Map<String, String> getObjectTagging(OmKeyArgs args) throws IOException {
     return omMetadataReader.getObjectTagging(normalizeOmKeyArgs(args));
+  }
+
+  @Override
+  public List<S3NotificationInfo> getS3NotificationInfo(String volume, String bucket) throws IOException {
+    return omMetadataReader.getS3NotificationInfo(volume, bucket);
   }
 
   private OzoneObj normalizeOzoneObj(OzoneObj o) {

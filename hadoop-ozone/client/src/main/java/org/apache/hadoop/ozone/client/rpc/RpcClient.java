@@ -2790,6 +2790,11 @@ public class RpcClient implements ClientProtocol {
     return ozoneManagerClient.setS3Notification(volumeName, bucketName, notification);
   }
 
+  @Override
+  public List<S3NotificationInfo> getS3Notification(String volumeName, String bucketName) throws IOException {
+    return ozoneManagerClient.getS3NotificationInfo(volumeName, bucketName);
+  }
+
   private static ExecutorService createThreadPoolExecutor(
        int corePoolSize, int maximumPoolSize, String threadNameFormat) {
     return new ThreadPoolExecutor(corePoolSize, maximumPoolSize,

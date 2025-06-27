@@ -257,6 +257,7 @@ import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadListParts;
 import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfo;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfoEx;
@@ -4885,6 +4886,14 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
       throws IOException {
     try (UncheckedAutoCloseableSupplier<IOmMetadataReader> rcReader = getReader(args)) {
       return rcReader.get().getObjectTagging(args);
+    }
+  }
+
+  @Override
+  public List<S3NotificationInfo> getS3NotificationInfo(String volumeName, String bucketName) throws IOException {
+    try (UncheckedAutoCloseableSupplier<IOmMetadataReader> rcReader =
+             getReader(volumeName, bucketName, null)) {
+      return rcReader.get().getS3NotificationInfo(volumeName, bucketName);
     }
   }
 

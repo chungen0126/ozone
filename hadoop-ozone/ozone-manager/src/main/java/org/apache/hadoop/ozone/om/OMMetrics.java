@@ -960,6 +960,11 @@ public class OMMetrics implements OmMetadataReaderMetrics {
     numKeyOps.incr();
   }
 
+  @Override
+  public void incNumGetNotification() {
+    numGetNotification.incr();
+  }
+
   public void incNumSetNotification() {
     numSetNotification.incr();
   }

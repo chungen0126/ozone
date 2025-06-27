@@ -138,6 +138,8 @@ import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetFile
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetFileStatusResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyInfoRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyInfoResponse;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetNotificationRequest;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetNotificationResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3SecretRequest;
@@ -2608,6 +2610,24 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
         handleError(submitRequest(omRequest)).getGetObjectTaggingResponse();
 
     return KeyValueUtil.getFromProtobuf(resp.getTagsList());
+  }
+
+  @Override
+  public List<S3NotificationInfo> getS3NotificationInfo(String volumeName, String bucketName) throws IOException {
+    GetNotificationRequest req = GetNotificationRequest.newBuilder()
+        .setVolumeName(volumeName)
+        .setBucketName(bucketName)
+        .build();
+
+    OMRequest omRequest = createOMRequest(Type.GetNotification)
+        .setGetNotificationRequest(req)
+        .build();
+    GetNotificationResponse response =
+        handleError(submitRequest(omRequest)).getGetNotificationResponse();
+    List<S3NotificationInfo> notificationInfos = new ArrayList<>();
+    response.getNotificationInfoList().stream().forEach(n ->
+        notificationInfos.add(S3NotificationInfo.fromProtobuf(n)));
+    return notificationInfos;
   }
 
   @Override

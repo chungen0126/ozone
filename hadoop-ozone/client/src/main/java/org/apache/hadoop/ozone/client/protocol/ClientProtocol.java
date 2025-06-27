@@ -1370,4 +1370,14 @@ public interface ClientProtocol {
    */
   boolean setS3Notification(String volumeName, String bucketName,
       List<S3NotificationInfo> notification) throws IOException;
+
+  /**
+   * Returns S3 notification configuration for a bucket.
+   * @param volumeName
+   * @param bucketName
+   * @return
+   * @throws IOException
+   */
+  List<S3NotificationInfo> getS3Notification(String volumeName,
+      String bucketName) throws IOException;
 }

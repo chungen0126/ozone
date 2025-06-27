@@ -157,6 +157,7 @@ enum Type {
   GetObjectTagging = 141;
   DeleteObjectTagging = 142;
   SetNotification = 143;
+  GetNotification = 144;
 }
 
 enum SafeMode {

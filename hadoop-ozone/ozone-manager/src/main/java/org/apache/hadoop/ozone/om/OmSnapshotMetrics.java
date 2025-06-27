@@ -60,6 +60,7 @@ public final class OmSnapshotMetrics implements OmMetadataReaderMetrics {
   private @Metric MutableCounterLong numFSOps;
   private @Metric MutableCounterLong numGetObjectTagging;
   private @Metric MutableCounterLong numGetObjectTaggingFails;
+  private @Metric MutableCounterLong numGetNotification;
 
   private OmSnapshotMetrics() {
   }
@@ -150,6 +151,11 @@ public final class OmSnapshotMetrics implements OmMetadataReaderMetrics {
   @Override
   public void incNumGetObjectTaggingFails() {
     numGetObjectTaggingFails.incr();
+  }
+
+  @Override
+  public void incNumGetNotification() {
+    numGetNotification.incr();
   }
 }
 

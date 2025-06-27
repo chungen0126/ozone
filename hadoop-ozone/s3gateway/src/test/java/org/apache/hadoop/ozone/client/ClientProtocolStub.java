@@ -810,4 +810,9 @@ public class ClientProtocolStub implements ClientProtocol {
     return false;
   }
 
+  @Override
+  public List<S3NotificationInfo> getS3Notification(String volumeName, String bucketName) throws IOException {
+    return null;
+  }
+
 }
