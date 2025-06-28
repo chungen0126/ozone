@@ -83,12 +83,28 @@ public class S3NotificationInfo {
    * Enum representing the type of S3 events for notifications.
    */
   public enum EventType {
-    S3TEST,
-    S3ObjectCreatePut,
-    S3ObjectCreateCompleteMultipartUpload,
-    S3ObjectRemovedDelete,
-    S3ObjectTaggingPut,
-    S3ObjectTaggingDelete
+    S3_TEST,
+    S3_OBJECT_CREATE_PUT,
+    S3_OBJECT_CREATE_COMPLETE_MULTIPART_UPLOAD,
+    S3_OBJECT_REMOVE_DELETE,
+    S3_OBJECT_TAGGING_PUT,
+    S3_OBJECT_TAGGING_DELETE
   }
 
+  public static S3NotificationInfo parseAcl(String notificationInfos)
+      throws IllegalArgumentException {
+    if (notificationInfos == null || notificationInfos.isEmpty()) {
+      throw new IllegalArgumentException("Notification info cannot be null or empty");
+    }
+    String[] parts = notificationInfos.trim().split(":");
+    if (parts.length != 3) {
+      throw new IllegalArgumentException("Notifications are not in expected format");
+    }
+
+    if ("S3".compareTo(parts[0].toUpperCase()) == 0) {
+      return new S3NotificationInfo(parts[1], EventType.valueOf(parts[2].toUpperCase()));
+    }
+
+    throw new IllegalArgumentException("Notifications are not in expected format");
+  }
 }

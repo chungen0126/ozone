@@ -31,6 +31,7 @@ import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.client.ReplicationType;
 import org.apache.hadoop.hdds.protocol.StorageType;
 import org.apache.hadoop.ozone.OzoneAcl;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo.EventType;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.apache.hadoop.ozone.security.acl.IAccessAuthorizer;
 import org.apache.hadoop.util.Time;
@@ -172,7 +173,7 @@ public class TestOmBucketInfo {
   @Test
   public void testS3NotificationInfoProtobufConversion() {
     S3NotificationInfo notificationInfo = new S3NotificationInfo(
-        "test-target", S3NotificationInfo.EventType.S3ObjectCreatePut);
+        "test-target", EventType.S3_OBJECT_CREATE_PUT);
 
     OmBucketInfo bucket = OmBucketInfo.newBuilder()
         .setBucketName("bucket")
@@ -190,7 +191,7 @@ public class TestOmBucketInfo {
     S3NotificationInfo notification =
         copyBucket.getS3NotificationInfos().get(0);
     assertEquals("test-target", notification.getTargetId());
-    assertEquals(S3NotificationInfo.EventType.S3ObjectCreatePut,
+    assertEquals(EventType.S3_OBJECT_CREATE_PUT,
         notification.getEventType());
   }
 }

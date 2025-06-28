@@ -974,12 +974,12 @@ message NotificationInfo {
 }
 
 enum S3Event {
-  S3TEST = 1;
-  S3ObjectCreatePut = 3;
-  S3ObjectCreateCompleteMultipartUpload = 6;
-  S3ObjectRemovedDelete = 7;
-  S3ObjectTaggingPut = 9;
-  S3ObjectTaggingDelete = 10;
+  S3_TEST = 1;
+  S3_OBJECT_CREATE_PUT = 2;
+  S3_OBJECT_CREATE_COMPLETE_MULTIPART_UPLOAD = 3;
+  S3_OBJECT_REMOVE_DELETE = 4;
+  S3_OBJECT_TAGGING_PUT = 5;
+  S3_OBJECT_TAGGING_DELETE = 6;
 }
 
 /**
