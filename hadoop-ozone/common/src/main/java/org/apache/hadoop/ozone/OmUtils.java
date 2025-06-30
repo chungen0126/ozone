@@ -280,6 +280,7 @@ public final class OmUtils {
     case GetObjectTagging:
     case GetQuotaRepairStatus:
     case StartQuotaRepair:
+    case GetNotification:
       return true;
     case CreateVolume:
     case SetVolumeProperty:

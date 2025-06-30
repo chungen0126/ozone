@@ -97,6 +97,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.xml.bind.DatatypeConverter;
+import com.amazonaws.services.s3.event.S3EventNotification;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -183,6 +184,8 @@ import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.OzoneFSUtils;
 import org.apache.hadoop.ozone.om.helpers.QuotaUtil;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo.EventType;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.protocol.S3Auth;
 import org.apache.hadoop.ozone.om.ratis.OzoneManagerStateMachine;
@@ -5230,5 +5233,29 @@ abstract class OzoneRpcClientTests extends OzoneTestBase {
 
     assertEquals(tags.size(), tagsRetrieved.size());
     assertThat(tagsRetrieved).containsAllEntriesOf(tags);
+  }
+
+  @Test
+  public void testS3Notifications() throws Exception {
+    String volumeName = UUID.randomUUID().toString();
+    String bucketName = UUID.randomUUID().toString();
+    store.createVolume(volumeName);
+    OzoneVolume volume = store.getVolume(volumeName);
+    volume.createBucket(bucketName);
+    OzoneBucket bucket = volume.getBucket(bucketName);
+
+    List<S3NotificationInfo> s3NotificationInfos =
+        new ArrayList<>();
+    s3NotificationInfos.add(
+        new S3NotificationInfo("target1", EventType.S3_TEST));
+    bucket.setS3Notification(s3NotificationInfos);
+
+    List<S3NotificationInfo> result = bucket.getS3Notification();
+    assertEquals(1, result.size());
+    assertEquals(s3NotificationInfos.get(0).getTargetId(),
+        result.get(0).getTargetId());
+    assertEquals(s3NotificationInfos.get(0).getEventType(),
+        result.get(0).getEventType());
+
   }
 }
