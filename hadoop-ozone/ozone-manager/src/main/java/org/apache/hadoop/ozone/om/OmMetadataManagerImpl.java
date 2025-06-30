@@ -104,6 +104,7 @@ import org.apache.hadoop.ozone.om.helpers.OzoneFSUtils;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.WithMetadata;
 import org.apache.hadoop.ozone.om.lock.IOzoneManagerLock;
 import org.apache.hadoop.ozone.om.lock.OmReadOnlyLock;
@@ -156,6 +157,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
   private TypedTable<String, OmPrefixInfo> prefixTable;
   private TypedTable<String, TransactionInfo> transactionInfoTable;
   private TypedTable<String, String> metaTable;
+  private TypedTable<String, TargetConfig> targetTable;
 
   // Tables required for multi-tenancy
   private TypedTable<String, OmDBAccessIdInfo> tenantAccessIdTable;
@@ -463,6 +465,8 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
     transactionInfoTable = initializer.get(OMDBDefinition.TRANSACTION_INFO_TABLE_DEF);
 
     metaTable = initializer.get(OMDBDefinition.META_TABLE_DEF);
+
+    targetTable = initializer.get(OMDBDefinition.TARGET_TABLE_DEF);
 
     // accessId -> OmDBAccessIdInfo (tenantId, secret, Kerberos principal)
     tenantAccessIdTable = initializer.get(OMDBDefinition.TENANT_ACCESS_ID_TABLE_DEF);
@@ -1607,6 +1611,11 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
   @Override
   public Table<String, String> getMetaTable() {
     return metaTable;
+  }
+
+  @Override
+  public Table<String, TargetConfig> getTargetTable() {
+    return targetTable;
   }
 
   @Override
