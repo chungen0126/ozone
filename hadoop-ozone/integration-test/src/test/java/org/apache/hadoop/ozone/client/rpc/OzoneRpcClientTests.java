@@ -52,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -172,6 +173,7 @@ import org.apache.hadoop.ozone.om.exceptions.OMException.ResultCodes;
 import org.apache.hadoop.ozone.om.ha.HadoopRpcOMFailoverProxyProvider;
 import org.apache.hadoop.ozone.om.ha.OMProxyInfo;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
+import org.apache.hadoop.ozone.om.helpers.KafkaTargetConfig;
 import org.apache.hadoop.ozone.om.helpers.OmKeyArgs;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OmKeyLocationInfo;
@@ -184,6 +186,7 @@ import org.apache.hadoop.ozone.om.helpers.OzoneFSUtils;
 import org.apache.hadoop.ozone.om.helpers.QuotaUtil;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.protocol.S3Auth;
 import org.apache.hadoop.ozone.om.ratis.OzoneManagerStateMachine;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
@@ -5230,5 +5233,23 @@ abstract class OzoneRpcClientTests extends OzoneTestBase {
 
     assertEquals(tags.size(), tagsRetrieved.size());
     assertThat(tagsRetrieved).containsAllEntriesOf(tags);
+  }
+
+  @Test
+  public void testTarget() throws Exception {
+    store.addTargetConfig(KafkaTargetConfig.newBuilder()
+        .setEndpoints(new ArrayList<>(Collections.singleton("localhost")))
+        .setTopic("topic")
+        .setTargetId("target")
+        .build());
+    List<TargetConfig> targetConfigs = store.getTargetConfigs();
+    assertEquals(1, targetConfigs.size());
+    assertInstanceOf(KafkaTargetConfig.class, targetConfigs.get(0));
+    KafkaTargetConfig kafkaTargetConfig =
+        (KafkaTargetConfig) targetConfigs.get(0);
+    assertEquals(1, kafkaTargetConfig.getEndpoints().size());
+    assertEquals("localhost", kafkaTargetConfig.getEndpoints().get(0));
+    assertEquals("topic", kafkaTargetConfig.getTopic());
+    assertEquals("target", kafkaTargetConfig.getTargetId());
   }
 }

@@ -71,8 +71,10 @@ import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.OzoneFSUtils;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.AddAclRequest;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.AddTargetRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.BucketInfo;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.CreateTenantRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.DeleteTenantRequest;
@@ -1725,6 +1727,19 @@ public final class OMRequestTestUtils {
         .setName(prefixObj.getPath())
         .setObjectID(System.currentTimeMillis())
         .setUpdateID(trxnLogIndex)
+        .build();
+  }
+
+  public static OMRequest createTargetAddRequest(TargetConfig targetConfig) {
+    AddTargetRequest.Builder targetAddRequestBuilder =
+        AddTargetRequest.newBuilder()
+            .setTargetId(targetConfig.getTargetId())
+            .setTargetConfig(targetConfig.toProtobuf());
+
+    return OMRequest.newBuilder()
+        .setCmdType(Type.AddTarget)
+        .setClientId(UUID.randomUUID().toString())
+        .setAddTargetRequest(targetAddRequestBuilder.build())
         .build();
   }
 

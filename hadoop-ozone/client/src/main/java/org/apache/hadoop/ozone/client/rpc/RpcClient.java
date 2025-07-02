@@ -156,6 +156,7 @@ import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfo;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfoEx;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.TenantStateList;
 import org.apache.hadoop.ozone.om.helpers.TenantUserInfoValue;
 import org.apache.hadoop.ozone.om.helpers.TenantUserList;
@@ -2781,6 +2782,16 @@ public class RpcClient implements ClientProtocol {
         .setKeyName(keyName)
         .build();
     ozoneManagerClient.deleteObjectTagging(keyArgs);
+  }
+
+  @Override
+  public boolean addTargetConfig(TargetConfig targetConfig) throws IOException {
+    return ozoneManagerClient.addTargetConfig(targetConfig);
+  }
+
+  @Override
+  public List<TargetConfig> getTargetConfigs() throws IOException {
+    return ozoneManagerClient.getTargetConfigs();
   }
 
   private static ExecutorService createThreadPoolExecutor(

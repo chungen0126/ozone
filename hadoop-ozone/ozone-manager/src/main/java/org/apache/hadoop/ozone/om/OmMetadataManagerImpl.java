@@ -466,7 +466,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
 
     metaTable = initializer.get(OMDBDefinition.META_TABLE_DEF);
 
-    targetTable = initializer.get(OMDBDefinition.TARGET_TABLE_DEF);
+    targetTable = initializer.get(OMDBDefinition.TARGET_TABLE_DEF, cacheType);
 
     // accessId -> OmDBAccessIdInfo (tenantId, secret, Kerberos principal)
     tenantAccessIdTable = initializer.get(OMDBDefinition.TENANT_ACCESS_ID_TABLE_DEF);

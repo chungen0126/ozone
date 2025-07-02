@@ -88,6 +88,7 @@ import org.apache.hadoop.ozone.om.helpers.ServiceInfo;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfoEx;
 import org.apache.hadoop.ozone.om.helpers.SnapshotDiffJob;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.TenantStateList;
 import org.apache.hadoop.ozone.om.helpers.TenantUserInfoValue;
 import org.apache.hadoop.ozone.om.helpers.TenantUserList;
@@ -390,6 +391,11 @@ public class OzoneManagerRequestHandler implements RequestHandler {
         OzoneManagerProtocolProtos.GetObjectTaggingResponse getObjectTaggingResponse =
             getObjectTagging(request.getGetObjectTaggingRequest());
         responseBuilder.setGetObjectTaggingResponse(getObjectTaggingResponse);
+        break;
+      case GetTarget:
+        OzoneManagerProtocolProtos.GetTargetResponse getTargetResponse =
+            getTarget(request.getGetTargetRequest());
+        responseBuilder.setGetTargetResponse(getTargetResponse);
         break;
       default:
         responseBuilder.setSuccess(false);
@@ -1577,6 +1583,16 @@ public class OzoneManagerRequestHandler implements RequestHandler {
       OzoneManagerProtocolProtos.StartQuotaRepairRequest req) throws IOException {
     impl.startQuotaRepair(req.getBucketsList());
     return OzoneManagerProtocolProtos.StartQuotaRepairResponse.newBuilder().build();
+  }
+
+  private OzoneManagerProtocolProtos.GetTargetResponse getTarget(
+      OzoneManagerProtocolProtos.GetTargetRequest request) throws IOException {
+    List<TargetConfig> targetConfigs = impl.getTargetConfigs();
+    return OzoneManagerProtocolProtos.GetTargetResponse.newBuilder()
+        .addAllTargetConfig(targetConfigs.stream()
+            .map(TargetConfig::toProtobuf)
+            .collect(Collectors.toList()))
+        .build();
   }
 
   private int limitListSizeInt(int requestedSize) {

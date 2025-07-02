@@ -17,9 +17,12 @@
 
 package org.apache.hadoop.ozone.om.helpers;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.hadoop.hdds.utils.db.Codec;
 import org.apache.hadoop.hdds.utils.db.DelegatedCodec;
 import org.apache.hadoop.hdds.utils.db.Proto2Codec;
+import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.TargetConfig.Type;
 
@@ -59,7 +62,6 @@ public abstract class TargetConfig {
     case Kafka:
       return KafkaTargetConfig.newBuilder()
           .setTargetId(proto.getTargetId())
-          .setType(proto.getType())
           .setTopic(proto.getKafkaTargetConfig().getTopic())
           .setEndpoints(proto.getKafkaTargetConfig().getEndpointsList())
           .setIsSaslEnabled(proto.getKafkaTargetConfig().getIsSaslEnabled())
@@ -77,4 +79,11 @@ public abstract class TargetConfig {
   }
 
   public abstract OzoneManagerProtocolProtos.TargetConfig toProtobuf();
+
+  public Map<String, String> toAuditMap() {
+    Map<String, String> auditMap = new LinkedHashMap<>();
+    auditMap.put(OzoneConsts.TARGET_ID, getTargetId());
+    auditMap.put(OzoneConsts.TARGET_TYPE, getType().name());
+    return auditMap;
+  }
 }

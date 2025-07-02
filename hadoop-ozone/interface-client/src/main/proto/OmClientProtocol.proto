@@ -156,6 +156,8 @@ enum Type {
   PutObjectTagging = 140;
   GetObjectTagging = 141;
   DeleteObjectTagging = 142;
+  AddTarget = 143;
+  GetTarget = 144;
 }
 
 enum SafeMode {
@@ -304,6 +306,9 @@ message OMRequest {
   optional PutObjectTaggingRequest          putObjectTaggingRequest        = 141;
   optional DeleteObjectTaggingRequest       deleteObjectTaggingRequest     = 142;
   repeated SetSnapshotPropertyRequest       SetSnapshotPropertyRequests    = 143;
+
+  optional GetTargetRequest                 getTargetRequest               = 144;
+  optional AddTargetRequest                 addTargetRequest               = 145;
 }
 
 message OMResponse {
@@ -437,6 +442,9 @@ message OMResponse {
   optional GetObjectTaggingResponse          getObjectTaggingResponse      = 140;
   optional PutObjectTaggingResponse          putObjectTaggingResponse      = 141;
   optional DeleteObjectTaggingResponse       deleteObjectTaggingResponse   = 142;
+
+  optional GetTargetResponse                 getTargetResponse             = 143;
+  optional AddTargetResponse                 addTargetResponse             = 144;
 }
 
 enum Status {
@@ -2359,6 +2367,22 @@ message DeleteObjectTaggingRequest {
 }
 
 message DeleteObjectTaggingResponse {
+}
+
+message AddTargetRequest {
+  required string targetId = 1;
+  required TargetConfig targetConfig = 2;
+}
+
+message AddTargetResponse {
+  required bool response = 1;
+}
+
+message GetTargetRequest {
+}
+
+message GetTargetResponse {
+  repeated TargetConfig targetConfig = 1;
 }
 
 /**

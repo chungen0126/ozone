@@ -59,6 +59,7 @@ import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.TenantStateList;
 import org.apache.hadoop.ozone.om.helpers.TenantUserInfoValue;
 import org.apache.hadoop.ozone.om.helpers.TenantUserList;
@@ -1359,4 +1360,19 @@ public interface ClientProtocol {
   void deleteObjectTagging(String volumeName, String bucketName, String keyName)
       throws IOException;
 
+  /**
+   * Get the list of target configurations.
+   *
+   * @return List of TargetConfig objects.
+   * @throws IOException if there is an error while fetching the target configs.
+   */
+  boolean addTargetConfig(TargetConfig targetConfig) throws IOException;
+
+  /**
+   * Get the list of target configurations.
+   *
+   * @return List of TargetConfig objects.
+   * @throws IOException if there is an error while fetching the target configs.
+   */
+  List<TargetConfig> getTargetConfigs() throws IOException;
 }

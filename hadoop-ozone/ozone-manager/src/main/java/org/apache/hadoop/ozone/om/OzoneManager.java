@@ -261,6 +261,7 @@ import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfo;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfoEx;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.TenantStateList;
 import org.apache.hadoop.ozone.om.helpers.TenantUserInfoValue;
 import org.apache.hadoop.ozone.om.helpers.TenantUserList;
@@ -394,6 +395,7 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
   private BucketManager bucketManager;
   private KeyManager keyManager;
   private PrefixManagerImpl prefixManager;
+  private TargetManager targetManager;
   private final UpgradeFinalizer<OzoneManager> upgradeFinalizer;
   private ExecutorService edekCacheLoader = null;
 
@@ -930,6 +932,8 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
     volumeManager = new VolumeManagerImpl(metadataManager);
 
     bucketManager = new BucketManagerImpl(this, metadataManager);
+
+    targetManager = new TargetManager(metadataManager);
 
     Class<? extends S3SecretStoreProvider> storeProviderClass =
         configuration.getClass(
@@ -4878,6 +4882,11 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
   public void startQuotaRepair(List<String> buckets) throws IOException {
     checkAdminUserPrivilege("start quota repair");
     new QuotaRepairTask(this).repair(buckets);
+  }
+
+  @Override
+  public List<TargetConfig> getTargetConfigs() throws IOException {
+    return targetManager.getTargetConfigs();
   }
 
   @Override

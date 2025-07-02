@@ -117,7 +117,10 @@ public enum OMAction implements AuditAction {
 
   GET_SNAPSHOT_DIFF_REPORT,
   LIST_SNAPSHOT_DIFF_JOBS,
-  CANCEL_SNAPSHOT_DIFF_JOBS;
+  CANCEL_SNAPSHOT_DIFF_JOBS,
+
+  ADD_TARGET,
+  GET_TARGET;
 
   @Override
   public String getAction() {

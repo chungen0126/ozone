@@ -88,6 +88,7 @@ import org.apache.hadoop.ozone.om.helpers.ServiceInfo;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfoEx;
 import org.apache.hadoop.ozone.om.helpers.SnapshotDiffJob;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.TenantStateList;
 import org.apache.hadoop.ozone.om.helpers.TenantUserInfoValue;
 import org.apache.hadoop.ozone.om.helpers.TenantUserList;
@@ -2582,6 +2583,31 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
     OMRequest omRequest = createOMRequest(Type.StartQuotaRepair)
         .setStartQuotaRepairRequest(startQuotaRepairRequest).build();
     handleError(submitRequest(omRequest));
+  }
+
+  public boolean addTargetConfig(TargetConfig targetConfig) throws IOException {
+    OzoneManagerProtocolProtos.AddTargetRequest addTargetRequest =
+        OzoneManagerProtocolProtos.AddTargetRequest.newBuilder()
+            .setTargetId(targetConfig.getTargetId())
+            .setTargetConfig(targetConfig.toProtobuf())
+            .build();
+    OMRequest omRequest = createOMRequest(Type.AddTarget)
+        .setAddTargetRequest(addTargetRequest).build();
+    OMResponse omResponse = submitRequest(omRequest);
+    handleError(omResponse);
+    return true;
+  }
+
+  @Override
+  public List<TargetConfig> getTargetConfigs() throws IOException {
+
+    OzoneManagerProtocolProtos.GetTargetRequest getTargetRequest =
+        OzoneManagerProtocolProtos.GetTargetRequest.newBuilder()
+            .build();
+    OMRequest omRequest = createOMRequest(Type.GetTarget)
+        .setGetTargetRequest(getTargetRequest).build();
+    return handleError(submitRequest(omRequest)).getGetTargetResponse().getTargetConfigList().stream().map(
+        TargetConfig::fromProtobuf).collect(Collectors.toList());
   }
 
   @Override

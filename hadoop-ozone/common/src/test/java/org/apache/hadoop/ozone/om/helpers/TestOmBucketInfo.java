@@ -189,7 +189,7 @@ public class TestOmBucketInfo {
     assertEquals(1, copyBucket.getS3NotificationInfos().size());
     S3NotificationInfo notification =
         copyBucket.getS3NotificationInfos().get(0);
-    assertEquals("test-target", notification.getTargetId());
+    assertEquals("test-target", notification.getTargeId());
     assertEquals(S3NotificationInfo.EventType.S3ObjectCreate,
         notification.getEventType());
   }
