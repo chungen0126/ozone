@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.ozone.om.request.target;
+package org.apache.hadoop.ozone.om.request.om_target;
 
 import static org.apache.hadoop.ozone.om.exceptions.OMException.ResultCodes.TARGET_ALREADY_EXISTS;
 import static org.apache.hadoop.ozone.om.lock.OzoneManagerLock.FlatResource.TARGET_LOCK;
@@ -38,7 +38,7 @@ import org.apache.hadoop.ozone.om.execution.flowcontrol.ExecutionContext;
 import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.request.OMClientRequest;
 import org.apache.hadoop.ozone.om.response.OMClientResponse;
-import org.apache.hadoop.ozone.om.response.target.OMTargetAddResponse;
+import org.apache.hadoop.ozone.om.response.om_target.OMTargetAddResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.AddTargetRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.OMRequest;

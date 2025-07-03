@@ -87,7 +87,7 @@ import org.apache.hadoop.ozone.om.request.snapshot.OMSnapshotMoveTableKeysReques
 import org.apache.hadoop.ozone.om.request.snapshot.OMSnapshotPurgeRequest;
 import org.apache.hadoop.ozone.om.request.snapshot.OMSnapshotRenameRequest;
 import org.apache.hadoop.ozone.om.request.snapshot.OMSnapshotSetPropertyRequest;
-import org.apache.hadoop.ozone.om.request.target.OMTargetAddRequest;
+import org.apache.hadoop.ozone.om.request.om_target.OMTargetAddRequest;
 import org.apache.hadoop.ozone.om.request.upgrade.OMCancelPrepareRequest;
 import org.apache.hadoop.ozone.om.request.upgrade.OMFinalizeUpgradeRequest;
 import org.apache.hadoop.ozone.om.request.upgrade.OMPrepareRequest;

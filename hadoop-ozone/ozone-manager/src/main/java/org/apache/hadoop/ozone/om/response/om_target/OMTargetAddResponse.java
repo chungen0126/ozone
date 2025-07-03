@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.ozone.om.response.target;
+package org.apache.hadoop.ozone.om.response.om_target;
 
 import java.io.IOException;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;

@@ -18,4 +18,4 @@
 /**
  * This package contains classes for the OM Responses.
  */
-package org.apache.hadoop.ozone.om.request.target;
+package org.apache.hadoop.ozone.om.response.om_target;
