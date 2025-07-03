@@ -44,6 +44,9 @@ public class OMTargetAddResponse extends OMClientResponse {
 
   @Override
   protected void addToDBBatch(OMMetadataManager omMetadataManager, BatchOperation batchOperation) throws IOException {
-
+    if (getOMResponse().getSuccess()) {
+      omMetadataManager.getTargetTable().putWithBatch(batchOperation,
+          targetConfig.getTargetId(), targetConfig);
+    }
   }
 }
