@@ -2585,6 +2585,7 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
     handleError(submitRequest(omRequest));
   }
 
+  @Override
   public boolean addTargetConfig(TargetConfig targetConfig) throws IOException {
     OzoneManagerProtocolProtos.AddTargetRequest addTargetRequest =
         OzoneManagerProtocolProtos.AddTargetRequest.newBuilder()
