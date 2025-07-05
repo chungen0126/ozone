@@ -41,6 +41,7 @@ import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.PRINCIPAL_TO_ACCES
 import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.S3_SECRET_TABLE;
 import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.SNAPSHOT_INFO_TABLE;
 import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.SNAPSHOT_RENAMED_TABLE;
+import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.TARGET_TABLE;
 import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.TENANT_ACCESS_ID_TABLE;
 import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.TENANT_STATE_TABLE;
 import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.TRANSACTION_INFO_TABLE;
@@ -137,7 +138,8 @@ public class TestOmMetadataManager {
       TENANT_STATE_TABLE,
       SNAPSHOT_INFO_TABLE,
       SNAPSHOT_RENAMED_TABLE,
-      COMPACTION_LOG_TABLE
+      COMPACTION_LOG_TABLE,
+      TARGET_TABLE
   };
 
   private OMMetadataManager omMetadataManager;

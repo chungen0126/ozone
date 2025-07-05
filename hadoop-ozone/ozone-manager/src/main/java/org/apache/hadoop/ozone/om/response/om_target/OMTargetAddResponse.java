@@ -17,16 +17,20 @@
 
 package org.apache.hadoop.ozone.om.response.om_target;
 
+import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.TARGET_TABLE;
+
 import java.io.IOException;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.om.helpers.TargetConfig;
+import org.apache.hadoop.ozone.om.response.CleanupTableInfo;
 import org.apache.hadoop.ozone.om.response.OMClientResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.OMResponse;
 
 /**
  * Response for adding a target in Ozone Manager.
  */
+@CleanupTableInfo(cleanupTables = {TARGET_TABLE})
 public class OMTargetAddResponse extends OMClientResponse {
 
   private final TargetConfig targetConfig;
