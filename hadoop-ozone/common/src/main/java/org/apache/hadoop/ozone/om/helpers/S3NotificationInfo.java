@@ -62,7 +62,7 @@ public class S3NotificationInfo {
       return false;
     }
     S3NotificationInfo that = (S3NotificationInfo) o;
-    return Objects.equals(targetId, that.getTargetId()) &&
+    return Objects.equals(targetId, that.getTargeId()) &&
         eventType == that.getEventType();
   }
 
@@ -71,7 +71,7 @@ public class S3NotificationInfo {
     return Objects.hash(targetId, eventType);
   }
 
-  public String getTargetId() {
+  public String getTargeId() {
     return targetId;
   }
 

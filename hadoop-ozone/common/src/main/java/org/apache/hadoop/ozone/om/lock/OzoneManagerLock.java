@@ -585,7 +585,8 @@ public class OzoneManagerLock implements IOzoneManagerLock {
     // Background services lock on a Snapshot.
     SNAPSHOT_GC_LOCK("SNAPSHOT_GC_LOCK"),
     // Lock acquired on a Snapshot's RocksDB Handle.
-    SNAPSHOT_DB_LOCK("SNAPSHOT_DB_LOCK");
+    SNAPSHOT_DB_LOCK("SNAPSHOT_DB_LOCK"),
+    TARGET_LOCK("TARGET_LOCK");
 
     private String name;
     private ResourceManager resourceManager;

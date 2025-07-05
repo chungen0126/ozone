@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
  */
 public class TestTargetConfig {
 
-  private static final String TARGET_ID = "test-target-id";
+  private static final String TARGET_ID = "test-target";
   private static final String TOPIC = "test-topic";
   private static final List<String> ENDPOINTS = Arrays.asList("endpoint1", "endpoint2");
   private static final boolean IS_SASL_ENABLED = true;
@@ -88,7 +88,6 @@ public class TestTargetConfig {
 
     KafkaTargetConfig kafkaConfig = KafkaTargetConfig.newBuilder()
         .setTargetId(TARGET_ID)
-        .setType(Kafka)
         .setTopic(TOPIC)
         .setEndpoints(ENDPOINTS)
         .setIsSaslEnabled(IS_SASL_ENABLED)

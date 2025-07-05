@@ -45,21 +45,38 @@ public final class KafkaTargetConfig extends TargetConfig {
 
   @Override
   public OzoneManagerProtocolProtos.TargetConfig toProtobuf() {
+    OzoneManagerProtocolProtos.KafkaTargetConfig.Builder builder =
+        OzoneManagerProtocolProtos.KafkaTargetConfig.newBuilder()
+        .addAllEndpoints(endpoints)
+        .setTopic(topic)
+        .setIsTlsEnabled(isTlsEnabled)
+        .setIsSaslEnabled(isSaslEnabled)
+        .setTlsSkipVerify(tlsSkipVerify);
+    if (saslUsername != null) {
+      builder.setSaslUsername(saslUsername);
+    }
+
+    if (saslPassword != null) {
+      builder.setSaslPassword(saslPassword);
+    }
+
+    if (saslMechanism != null) {
+      builder.setSaslMechanism(saslMechanism);
+    }
+
+    if (clientTlsCert != null) {
+      builder.setClientTlsCert(clientTlsCert);
+    }
+
+    if (clientTlsKey != null) {
+      builder.setClientTlsKey(clientTlsKey);
+    }
+
+
     return OzoneManagerProtocolProtos.TargetConfig.newBuilder()
         .setType(getType())
         .setTargetId(getTargetId())
-        .setKafkaTargetConfig(OzoneManagerProtocolProtos.KafkaTargetConfig.newBuilder()
-            .addAllEndpoints(endpoints)
-            .setTopic(topic)
-            .setIsSaslEnabled(isSaslEnabled)
-            .setSaslUsername(saslUsername)
-            .setSaslPassword(saslPassword)
-            .setSaslMechanism(saslMechanism)
-            .setIsTlsEnabled(isTlsEnabled)
-            .setTlsSkipVerify(tlsSkipVerify)
-            .setClientTlsCert(clientTlsCert)
-            .setClientTlsKey(clientTlsKey)
-            .build())
+        .setKafkaTargetConfig(builder.build())
         .build();
   }
 
@@ -82,11 +99,6 @@ public final class KafkaTargetConfig extends TargetConfig {
 
     public Builder setTargetId(String targetId) {
       this.targetId = targetId;
-      return this;
-    }
-
-    public Builder setType(Type type) {
-      this.type = type;
       return this;
     }
 

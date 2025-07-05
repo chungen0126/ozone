@@ -58,6 +58,7 @@ import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfo;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfoEx;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.TenantStateList;
 import org.apache.hadoop.ozone.om.helpers.TenantUserInfoValue;
 import org.apache.hadoop.ozone.om.helpers.TenantUserList;
@@ -1175,4 +1176,23 @@ public interface OzoneManagerProtocol
    * @throws IOException
    */
   void startQuotaRepair(List<String> buckets) throws IOException;
+
+  /**
+   * Get the target configurations for Ozone Manager.
+   *
+   * @return List of TargetConfig objects.
+   * @throws IOException if there is an error retrieving the target configs.
+   */
+  default boolean addTargetConfig(TargetConfig targetConfig) throws IOException {
+    throw new UnsupportedOperationException("OzoneManager does not require " +
+        "this to be implemented, as write requests use a new approach.");
+  }
+
+  /**
+   * Get target configs for Ozone Manager.
+   *
+   * @return List of TargetConfig
+   * @throws IOException if there is an error while fetching target configs.
+   */
+  List<TargetConfig> getTargetConfigs() throws IOException;
 }

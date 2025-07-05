@@ -41,6 +41,7 @@ import org.apache.hadoop.ozone.om.helpers.DeleteTenantState;
 import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
+import org.apache.hadoop.ozone.om.helpers.TargetConfig;
 import org.apache.hadoop.ozone.om.helpers.TenantStateList;
 import org.apache.hadoop.ozone.om.helpers.TenantUserInfoValue;
 import org.apache.hadoop.ozone.om.helpers.TenantUserList;
@@ -803,5 +804,13 @@ public class ObjectStore {
           response.getSnapshotDiffJobs().stream().map(OzoneSnapshotDiff::fromSnapshotDiffJob).iterator();
       this.lastSnapshotDiffJob = response.getLastSnapshotDiffJob();
     }
+  }
+
+  public boolean addTargetConfig(TargetConfig targetConfig) throws IOException {
+    return proxy.addTargetConfig(targetConfig);
+  }
+
+  public List<TargetConfig> getTargetConfigs() throws IOException {
+    return proxy.getTargetConfigs();
   }
 }

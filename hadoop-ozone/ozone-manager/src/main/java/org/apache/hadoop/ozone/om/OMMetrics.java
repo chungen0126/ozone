@@ -107,6 +107,9 @@ public class OMMetrics implements OmMetadataReaderMetrics {
   private @Metric MutableCounterLong numPutObjectTagging;
   private @Metric MutableCounterLong numDeleteObjectTagging;
 
+  private @Metric MutableCounterLong numAddTarget;
+  private @Metric MutableCounterLong numGetTarget;
+
   // Failure Metrics
   private @Metric MutableCounterLong numVolumeCreateFails;
   private @Metric MutableCounterLong numVolumeUpdateFails;
@@ -917,6 +920,22 @@ public class OMMetrics implements OmMetadataReaderMetrics {
 
   public void incNumSetTime() {
     numSetTime.incr();
+  }
+
+  public void incNumAddTarget() {
+    numAddTarget.incr();
+  }
+
+  public long getNumAddTarget() {
+    return numAddTarget.value();
+  }
+
+  public void incNumGetTarget() {
+    numGetTarget.incr();
+  }
+
+  public long getNumGetTarget() {
+    return numGetTarget.value();
   }
 
   @Override
