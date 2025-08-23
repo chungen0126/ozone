@@ -29,6 +29,7 @@ import org.apache.hadoop.ozone.om.helpers.OmKeyArgs;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.security.acl.OzoneObj;
 
 /**
@@ -173,4 +174,12 @@ public interface IOmMetadataReader {
    * @return Tags associated with the key.
    */
   Map<String, String> getObjectTagging(OmKeyArgs args) throws IOException;
+
+  /**
+   * Gets the S3 notification info for the specified key.
+   *
+   * @return S3 notification info associated with the key.
+   * @throws IOException if there is an error.
+   */
+  List<S3NotificationInfo> getS3NotificationInfo(String volumeName, String bucketName) throws IOException;
 }

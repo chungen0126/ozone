@@ -53,6 +53,7 @@ import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.OpenKeySession;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfo;
@@ -1175,4 +1176,10 @@ public interface OzoneManagerProtocol
    * @throws IOException
    */
   void startQuotaRepair(List<String> buckets) throws IOException;
+
+  default boolean setS3Notification(
+      String volumeName, String bucketName, List<S3NotificationInfo> s3NotificationInfos) throws IOException {
+    throw new UnsupportedOperationException("OzoneManager does not require " +
+        "this to be implemented, as write requests use a new approach.");
+  }
 }

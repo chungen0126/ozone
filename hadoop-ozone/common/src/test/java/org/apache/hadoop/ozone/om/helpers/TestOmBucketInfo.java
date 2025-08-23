@@ -31,6 +31,7 @@ import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.client.ReplicationType;
 import org.apache.hadoop.hdds.protocol.StorageType;
 import org.apache.hadoop.ozone.OzoneAcl;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo.EventType;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.apache.hadoop.ozone.security.acl.IAccessAuthorizer;
 import org.apache.hadoop.util.Time;
@@ -167,5 +168,30 @@ public class TestOmBucketInfo {
     ReplicationConfig config =
         recovered.getDefaultReplicationConfig().getReplicationConfig();
     assertEquals(new ECReplicationConfig(3, 2), config);
+  }
+
+  @Test
+  public void testS3NotificationInfoProtobufConversion() {
+    S3NotificationInfo notificationInfo = new S3NotificationInfo(
+        "test-target", EventType.S3_OBJECT_CREATE_PUT);
+
+    OmBucketInfo bucket = OmBucketInfo.newBuilder()
+        .setBucketName("bucket")
+        .setVolumeName("vol1")
+        .setCreationTime(1L)
+        .setIsVersionEnabled(false)
+        .setStorageType(StorageType.ARCHIVE)
+        .setS3NotificationInfos(Collections.singletonList(notificationInfo))
+        .build();
+
+    OmBucketInfo copyBucket =
+        OmBucketInfo.getFromProtobuf(bucket.getProtobuf());
+
+    assertEquals(1, copyBucket.getS3NotificationInfos().size());
+    S3NotificationInfo notification =
+        copyBucket.getS3NotificationInfos().get(0);
+    assertEquals("test-target", notification.getTargetId());
+    assertEquals(EventType.S3_OBJECT_CREATE_PUT,
+        notification.getEventType());
   }
 }

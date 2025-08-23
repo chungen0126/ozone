@@ -53,6 +53,7 @@ import org.apache.hadoop.ozone.om.request.bucket.OMBucketSetPropertyRequest;
 import org.apache.hadoop.ozone.om.request.bucket.acl.OMBucketAddAclRequest;
 import org.apache.hadoop.ozone.om.request.bucket.acl.OMBucketRemoveAclRequest;
 import org.apache.hadoop.ozone.om.request.bucket.acl.OMBucketSetAclRequest;
+import org.apache.hadoop.ozone.om.request.bucket.notification.OMBucketSetNotificationRequest;
 import org.apache.hadoop.ozone.om.request.file.OMRecoverLeaseRequest;
 import org.apache.hadoop.ozone.om.request.key.OMDirectoriesPurgeRequestWithFSO;
 import org.apache.hadoop.ozone.om.request.key.OMKeyPurgeRequest;
@@ -178,6 +179,8 @@ public final class OzoneManagerRatisUtils {
     case RemoveAcl:
     case SetAcl:
       return getOMAclRequest(omRequest, ozoneManager);
+    case SetNotification:
+      return new OMBucketSetNotificationRequest(omRequest);
     case GetDelegationToken:
       return new OMGetDelegationTokenRequest(omRequest);
     case CancelDelegationToken:

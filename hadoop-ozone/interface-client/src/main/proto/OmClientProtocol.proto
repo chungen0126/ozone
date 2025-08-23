@@ -156,6 +156,8 @@ enum Type {
   PutObjectTagging = 140;
   GetObjectTagging = 141;
   DeleteObjectTagging = 142;
+  SetNotification = 143;
+  GetNotification = 144;
 }
 
 enum SafeMode {
@@ -304,6 +306,11 @@ message OMRequest {
   optional PutObjectTaggingRequest          putObjectTaggingRequest        = 141;
   optional DeleteObjectTaggingRequest       deleteObjectTaggingRequest     = 142;
   repeated SetSnapshotPropertyRequest       SetSnapshotPropertyRequests    = 143;
+
+  optional GetNotificationRequest           getNotificationRequest          = 144;
+  optional SetNotificationRequest           setNotificationRequest          = 145;
+  optional AddNotificationRequest           addNotificationRequest          = 146;
+  optional RemoveNotificationRequest        removeNotificationRequest       = 147;
 }
 
 message OMResponse {
@@ -437,6 +444,11 @@ message OMResponse {
   optional GetObjectTaggingResponse          getObjectTaggingResponse      = 140;
   optional PutObjectTaggingResponse          putObjectTaggingResponse      = 141;
   optional DeleteObjectTaggingResponse       deleteObjectTaggingResponse   = 142;
+
+  optional GetNotificationResponse           getNotificationResponse       = 144;
+  optional SetNotificationResponse           setNotificationResponse       = 145;
+  optional AddNotificationResponse           addNotificationResponse       = 146;
+  optional RemoveNotificationResponse        removeNotificationResponse    = 147;
 }
 
 enum Status {
@@ -772,6 +784,7 @@ message BucketInfo {
     optional BucketLayoutProto bucketLayout = 18;
     optional string owner = 19;
     optional hadoop.hdds.DefaultReplicationConfig defaultReplicationConfig = 20;
+    repeated NotificationInfo notificationInfo = 21;
 }
 
 enum BucketLayoutProto {
@@ -949,6 +962,50 @@ message OzoneAclInfo {
     required string name = 2;
     required bytes rights = 3;
     required OzoneAclScope aclScope = 4 [default = ACCESS];
+}
+
+/**
+ * NotificationInfo is used to send notifications to clients
+ * about events that happen in Ozone.
+ */
+message NotificationInfo {
+  required string targetId = 1;
+  required S3Event event = 2;
+}
+
+enum S3Event {
+  S3_TEST = 1;
+  S3_OBJECT_CREATE_PUT = 2;
+  S3_OBJECT_CREATE_COMPLETE_MULTIPART_UPLOAD = 3;
+  S3_OBJECT_REMOVE_DELETE = 4;
+  S3_OBJECT_TAGGING_PUT = 5;
+  S3_OBJECT_TAGGING_DELETE = 6;
+}
+
+/**
+ * TargetConfig is used to configure the target for notifications.
+ * Currently, only Kafka is supported as a target.
+ */
+message TargetConfig {
+  enum Type {
+    Kafka = 1;
+  }
+  required Type type = 1;
+  required string targetId = 2;
+  optional KafkaTargetConfig kafkaTargetConfig = 3;
+}
+
+message KafkaTargetConfig {
+  repeated string endpoints = 1;
+  required string topic = 2;
+  required bool isSaslEnabled = 3 [default = false];
+  optional string saslUsername = 4;
+  optional string saslPassword = 5;
+  optional string saslMechanism = 6;
+  required bool isTlsEnabled = 7 [default = false];
+  optional bool tlsSkipVerify = 8;
+  optional string clientTlsCert = 9;
+  optional string clientTlsKey = 10;
 }
 
 message GetAclRequest {
@@ -2331,6 +2388,48 @@ message DeleteObjectTaggingRequest {
 }
 
 message DeleteObjectTaggingResponse {
+}
+
+message SetNotificationRequest {
+  required string volumeName = 1;
+  required string bucketName = 2;
+  repeated NotificationInfo notificationInfo = 3;
+  optional uint64 modificationTime = 4;
+}
+
+message SetNotificationResponse {
+  optional bool success = 1;
+}
+
+message AddNotificationRequest {
+  required string volumeName = 1;
+  required string bucketName = 2;
+  required NotificationInfo notificationInfo = 3;
+  optional uint64 modificationTime = 4;
+}
+
+message AddNotificationResponse {
+  optional bool success = 1;
+}
+
+message RemoveNotificationRequest {
+  required string volumeName = 1;
+  required string bucketName = 2;
+  required NotificationInfo notificationInfo = 3;
+  optional uint64 modificationTime = 4;
+}
+
+message RemoveNotificationResponse {
+  optional bool success = 1;
+}
+
+message GetNotificationRequest {
+  required string volumeName = 1;
+  required string bucketName = 2;
+}
+
+message GetNotificationResponse {
+  repeated NotificationInfo notificationInfo = 1;
 }
 
 /**

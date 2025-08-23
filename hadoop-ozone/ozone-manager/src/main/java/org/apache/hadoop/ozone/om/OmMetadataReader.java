@@ -52,6 +52,7 @@ import org.apache.hadoop.ozone.om.helpers.OmKeyArgs;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.helpers.S3VolumeContext;
 import org.apache.hadoop.ozone.om.protocolPB.grpc.GrpcClientConstants;
 import org.apache.hadoop.ozone.security.acl.IAccessAuthorizer;
@@ -465,6 +466,36 @@ public class OmMetadataReader implements IOmMetadataReader, Auditor {
       }
 
       perfMetrics.addGetObjectTaggingLatencyNs(Time.monotonicNowNanos() - start);
+    }
+  }
+
+  @Override
+  public List<S3NotificationInfo> getS3NotificationInfo(String volume, String bucket) throws IOException {
+    ResolvedBucket resolvedBucket =
+        ozoneManager.resolveBucketLink(Pair.of(volume, bucket));
+    String resolvedVolumeName = resolvedBucket.realVolume();
+    String resolvedBucketName = resolvedBucket.realBucket();
+
+    boolean auditSuccess = true;
+
+    try {
+      if (isAclEnabled) {
+        checkAcls(ResourceType.BUCKET,
+            StoreType.OZONE, ACLType.READ, resolvedVolumeName,
+            resolvedBucketName, null);
+      }
+      metrics.incNumGetNotification();
+      return bucketManager.getBucketInfo(volume, bucket).getS3NotificationInfos();
+    } catch (Exception ex) {
+      auditSuccess = false;
+      audit.logReadFailure(
+          buildAuditMessageForFailure(OMAction.GET_S3_NOTIFICATION, resolvedBucket.audit(), ex));
+      throw ex;
+    } finally {
+      if (auditSuccess) {
+        audit.logReadSuccess(
+            buildAuditMessageForSuccess(OMAction.GET_S3_NOTIFICATION, resolvedBucket.audit()));
+      }
     }
   }
 

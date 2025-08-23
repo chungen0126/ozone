@@ -15,41 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.ozone.om;
-
 /**
- * Interface OM Metadata Reading metrics classes.
+ * This package contains classes for handling bucket notification responses.
  */
-public interface OmMetadataReaderMetrics {
-  void incNumKeyLookups();
-
-  void incNumKeyLookupFails();
-
-  void incNumGetKeyInfo();
-
-  void incNumGetKeyInfoFails();
-
-  void incNumListStatus();
-
-  void incNumListStatusFails();
-
-  void incNumGetFileStatus();
-
-  void incNumGetFileStatusFails();
-
-  void incNumLookupFile();
-
-  void incNumLookupFileFails();
-
-  void incNumKeyLists();
-
-  void incNumKeyListFails();
-
-  void incNumGetAcl();
-
-  void incNumGetObjectTagging();
-
-  void incNumGetObjectTaggingFails();
-
-  void incNumGetNotification();
-}
+package org.apache.hadoop.ozone.om.response.bucket.notification;

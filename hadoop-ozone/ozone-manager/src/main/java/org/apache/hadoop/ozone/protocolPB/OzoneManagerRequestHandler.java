@@ -84,6 +84,7 @@ import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
 import org.apache.hadoop.ozone.om.helpers.OpenKeySession;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
+import org.apache.hadoop.ozone.om.helpers.S3NotificationInfo;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfo;
 import org.apache.hadoop.ozone.om.helpers.ServiceInfoEx;
 import org.apache.hadoop.ozone.om.helpers.SnapshotDiffJob;
@@ -112,6 +113,7 @@ import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetFile
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetFileStatusResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyInfoRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyInfoResponse;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetNotificationResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3VolumeContextResponse;
@@ -391,6 +393,10 @@ public class OzoneManagerRequestHandler implements RequestHandler {
             getObjectTagging(request.getGetObjectTaggingRequest());
         responseBuilder.setGetObjectTaggingResponse(getObjectTaggingResponse);
         break;
+      case GetNotification:
+        OzoneManagerProtocolProtos.GetNotificationResponse setNotificationRequest =
+            getNotificationResponse(request.getGetNotificationRequest());
+        responseBuilder.setGetNotificationResponse(setNotificationRequest);
       default:
         responseBuilder.setSuccess(false);
         responseBuilder.setMessage("Unrecognized Command Type: " + cmdType);
@@ -1585,6 +1591,16 @@ public class OzoneManagerRequestHandler implements RequestHandler {
 
   private long limitListSize(long requestedSize) {
     return Math.min(requestedSize, impl.getConfig().getMaxListSize());
+  }
+
+  private GetNotificationResponse getNotificationResponse(OzoneManagerProtocolProtos.GetNotificationRequest request)
+      throws IOException {
+    GetNotificationResponse.Builder responseBuilder = GetNotificationResponse.newBuilder();
+    List<S3NotificationInfo> notificationInfos =
+        impl.getS3NotificationInfo(request.getVolumeName(), request.getBucketName());
+    responseBuilder.addAllNotificationInfo(notificationInfos.stream().map(S3NotificationInfo::toProtobuf).collect(
+        Collectors.toList()));
+    return responseBuilder.build();
   }
 
 }

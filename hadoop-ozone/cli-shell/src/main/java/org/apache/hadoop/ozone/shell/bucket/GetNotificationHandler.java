@@ -15,41 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.ozone.om;
+package org.apache.hadoop.ozone.shell.bucket;
+
+import java.io.IOException;
+import org.apache.hadoop.ozone.client.OzoneBucket;
+import org.apache.hadoop.ozone.client.OzoneClient;
+import org.apache.hadoop.ozone.shell.OzoneAddress;
 
 /**
- * Interface OM Metadata Reading metrics classes.
+ * Handler for getting notification configuration of a bucket.
  */
-public interface OmMetadataReaderMetrics {
-  void incNumKeyLookups();
+public class GetNotificationHandler extends BucketHandler {
 
-  void incNumKeyLookupFails();
-
-  void incNumGetKeyInfo();
-
-  void incNumGetKeyInfoFails();
-
-  void incNumListStatus();
-
-  void incNumListStatusFails();
-
-  void incNumGetFileStatus();
-
-  void incNumGetFileStatusFails();
-
-  void incNumLookupFile();
-
-  void incNumLookupFileFails();
-
-  void incNumKeyLists();
-
-  void incNumKeyListFails();
-
-  void incNumGetAcl();
-
-  void incNumGetObjectTagging();
-
-  void incNumGetObjectTaggingFails();
-
-  void incNumGetNotification();
+  @Override
+  public void execute(OzoneClient client, OzoneAddress address) throws IOException {
+    OzoneBucket bucket = client.getObjectStore()
+        .getVolume(address.getVolumeName())
+        .getBucket(address.getBucketName());
+    printObjectAsJson(bucket.getS3Notification());
+  }
 }
