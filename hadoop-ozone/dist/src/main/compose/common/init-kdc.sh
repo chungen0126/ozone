@@ -55,6 +55,9 @@ export_keytab HTTP/s3g s3g
 export_keytab testuser/s3g s3g
 export_keytab testuser2/s3g s3g
 
+export_keytab HTTP/admin admin
+export_keytab admin/admin admin
+
 export_keytab httpfs/httpfs httpfs
 export_keytab HTTP/httpfs httpfs
 export_keytab testuser/httpfs httpfs

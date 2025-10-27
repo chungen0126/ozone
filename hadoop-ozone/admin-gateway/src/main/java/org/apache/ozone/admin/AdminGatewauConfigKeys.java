@@ -49,6 +49,12 @@ public final class AdminGatewauConfigKeys {
   public static final String OZONE_ADMIN_GATEWAY_WEB_AUTHENTICATION_KERBEROS_PRINCIPAL =
       OZONE_ADMIN_GATEWAY_AUTH_CONFIG_PREFIX + "kerberos.principal";
 
+  // S3G kerberos, principal config
+  public static final String OZONE_ADMIN_KERBEROS_KEYTAB_FILE_KEY =
+      "ozone.admin.gateway.kerberos.keytab.file";
+  public static final String OZONE_ADMIN_KERBEROS_PRINCIPAL_KEY =
+      "ozone.admin.gateway.kerberos.principal";
+
   /**
    * Never constructed.
    */

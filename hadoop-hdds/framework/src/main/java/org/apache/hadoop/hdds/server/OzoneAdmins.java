@@ -36,6 +36,8 @@ import java.util.Set;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class contains ozone admin user information, username and group,
@@ -43,6 +45,8 @@ import org.apache.hadoop.security.UserGroupInformation;
  * has admin permissions.
  */
 public class OzoneAdmins {
+
+  private static final Logger LOG= LoggerFactory.getLogger(OzoneAdmins.class);
 
   /**
    * Ozone super user / admin username list.

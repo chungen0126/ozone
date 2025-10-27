@@ -17,12 +17,20 @@
 
 package org.apache.ozone.admin;
 
+import static org.apache.ozone.admin.AdminGatewauConfigKeys.OZONE_ADMIN_KERBEROS_KEYTAB_FILE_KEY;
+import static org.apache.ozone.admin.AdminGatewauConfigKeys.OZONE_ADMIN_KERBEROS_PRINCIPAL_KEY;
+
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import org.apache.hadoop.hdds.cli.GenericCli;
 import org.apache.hadoop.hdds.cli.HddsVersionProvider;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
+import org.apache.hadoop.ozone.OzoneSecurityUtil;
+import org.apache.hadoop.ozone.om.OMConfigKeys;
 import org.apache.hadoop.ozone.util.OzoneNetUtils;
+import org.apache.hadoop.security.SecurityUtil;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -50,13 +58,16 @@ public class Gateway extends GenericCli implements Callable<Void> {
   public Void call() throws Exception {
     OzoneConfiguration conf = getOzoneConf();
     OzoneConfigurationHolder.setConfiguration(conf);
+    UserGroupInformation.setConfiguration(OzoneConfigurationHolder.configuration());
+    loginS3GUser(OzoneConfigurationHolder.configuration());
     httpServer = new AdminGatewayHttpServer(conf, "adminGateway");
     start();
     return null;
   }
 
   public void start() throws IOException {
-    LOG.info("Starting Ozone admin gateway");
+    LOG.info("Starting Ozone admin gateway, {} = {}", OMConfigKeys.OZONE_OM_MULTITENANCY_ENABLED,
+        OzoneConfigurationHolder.configuration().get(OMConfigKeys.OZONE_OM_MULTITENANCY_ENABLED));
     httpServer.start();
   }
 
@@ -64,4 +75,28 @@ public class Gateway extends GenericCli implements Callable<Void> {
     LOG.info("Stoping Ozone admin gateway");
     httpServer.stop();
   }
+
+  private static void loginS3GUser(OzoneConfiguration conf)
+      throws IOException, AuthenticationException {
+    if (OzoneSecurityUtil.isSecurityEnabled(conf)) {
+      if (SecurityUtil.getAuthenticationMethod(conf).equals(
+          UserGroupInformation.AuthenticationMethod.KERBEROS)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Ozone security is enabled. Attempting login for admin gateway user. "
+                  + "Principal: {}, keytab: {}",
+              conf.get(OZONE_ADMIN_KERBEROS_PRINCIPAL_KEY),
+              conf.get(OZONE_ADMIN_KERBEROS_KEYTAB_FILE_KEY));
+        }
+
+        SecurityUtil.login(conf, OZONE_ADMIN_KERBEROS_KEYTAB_FILE_KEY,
+            OZONE_ADMIN_KERBEROS_PRINCIPAL_KEY);
+      } else {
+        throw new AuthenticationException(SecurityUtil.getAuthenticationMethod(
+            conf) + " authentication method not supported. S3G user login "
+            + "failed.");
+      }
+      LOG.info("S3Gateway login successful.");
+    }
+  }
+
 }

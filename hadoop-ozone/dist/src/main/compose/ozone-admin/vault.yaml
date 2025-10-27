@@ -14,10 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-HDDS_VERSION=${hdds.version}
-HADOOP_IMAGE=apache/hadoop
-HADOOP_VERSION=${hadoop.version}
-OZONE_RUNNER_VERSION=${docker.ozone-runner.version}
-OZONE_RUNNER_IMAGE=apache/ozone-runner
-OZONE_TESTKRB5_IMAGE=${docker.ozone-testkr5b.image}
-OZONE_OPTS=
+services:
+  om:
+    env_file:
+      - vault.conf
+    environment:
+      - OZONE_OPTS=-Dcom.sun.net.ssl.checkRevocation=false
+      - OZONE_MANAGER_CLASSPATH=/opt/hadoop/share/ozone/lib/ozone-s3-secret-store-@project.version@.jar:/opt/hadoop/share/ozone/lib/vault-java-driver-@vault.driver.version@.jar
+  vault:
+    image: hashicorp/vault:1.13.2
+    hostname: vault
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - ${VAULT_PORT:-8200}:8200
+    command:
+      - server
+      - -dev
+      - -dev-root-token-id=00000000-0000-0000-0000-000000000000
+      - -namespace=namespace

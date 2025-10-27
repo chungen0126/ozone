@@ -39,9 +39,9 @@ public class ListTenant extends EndpointBase {
   @Produces(MediaType.APPLICATION_XML)
   public Response get() throws Exception {
     LOG.info("Listing tenants");
-    TenantStateList tanents = getObjectStore().listTenant();
-    ListTanentResponse response = new ListTanentResponse();
-    tanents.getTenantStateList().forEach(t ->
+    TenantStateList tenants = getObjectStore().listTenant();
+    ListTenantResponse response = new ListTenantResponse();
+    tenants.getTenantStateList().forEach(t ->
         response.addTenant(t.getTenantId()));
     return Response.ok(response).build();
   }

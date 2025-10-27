@@ -19,12 +19,17 @@ package org.apache.ozone.admin;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Response from the ListTenants RPC Call.
  */
-public class ListTanentResponse {
+@XmlRootElement(name = "listTenantResponse") // <--- 加上這行
+@XmlAccessorType(XmlAccessType.FIELD)
+public class ListTenantResponse {
 
   @XmlElement(name = "tenants")
   private List<String> tenants = new ArrayList<>();
