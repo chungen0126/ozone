@@ -19,8 +19,8 @@ package org.apache.hadoop.hdds.scm.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -289,7 +289,11 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
    */
   public class StreamingReader implements StreamingReaderSpi {
 
-    private final BlockingQueue<ContainerProtos.ReadBlockResponseProto> responseQueue = new LinkedBlockingQueue<>(1);
+    // Hint: Consider increasing this queue size and implementing batch request logic.
+    // This helps reduces context switching between application and network threads.
+    private static final int MAX_QUEUE_SIZE = 1;
+    private final BlockingQueue<ContainerProtos.ReadBlockResponseProto> responseQueue =
+        new ArrayBlockingQueue<>(MAX_QUEUE_SIZE);
     private final AtomicBoolean completed = new AtomicBoolean(false);
     private final AtomicBoolean failed = new AtomicBoolean(false);
     private final AtomicBoolean semaphoreReleased = new AtomicBoolean(false);
@@ -328,6 +332,13 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
           throw new IOException("Timed out waiting for response");
         }
       }
+
+      // We have successfully removed an item from the queue.
+      // We now signal gRPC framework to send exactly one more chunk.
+      if (requestObserver != null) {
+        requestObserver.request(1);
+      }
+
       // The server always returns data starting from the last checksum boundary. Therefore if the reader position is
       // ahead of the position we received from the server, we need to adjust the buffer position accordingly.
       // If the reader position is behind
@@ -424,14 +435,14 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
     }
 
     private void offerToQueue(ReadBlockResponseProto item) {
-      while (!completed.get() && !failed.get()) {
+      if (!completed.get() && !failed.get()) {
         try {
-          if (responseQueue.offer(item, 100, TimeUnit.MILLISECONDS)) {
-            return;
+          if (!responseQueue.offer(item, 100, TimeUnit.MILLISECONDS)) {
+            cancelDueToError(new IllegalStateException(
+                "Buffer overflow: Received unexpected data while queue is full."));
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          return;
         }
       }
     }
@@ -444,6 +455,7 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
     @Override
     public void beforeStart(
         ClientCallStreamObserver<ContainerProtos.ContainerCommandRequestProto> clientCallStreamObserver) {
+      clientCallStreamObserver.disableAutoRequestWithInitial(MAX_QUEUE_SIZE);
       this.requestObserver = clientCallStreamObserver;
     }
   }
