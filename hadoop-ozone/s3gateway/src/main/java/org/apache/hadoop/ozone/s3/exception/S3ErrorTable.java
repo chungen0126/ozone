@@ -58,7 +58,7 @@ public final class S3ErrorTable {
           "The request may not be signed using AWS V4 signing algorithm," +
           " or might be invalid", HTTP_FORBIDDEN);
 
-  public static final OS3Exception SignatureDoesNotMatch =
+  public static final OS3Exception SIGNATURE_DOES_NOT_MATCH =
       new OS3Exception("SignatureDoesNotMatch", "The request signature we " +
           "calculated does not match the signature you provided. Check your " +
           "AWS Secret Access Key and signing method.", HTTP_FORBIDDEN);

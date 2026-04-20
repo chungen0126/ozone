@@ -17,7 +17,7 @@
 
 package org.apache.hadoop.ozone.s3;
 
-import static org.apache.hadoop.ozone.s3.exception.S3ErrorTable.SignatureDoesNotMatch;
+import static org.apache.hadoop.ozone.s3.exception.S3ErrorTable.SIGNATURE_DOES_NOT_MATCH;
 import static org.apache.hadoop.ozone.s3.util.S3Utils.eol;
 
 import java.io.EOFException;
@@ -131,7 +131,8 @@ public class SignedChunksInputStream extends InputStream {
   private final String resource;
 
   public SignedChunksInputStream(
-      InputStream inputStream, String amzContentSha256Header, String secretKey, SignatureInfo signatureInfo, String resource) {
+      InputStream inputStream, String amzContentSha256Header,
+      String secretKey, SignatureInfo signatureInfo, String resource) {
     originalStream = inputStream;
     this.derivedKey = AWSV4AuthValidator.getSigningKey(secretKey, signatureInfo.getStringToSign());
     this.previousSignature = signatureInfo.getSignature();
@@ -144,7 +145,8 @@ public class SignedChunksInputStream extends InputStream {
     try {
       messageDigest = MessageDigest.getInstance("SHA-256");
     } catch (NoSuchAlgorithmException e) {
-      throw new IllegalArgumentException("Failed to initialize MessageDigest that implements the SHA-256 algorithm.", e);
+      throw new IllegalArgumentException(
+          "Failed to initialize MessageDigest that implements the SHA-256 algorithm.", e);
     }
   }
 
@@ -295,11 +297,12 @@ public class SignedChunksInputStream extends InputStream {
   }
 
   private void validateChunk() {
-    String strToSign = buildChunkStringToSign(String.format("%064x", new java.math.BigInteger(1, messageDigest.digest())));
+    String strToSign = buildChunkStringToSign(
+        String.format("%064x", new java.math.BigInteger(1, messageDigest.digest())));
     System.out.println("strToSign: " + strToSign + ", expectedSignature: " + expectedSignature + ", derivedKey: " +
         Hex.encode(derivedKey));
     if (!AWSV4AuthValidator.validateChunk(expectedSignature, strToSign, derivedKey)) {
-      throw S3ErrorTable.newError(SignatureDoesNotMatch, resource);
+      throw S3ErrorTable.newError(SIGNATURE_DOES_NOT_MATCH, resource);
     }
     messageDigest.reset();
     previousSignature = expectedSignature;

@@ -28,7 +28,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.ozone.s3.signature.SignatureInfo;
 import org.apache.hadoop.ozone.s3.signature.SignatureInfo.Version;
 import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 
 /**
  * Test {@link SignedChunksInputStream}.
@@ -160,7 +159,8 @@ public class TestSignedChunksInputStream {
   @Test
   void testMultiChunks() throws IOException {
     //test simple read()
-    try (InputStream is = wrapContent("0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
         + "abcde\r\n"
@@ -170,7 +170,8 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int)
-    try (InputStream is = wrapContent("0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
         + "abcde\r\n"
@@ -181,7 +182,8 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int) with length parameter larger than the payload
-    try (InputStream is = wrapContent("0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
         + "abcde\r\n"
@@ -196,7 +198,8 @@ public class TestSignedChunksInputStream {
   @Test
   void testMultiChunksWithTrailer() throws Exception {
     //test simple read()
-    try (InputStream is = wrapContent("0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
         + "abcde\r\n"
@@ -208,7 +211,8 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int)
-    try (InputStream is = wrapContent("0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
         + "abcde\r\n"
@@ -221,7 +225,8 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int) with length parameter larger than the payload
-    try (InputStream is = wrapContent("0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
         + "abcde\r\n"
@@ -234,7 +239,7 @@ public class TestSignedChunksInputStream {
       assertEquals("1234567890abcde", new String(bytes, UTF_8).substring(0, 15));
     }
   }
-//20260419/us-east-1/s3
+
   private InputStream wrapContent(String content) {
     SignatureInfo signatureInfo = new SignatureInfo.Builder(Version.V4)
         .setSignature("23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40")
@@ -246,6 +251,7 @@ public class TestSignedChunksInputStream {
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
         .build();
     return new SignedChunksInputStream(
-        new ByteArrayInputStream(content.getBytes(UTF_8)), STREAMING_AWS4_HMAC_SHA256_PAYLOAD, SECRET_KEY, signatureInfo, "");
+        new ByteArrayInputStream(
+            content.getBytes(UTF_8)), STREAMING_AWS4_HMAC_SHA256_PAYLOAD, SECRET_KEY, signatureInfo, "");
   }
 }
