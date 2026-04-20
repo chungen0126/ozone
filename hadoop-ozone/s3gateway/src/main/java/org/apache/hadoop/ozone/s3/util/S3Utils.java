@@ -24,6 +24,8 @@ import static org.apache.hadoop.ozone.s3.exception.S3ErrorTable.newError;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.AWS_CHUNKED;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.DECODED_CONTENT_LENGTH_HEADER;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.MULTI_CHUNKS_UPLOAD_PREFIX;
+import static org.apache.hadoop.ozone.s3.util.S3Consts.STREAMING_AWS4_HMAC_SHA256_PAYLOAD;
+import static org.apache.hadoop.ozone.s3.util.S3Consts.STREAMING_AWS4_HMAC_SHA256_PAYLOAD_TRAILER;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.STREAMING_UNSIGNED_PAYLOAD_TRAILER;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.UNSIGNED_PAYLOAD;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.X_AMZ_CONTENT_SHA256;
@@ -120,6 +122,17 @@ public final class S3Utils {
     Objects.requireNonNull(amzContentSha256Header);
     return amzContentSha256Header.equals(UNSIGNED_PAYLOAD) ||
         amzContentSha256Header.equals(STREAMING_UNSIGNED_PAYLOAD_TRAILER);
+  }
+
+  public static boolean isHMACSHA256SignedPayload(@Nonnull String amzContentSha256Header) {
+    Objects.requireNonNull(amzContentSha256Header);
+    return amzContentSha256Header.equals(STREAMING_AWS4_HMAC_SHA256_PAYLOAD) ||
+        amzContentSha256Header.equals(STREAMING_AWS4_HMAC_SHA256_PAYLOAD_TRAILER);
+  }
+
+  public static boolean isTrailerSignature(@Nonnull String amzContentSha256Header) {
+    Objects.requireNonNull(amzContentSha256Header);
+    return amzContentSha256Header.equals(STREAMING_AWS4_HMAC_SHA256_PAYLOAD_TRAILER);
   }
 
   public static boolean hasMultiChunksPayload(@Nonnull String amzContentSha256Header) {

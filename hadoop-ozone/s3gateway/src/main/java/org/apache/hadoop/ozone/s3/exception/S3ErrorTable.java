@@ -58,6 +58,11 @@ public final class S3ErrorTable {
           "The request may not be signed using AWS V4 signing algorithm," +
           " or might be invalid", HTTP_FORBIDDEN);
 
+  public static final OS3Exception SignatureDoesNotMatch =
+      new OS3Exception("SignatureDoesNotMatch", "The request signature we " +
+          "calculated does not match the signature you provided. Check your " +
+          "AWS Secret Access Key and signing method.", HTTP_FORBIDDEN);
+
   public static final OS3Exception BUCKET_NOT_EMPTY = new OS3Exception(
       "BucketNotEmpty", "The bucket you tried to delete is not empty. " +
       "If you are using --force option to delete all objects in the bucket, " +

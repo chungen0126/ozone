@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.ozone.security;
+package org.apache.hadoop.ozone.om;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * documentation https://docs.aws.amazon.com/general/latest/gr/
  * sigv4-create-canonical-request.html.
  **/
-final class AWSV4AuthValidator {
+public final class AWSV4AuthValidator {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(AWSV4AuthValidator.class);
@@ -88,7 +88,7 @@ final class AWSV4AuthValidator {
    * .com/AmazonS3/latest/API/sig-v4-header-based-auth.html
    *
    * */
-  private static byte[] getSigningKey(String key, String strToSign) {
+  public static byte[] getSigningKey(String key, String strToSign) {
     String[] signData = StringUtils.split(StringUtils.split(strToSign,
         '\n')[2], '/');
     String dateStamp = signData[0];
@@ -117,6 +117,11 @@ final class AWSV4AuthValidator {
       String userKey) {
     String expectedSignature = Hex.encode(sign(getSigningKey(userKey,
         strToSign), strToSign));
+    return expectedSignature.equals(signature);
+  }
+
+  public static boolean validateChunk(String signature, String chunk, byte[] derivedKey) {
+    String expectedSignature = Hex.encode(sign(derivedKey, chunk));
     return expectedSignature.equals(signature);
   }
 }

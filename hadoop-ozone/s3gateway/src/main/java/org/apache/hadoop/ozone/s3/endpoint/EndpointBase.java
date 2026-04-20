@@ -95,6 +95,7 @@ import org.apache.hadoop.ozone.client.OzoneVolume;
 import org.apache.hadoop.ozone.client.protocol.ClientProtocol;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.om.exceptions.OMException.ResultCodes;
+import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.protocol.S3Auth;
 import org.apache.hadoop.ozone.s3.MultiDigestInputStream;
 import org.apache.hadoop.ozone.s3.RequestIdentifier;
@@ -674,7 +675,8 @@ public abstract class EndpointBase {
   protected boolean isAccessDenied(OMException ex) {
     ResultCodes result = ex.getResult();
     return result == ResultCodes.PERMISSION_DENIED
-        || result == ResultCodes.INVALID_TOKEN;
+        || result == ResultCodes.INVALID_TOKEN
+        || result == ResultCodes.ACCESS_ID_NOT_FOUND;
   }
 
   protected ReplicationConfig getReplicationConfig(OzoneBucket ozoneBucket) throws OS3Exception {
@@ -775,7 +777,7 @@ public abstract class EndpointBase {
    * the S3 chunk upload.
    */
   protected S3ChunkInputStreamInfo getS3ChunkInputStreamInfo(
-      InputStream body, long contentLength, String amzDecodedLength, String keyPath) throws OS3Exception {
+      InputStream body, long contentLength, String amzDecodedLength, String keyPath) throws OS3Exception, IOException {
     final String amzContentSha256Header = validateSignatureHeader(getHeaders(), keyPath, signatureInfo.isSignPayload());
     final InputStream chunkInputStream;
     final long effectiveLength;
@@ -784,7 +786,8 @@ public abstract class EndpointBase {
       if (hasUnsignedPayload(amzContentSha256Header)) {
         chunkInputStream = new UnsignedChunksInputStream(body);
       } else {
-        chunkInputStream = new SignedChunksInputStream(body);
+        S3SecretValue secretKey = client.getObjectStore().getS3Secret(s3Auth.getAccessID(), false);
+        chunkInputStream = new SignedChunksInputStream(body, amzContentSha256Header, secretKey.getAwsSecret(), signatureInfo, keyPath);
       }
       effectiveLength = Long.parseLong(amzDecodedLength);
     } else {
