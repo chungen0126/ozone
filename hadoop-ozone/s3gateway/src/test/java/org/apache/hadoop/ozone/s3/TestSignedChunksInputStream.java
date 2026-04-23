@@ -26,8 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.ozone.s3.signature.ChunkSignatureValidator;
-import org.apache.hadoop.ozone.s3.signature.SignatureInfo;
-import org.apache.hadoop.ozone.s3.signature.SignatureInfo.Version;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
