@@ -166,7 +166,8 @@ public class TestSignedChunksInputStream {
   @Test
   void testMultiChunks() throws IOException {
     //test simple read()
-    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
@@ -176,7 +177,8 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int)
-    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
@@ -187,7 +189,8 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int) with length parameter larger than the payload
-    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
@@ -202,7 +205,8 @@ public class TestSignedChunksInputStream {
   @Test
   void testMultiChunksWithTrailer() throws Exception {
     //test simple read()
-    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
@@ -214,7 +218,8 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int)
-    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
@@ -227,7 +232,8 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int) with length parameter larger than the payload
-    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
+    try (InputStream is = wrapContent(
+        "0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
         + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"

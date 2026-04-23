@@ -17,7 +17,6 @@
 
 package org.apache.hadoop.ozone.s3;
 
-import static org.apache.hadoop.ozone.s3.exception.S3ErrorTable.SIGNATURE_DOES_NOT_MATCH;
 import static org.apache.hadoop.ozone.s3.util.S3Utils.eol;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -27,11 +26,8 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.hadoop.ozone.om.AWSV4AuthValidator;
-import org.apache.hadoop.ozone.s3.exception.S3ErrorTable;
 import org.apache.hadoop.ozone.s3.signature.ChunkSignatureValidator;
 import org.apache.hadoop.ozone.s3.signature.SignatureInfo;
-import org.apache.kerby.util.Hex;
 
 /**
  * Input stream implementation to read body of a signed chunked upload. This should also work

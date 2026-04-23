@@ -25,6 +25,9 @@ import org.apache.hadoop.ozone.om.AWSV4AuthValidator;
 import org.apache.hadoop.ozone.s3.exception.S3ErrorTable;
 import org.apache.kerby.util.Hex;
 
+/**
+ * Validator for validating the signature of each chunk in the chunked upload with signature.
+ */
 public class ChunkSignatureValidator {
 
   /**
@@ -60,7 +63,6 @@ public class ChunkSignatureValidator {
   private final String amzContentSha256Header;
 
   private final String resource;
-
 
   public ChunkSignatureValidator(
       String secretKey, SignatureInfo signatureInfo, String amzContentSha256Header, String resource) {
