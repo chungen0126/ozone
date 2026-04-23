@@ -248,15 +248,6 @@ public class TestSignedChunksInputStream {
   }
 
   private InputStream wrapContent(String content) {
-    SignatureInfo signatureInfo = new SignatureInfo.Builder(Version.V4)
-        .setSignature("23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40")
-        .setDateTime("20260419T000000Z")
-        .setCredentialScope("20260419/us-east-1/s3/aws4_request")
-        .setStringToSign("AWS4-HMAC-SHA256\n" +
-            "20260419T000000Z\n" +
-            "20260419/us-east-1/s3/aws4_request\n" +
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
-        .build();
     return new SignedChunksInputStream(
         new ByteArrayInputStream(
             content.getBytes(UTF_8)), chunkSignatureValidator);
