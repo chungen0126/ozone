@@ -66,7 +66,7 @@ public class ChunkSignatureValidator {
 
   public ChunkSignatureValidator(
       byte[] derivedKey, SignatureInfo signatureInfo, String amzContentSha256Header, String resource) {
-    this.derivedKey = derivedKey;
+    this.derivedKey = (derivedKey == null) ? null : derivedKey.clone();
     this.previousSignature = signatureInfo.getSignature();
     this.signatureInfo = signatureInfo;
     this.amzContentSha256Header = amzContentSha256Header;
