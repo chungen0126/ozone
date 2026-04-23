@@ -95,7 +95,6 @@ import org.apache.hadoop.ozone.client.OzoneVolume;
 import org.apache.hadoop.ozone.client.protocol.ClientProtocol;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.om.exceptions.OMException.ResultCodes;
-import org.apache.hadoop.ozone.om.helpers.S3SecretValue;
 import org.apache.hadoop.ozone.om.protocol.S3Auth;
 import org.apache.hadoop.ozone.s3.MultiDigestInputStream;
 import org.apache.hadoop.ozone.s3.RequestIdentifier;
@@ -785,7 +784,8 @@ public abstract class EndpointBase {
       if (hasUnsignedPayload(amzContentSha256Header)) {
         chunkInputStream = new UnsignedChunksInputStream(body);
       } else {
-        byte[] derivedKey = client.getObjectStore().getS3DerivedKey(s3Auth.getAccessID(), signatureInfo.getCredentialScope());
+        byte[] derivedKey = client.getObjectStore().getS3DerivedKey(
+            s3Auth.getAccessID(), signatureInfo.getCredentialScope());
         chunkInputStream = new SignedChunksInputStream(
             body, amzContentSha256Header, derivedKey, signatureInfo, keyPath);
       }
