@@ -96,8 +96,8 @@ public class SignedChunksInputStream extends InputStream {
 
   public SignedChunksInputStream(
       InputStream inputStream, String amzContentSha256Header,
-      String secretKey, SignatureInfo signatureInfo, String resource) {
-    this(inputStream,  new ChunkSignatureValidator(secretKey, signatureInfo, amzContentSha256Header, resource));
+      byte[] derivedKey, SignatureInfo signatureInfo, String resource) {
+    this(inputStream,  new ChunkSignatureValidator(derivedKey, signatureInfo, amzContentSha256Header, resource));
   }
 
   @VisibleForTesting

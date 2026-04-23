@@ -436,6 +436,11 @@ public class ClientProtocolStub implements ClientProtocol {
   }
 
   @Override
+  public byte[] getS3DerivedKey(String accessId, String credentialScope) throws IOException {
+    return null;
+  }
+
+  @Override
   public void revokeS3Secret(String kerberosID) throws IOException {
 
   }

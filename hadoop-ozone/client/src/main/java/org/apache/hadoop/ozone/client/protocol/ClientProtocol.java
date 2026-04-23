@@ -743,6 +743,8 @@ public interface ClientProtocol {
   S3SecretValue setS3Secret(String accessId, String secretKey)
       throws IOException;
 
+  byte[] getS3DerivedKey(String accessId, String credentialScope) throws IOException;
+
   /**
    * Revoke S3 Secret of given kerberos user.
    * @param kerberosID

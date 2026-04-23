@@ -837,6 +837,13 @@ public class RpcClient implements ClientProtocol {
     return ozoneManagerClient.setS3Secret(accessId, secretKey);
   }
 
+  @Override
+  public byte[] getS3DerivedKey(String accessId, String credentialScope) throws IOException {
+    Preconditions.checkArgument(StringUtils.isNotBlank(accessId), "accessId cannot be null or empty.");
+    Preconditions.checkArgument(StringUtils.isNotBlank(credentialScope), "credentialScopt cannot be null or empty.");
+    return ozoneManagerClient.getS3DerivedKey(accessId, credentialScope);
+  }
+
   /**
    * {@inheritDoc}
    */

@@ -1175,4 +1175,12 @@ public interface OzoneManagerProtocol
    * @throws IOException
    */
   void startQuotaRepair(List<String> buckets) throws IOException;
+
+  /**
+   * Get the S3 derived key for the given accessId.
+   * @param accessId Access ID for which the S3 derived key is requested.
+   * @return S3 derived key in byte array format.
+   * @throws IOException if there is an error while fetching the S3 derived key.
+   */
+  byte[] getS3DerivedKey(String accessId, String credentialScope) throws IOException;
 }

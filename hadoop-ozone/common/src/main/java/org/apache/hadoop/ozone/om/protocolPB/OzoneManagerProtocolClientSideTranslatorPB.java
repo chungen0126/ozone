@@ -140,6 +140,7 @@ import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyI
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyInfoResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingResponse;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3DerivedKeyRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3SecretRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3SecretResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3VolumeContextRequest;
@@ -2583,6 +2584,20 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
     OMRequest omRequest = createOMRequest(Type.StartQuotaRepair)
         .setStartQuotaRepairRequest(startQuotaRepairRequest).build();
     handleError(submitRequest(omRequest));
+  }
+
+  @Override
+  public byte[] getS3DerivedKey(String accessId, String credentialScope)
+      throws IOException {
+    OzoneManagerProtocolProtos.GetS3DerivedKeyRequest getS3DerivedKeyRequest =
+        OzoneManagerProtocolProtos.GetS3DerivedKeyRequest.newBuilder()
+            .setAccessId(accessId)
+            .setCredentialScope(credentialScope)
+            .build();
+    OMRequest omRequest = createOMRequest(Type.GetS3DerivedKeys)
+        .setGetS3DerivedKeyRequest(getS3DerivedKeyRequest).build();
+    handleError(submitRequest(omRequest));
+    return new byte[0];
   }
 
   @Override

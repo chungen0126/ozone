@@ -156,6 +156,7 @@ enum Type {
   PutObjectTagging = 140;
   GetObjectTagging = 141;
   DeleteObjectTagging = 142;
+  GetS3DerivedKeys = 143;
 }
 
 enum SafeMode {
@@ -304,6 +305,7 @@ message OMRequest {
   optional PutObjectTaggingRequest          putObjectTaggingRequest        = 141;
   optional DeleteObjectTaggingRequest       deleteObjectTaggingRequest     = 142;
   repeated SetSnapshotPropertyRequest       SetSnapshotPropertyRequests    = 143;
+  optional GetS3DerivedKeyRequest           getS3DerivedKeyRequest         = 144;
 }
 
 message OMResponse {
@@ -437,6 +439,7 @@ message OMResponse {
   optional GetObjectTaggingResponse          getObjectTaggingResponse      = 140;
   optional PutObjectTaggingResponse          putObjectTaggingResponse      = 141;
   optional DeleteObjectTaggingResponse       deleteObjectTaggingResponse   = 142;
+  optional GetS3DerivedKeyResponse           getS3DerivedKeyResponse       = 143;
 }
 
 enum Status {
@@ -2353,6 +2356,15 @@ message DeleteObjectTaggingRequest {
 }
 
 message DeleteObjectTaggingResponse {
+}
+
+message GetS3DerivedKeyRequest {
+  required string accessId = 1;
+  required string credentialScope = 2;
+}
+
+message GetS3DerivedKeyResponse {
+  optional bytes derivedKey = 1;
 }
 
 /**

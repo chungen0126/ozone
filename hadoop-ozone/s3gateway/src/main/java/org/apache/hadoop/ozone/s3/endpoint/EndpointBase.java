@@ -785,9 +785,9 @@ public abstract class EndpointBase {
       if (hasUnsignedPayload(amzContentSha256Header)) {
         chunkInputStream = new UnsignedChunksInputStream(body);
       } else {
-        S3SecretValue secretKey = client.getObjectStore().getS3Secret(s3Auth.getAccessID(), false);
+        byte[] derivedKey = client.getObjectStore().getS3DerivedKey(s3Auth.getAccessID(), signatureInfo.getCredentialScope());
         chunkInputStream = new SignedChunksInputStream(
-            body, amzContentSha256Header, secretKey.getAwsSecret(), signatureInfo, keyPath);
+            body, amzContentSha256Header, derivedKey, signatureInfo, keyPath);
       }
       effectiveLength = Long.parseLong(amzDecodedLength);
     } else {

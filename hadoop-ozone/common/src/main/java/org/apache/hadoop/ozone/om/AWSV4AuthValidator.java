@@ -88,9 +88,13 @@ public final class AWSV4AuthValidator {
    * .com/AmazonS3/latest/API/sig-v4-header-based-auth.html
    *
    * */
-  public static byte[] getSigningKey(String key, String strToSign) {
-    String[] signData = StringUtils.split(StringUtils.split(strToSign,
-        '\n')[2], '/');
+  private static byte[] getSigningKey(String key, String strToSign) {
+    String credentialScope = StringUtils.split(strToSign, '\n')[2];
+    return getSigningKeyFromCredentialScope(key, credentialScope);
+  }
+
+  public static byte[] getSigningKeyFromCredentialScope(String key, String credentialScope) {
+    String[] signData = StringUtils.split(credentialScope, '/');
     String dateStamp = signData[0];
     String regionName = signData[1];
     String serviceName = signData[2];

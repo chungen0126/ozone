@@ -65,8 +65,8 @@ public class ChunkSignatureValidator {
   private final String resource;
 
   public ChunkSignatureValidator(
-      String secretKey, SignatureInfo signatureInfo, String amzContentSha256Header, String resource) {
-    this.derivedKey = AWSV4AuthValidator.getSigningKey(secretKey, signatureInfo.getStringToSign());
+      byte[] derivedKey, SignatureInfo signatureInfo, String amzContentSha256Header, String resource) {
+    this.derivedKey = derivedKey;
     this.previousSignature = signatureInfo.getSignature();
     this.signatureInfo = signatureInfo;
     this.amzContentSha256Header = amzContentSha256Header;

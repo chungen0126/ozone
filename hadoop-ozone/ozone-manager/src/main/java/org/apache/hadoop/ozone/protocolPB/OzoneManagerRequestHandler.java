@@ -114,6 +114,8 @@ import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyI
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyInfoResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingResponse;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3DerivedKeyRequest;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3DerivedKeyResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3VolumeContextResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.InfoBucketRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.InfoBucketResponse;
@@ -391,6 +393,10 @@ public class OzoneManagerRequestHandler implements RequestHandler {
             getObjectTagging(request.getGetObjectTaggingRequest());
         responseBuilder.setGetObjectTaggingResponse(getObjectTaggingResponse);
         break;
+      case GetS3DerivedKeys:
+        OzoneManagerProtocolProtos.GetS3DerivedKeyResponse getS3DerivedKeyRequest =
+            getS3DerivedKey(request.getGetS3DerivedKeyRequest());
+        responseBuilder.setGetS3DerivedKeyResponse(getS3DerivedKeyRequest);
       default:
         responseBuilder.setSuccess(false);
         responseBuilder.setMessage("Unrecognized Command Type: " + cmdType);
@@ -1528,6 +1534,14 @@ public class OzoneManagerRequestHandler implements RequestHandler {
     boolean response = impl.setSafeMode(toSafeModeAction(safeMode), false);
     return SetSafeModeResponse.newBuilder()
         .setResponse(response)
+        .build();
+  }
+
+  private GetS3DerivedKeyResponse getS3DerivedKey(
+      GetS3DerivedKeyRequest request) throws IOException {
+    byte[] derivedKey = impl.getS3DerivedKey(request.getAccessId(), request.getCredentialScope());
+    return GetS3DerivedKeyResponse.newBuilder()
+        .setDerivedKey(ByteString.copyFrom(derivedKey))
         .build();
   }
 
