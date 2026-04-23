@@ -675,8 +675,7 @@ public abstract class EndpointBase {
   protected boolean isAccessDenied(OMException ex) {
     ResultCodes result = ex.getResult();
     return result == ResultCodes.PERMISSION_DENIED
-        || result == ResultCodes.INVALID_TOKEN
-        || result == ResultCodes.ACCESS_ID_NOT_FOUND;
+        || result == ResultCodes.INVALID_TOKEN;
   }
 
   protected ReplicationConfig getReplicationConfig(OzoneBucket ozoneBucket) throws OS3Exception {

@@ -20,16 +20,16 @@ package org.apache.hadoop.ozone.s3;
 import static org.apache.hadoop.ozone.s3.exception.S3ErrorTable.SIGNATURE_DOES_NOT_MATCH;
 import static org.apache.hadoop.ozone.s3.util.S3Utils.eol;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.hadoop.ozone.om.AWSV4AuthValidator;
 import org.apache.hadoop.ozone.s3.exception.S3ErrorTable;
+import org.apache.hadoop.ozone.s3.signature.ChunkSignatureValidator;
 import org.apache.hadoop.ozone.s3.signature.SignatureInfo;
 import org.apache.kerby.util.Hex;
 
@@ -96,58 +96,20 @@ public class SignedChunksInputStream extends InputStream {
    */
   private boolean isFinalChunkEncountered = false;
 
-  /**
-   * MessageDigest instance for calculating the hash of the chunk payload for signature verification.
-   */
-  private MessageDigest messageDigest;
-
-  /**
-   * Secret key for calculating the signature of the chunk payload for signature verification.
-   */
-  private byte[] derivedKey;
-
-  /**
-   * Previous chunk signature, used for calculating the string to sign for the current chunk.
-   */
-  private String previousSignature;
-
-  /**
-   * Expected signature for the current chunk, used for verifying the signature of the current chunk.
-   */
-  private String expectedSignature;
-
-  /**
-   * Signature info for the chunked upload, used for calculating the string to sign for the current chunk.
-   */
-  private final SignatureInfo signatureInfo;
-
-  private static final String EMPTY_STRING_HASH =
-      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-
-  private static final char NEWLINE = '\n';
-
-  private final String amzContentSha256Header;
-
-  private final String resource;
+  private final ChunkSignatureValidator validator;
 
   public SignedChunksInputStream(
       InputStream inputStream, String amzContentSha256Header,
       String secretKey, SignatureInfo signatureInfo, String resource) {
+    this(inputStream,  new ChunkSignatureValidator(secretKey, signatureInfo, amzContentSha256Header, resource));
+  }
+
+  @VisibleForTesting
+  public SignedChunksInputStream(
+      InputStream inputStream, ChunkSignatureValidator validator) {
     originalStream = inputStream;
-    this.derivedKey = AWSV4AuthValidator.getSigningKey(secretKey, signatureInfo.getStringToSign());
-    this.previousSignature = signatureInfo.getSignature();
-    this.signatureInfo = signatureInfo;
-    this.amzContentSha256Header = amzContentSha256Header;
-    this.resource = resource;
-
+    this.validator = validator;
     System.out.println("Starting new SignedChunksInputStream");
-
-    try {
-      messageDigest = MessageDigest.getInstance("SHA-256");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalArgumentException(
-          "Failed to initialize MessageDigest that implements the SHA-256 algorithm.", e);
-    }
   }
 
   @Override
@@ -158,12 +120,12 @@ public class SignedChunksInputStream extends InputStream {
     if (remainingData > 0) {
       // Get the byte and calculate incremental hash here. If curr is -1, we should throw EOFException.
       int curr = originalStream.read();
-      messageDigest.update((byte) curr);
+      validator.update((byte) curr);
       remainingData--;
       if (remainingData == 0) {
         // end of the chunk payload, verify here.
         //read the "\r\n" at the end of the data section
-        validateChunk();
+        validator.validateChunkSignature();
         originalStream.read();
         originalStream.read();
       }
@@ -176,7 +138,7 @@ public class SignedChunksInputStream extends InputStream {
         // if we encounter this chunk
         // This is the last chunk, it should be verified the signature too.
         // if remainingData < 0, we should throw an exception.
-        validateChunk();
+        validator.validateChunkSignature();
         isFinalChunkEncountered = true;
         return -1;
       }
@@ -210,7 +172,7 @@ public class SignedChunksInputStream extends InputStream {
           throw new EOFException("EOF encountered at offset " + currentOff);
         }
         // calculate incremental hash here with the read chunk payload.
-        messageDigest.update(b, currentOff, realReadLen);
+        validator.update(b, currentOff, realReadLen);
         currentOff += realReadLen;
         currentLen -= realReadLen;
         totalReadBytes += realReadLen;
@@ -218,7 +180,7 @@ public class SignedChunksInputStream extends InputStream {
         if (remainingData == 0) {
           //read the "\r\n" at the end of the data section
           // end of the chunk payload, verify here.
-          validateChunk();
+          validator.validateChunkSignature();
           originalStream.read();
           originalStream.read();
         }
@@ -229,7 +191,7 @@ public class SignedChunksInputStream extends InputStream {
           // there is always a final zero byte chunk so we can stop reading
           // if we encounter this chunk
           // This is the last chunk, it should be verified the signature too.
-          validateChunk();
+          validator.validateChunkSignature();
           isFinalChunkEncountered = true;
         }
         if (isFinalChunkEncountered || remainingData == -1) {
@@ -268,43 +230,10 @@ public class SignedChunksInputStream extends InputStream {
     //parse the data length.
     Matcher matcher = signatureLinePattern.matcher(signatureLine);
     if (matcher.matches()) {
-      this.expectedSignature = matcher.group(2);
+      validator.setExpectedSignature(matcher.group(2));
       return Integer.parseInt(matcher.group(1), 16);
     } else {
       throw new IOException("Invalid signature line: " + signatureLine);
     }
-  }
-
-  private String buildChunkStringToSign(String chunkPayloadHash) {
-    // For the chunked upload with signature, the string to sign for each chunk should be calculated as below:
-    // StringToSign = AWS4-HMAC-SHA256-PAYLOAD\n
-    //                <ISO8601-formatted-date>\n
-    //                <CredentialScope>\n
-    //                <PreviousSignature>\n
-    //                <EmptyStringHash>\n
-    //                <ChunkPayloadHash>
-    //
-    // For more details refer to AWS documentation: https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-streaming.html
-
-    StringBuilder stringToSign = new StringBuilder();
-    stringToSign.append(amzContentSha256Header).append(NEWLINE);
-    stringToSign.append(signatureInfo.getDateTime()).append(NEWLINE);
-    stringToSign.append(signatureInfo.getCredentialScope()).append(NEWLINE);
-    stringToSign.append(previousSignature).append(NEWLINE);
-    stringToSign.append(EMPTY_STRING_HASH).append(NEWLINE);
-    stringToSign.append(chunkPayloadHash);
-    return stringToSign.toString();
-  }
-
-  private void validateChunk() {
-    String strToSign = buildChunkStringToSign(
-        String.format("%064x", new java.math.BigInteger(1, messageDigest.digest())));
-    System.out.println("strToSign: " + strToSign + ", expectedSignature: " + expectedSignature + ", derivedKey: " +
-        Hex.encode(derivedKey));
-    if (!AWSV4AuthValidator.validateChunk(expectedSignature, strToSign, derivedKey)) {
-      throw S3ErrorTable.newError(SIGNATURE_DOES_NOT_MATCH, resource);
-    }
-    messageDigest.reset();
-    previousSignature = expectedSignature;
   }
 }

@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.ozone.s3.endpoint;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.hadoop.ozone.s3.endpoint.EndpointTestUtils.assertErrorResponse;
 import static org.apache.hadoop.ozone.s3.endpoint.EndpointTestUtils.assertSucceeds;
 import static org.apache.hadoop.ozone.s3.endpoint.EndpointTestUtils.initiateMultipartUpload;
@@ -31,6 +32,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
@@ -38,13 +41,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 import javax.ws.rs.core.HttpHeaders;
@@ -56,8 +62,12 @@ import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.client.OzoneClientStub;
 import org.apache.hadoop.ozone.client.OzoneMultipartUploadPartListParts;
+import org.apache.hadoop.ozone.s3.MultiDigestInputStream;
+import org.apache.hadoop.ozone.s3.SignedChunksInputStream;
+import org.apache.hadoop.ozone.s3.endpoint.EndpointBase.S3ChunkInputStreamInfo;
 import org.apache.hadoop.ozone.s3.exception.OS3Exception;
 import org.apache.hadoop.ozone.s3.exception.S3ErrorTable;
+import org.apache.hadoop.ozone.s3.signature.ChunkSignatureValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.Parameter;
@@ -138,14 +148,23 @@ public class TestPartUpload {
     String keyName = UUID.randomUUID().toString();
 
     int contentLength = 15;
-    String chunkedContent = "0a;chunk-signature=signature\r\n"
+    String chunkedContent = "0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "05;chunk-signature=signature\r\n"
+        + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n";
     when(headers.getHeaderString(X_AMZ_CONTENT_SHA256))
         .thenReturn("STREAMING-AWS4-HMAC-SHA256-PAYLOAD");
     when(headers.getHeaderString(DECODED_CONTENT_LENGTH_HEADER))
         .thenReturn(String.valueOf(contentLength));
+
+    doAnswer(i -> {
+      List<MessageDigest> digests = new ArrayList<>();
+      digests.add(rest.getMD5DigestInstance());
+      SignedChunksInputStream signedChunksInputStream = new SignedChunksInputStream(
+          new ByteArrayInputStream(chunkedContent.getBytes(UTF_8)), mock(ChunkSignatureValidator.class));
+      MultiDigestInputStream multiDigestInputStream = new MultiDigestInputStream(signedChunksInputStream, digests);
+      return new S3ChunkInputStreamInfo(multiDigestInputStream, 15);
+    }).when(rest).getS3ChunkInputStreamInfo(any(), anyLong(), anyString(), anyString());
 
     String uploadID = initiateMultipartUpload(rest, OzoneConsts.S3_BUCKET, keyName);
 

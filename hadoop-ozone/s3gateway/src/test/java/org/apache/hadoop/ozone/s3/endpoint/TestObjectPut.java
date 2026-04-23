@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.ozone.s3.endpoint;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.hadoop.ozone.client.OzoneClientTestUtils.assertKeyContent;
 import static org.apache.hadoop.ozone.s3.endpoint.EndpointTestUtils.assertErrorResponse;
 import static org.apache.hadoop.ozone.s3.endpoint.EndpointTestUtils.assertSucceeds;
@@ -43,8 +44,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
@@ -53,13 +57,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableMap;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import javax.ws.rs.core.HttpHeaders;
@@ -81,8 +88,13 @@ import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.client.OzoneKeyDetails;
 import org.apache.hadoop.ozone.client.OzoneVolume;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
+import org.apache.hadoop.ozone.s3.MultiDigestInputStream;
+import org.apache.hadoop.ozone.s3.SignedChunksInputStream;
+import org.apache.hadoop.ozone.s3.endpoint.EndpointBase.S3ChunkInputStreamInfo;
 import org.apache.hadoop.ozone.s3.exception.OS3Exception;
 import org.apache.hadoop.ozone.s3.exception.S3ErrorTable;
+import org.apache.hadoop.ozone.s3.signature.ChunkSignatureValidator;
+import org.apache.ratis.thirdparty.org.checkerframework.checker.signedness.qual.Signed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -225,15 +237,25 @@ class TestObjectPut {
   @Test
   void testPutObjectWithSignedChunks() throws Exception {
     //GIVEN
-    String chunkedContent = "0a;chunk-signature=signature\r\n"
+    String chunkedContent = "0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "05;chunk-signature=signature\r\n"
+        + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n";
 
     when(headers.getHeaderString(X_AMZ_CONTENT_SHA256))
         .thenReturn(STREAMING_AWS4_HMAC_SHA256_PAYLOAD);
     when(headers.getHeaderString(DECODED_CONTENT_LENGTH_HEADER))
         .thenReturn("15");
+
+
+    doAnswer(i -> {
+      List<MessageDigest> digests = new ArrayList<>();
+      digests.add(objectEndpoint.getMD5DigestInstance());
+      SignedChunksInputStream signedChunksInputStream = new SignedChunksInputStream(
+          new ByteArrayInputStream(chunkedContent.getBytes(UTF_8)), mock(ChunkSignatureValidator.class));
+      MultiDigestInputStream multiDigestInputStream = new MultiDigestInputStream(signedChunksInputStream, digests);
+      return new S3ChunkInputStreamInfo(multiDigestInputStream, 15);
+    }).when(objectEndpoint).getS3ChunkInputStreamInfo(any(), anyLong(), anyString(), anyString());
 
     //WHEN
     assertSucceeds(() -> putObject(chunkedContent));

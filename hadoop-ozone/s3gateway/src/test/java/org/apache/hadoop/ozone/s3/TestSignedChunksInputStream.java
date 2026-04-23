@@ -18,15 +18,17 @@
 package org.apache.hadoop.ozone.s3;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.hadoop.ozone.s3.util.S3Consts.STREAMING_AWS4_HMAC_SHA256_PAYLOAD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.ozone.s3.signature.ChunkSignatureValidator;
 import org.apache.hadoop.ozone.s3.signature.SignatureInfo;
 import org.apache.hadoop.ozone.s3.signature.SignatureInfo.Version;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -34,12 +36,17 @@ import org.junit.jupiter.api.Test;
  */
 public class TestSignedChunksInputStream {
 
-  private static final String SECRET_KEY = "SECRET_KEY";
+  private static ChunkSignatureValidator chunkSignatureValidator;
+
+  @BeforeAll
+  public static void setup() throws Exception {
+    chunkSignatureValidator = mock(ChunkSignatureValidator.class);
+  }
 
   @Test
   void testEmptyFile() throws IOException {
     try (InputStream is = wrapContent("0;chunk-signature"
-        + "=d8c5d9df447e12a354d30322d8c3bbbbe7b37dbd9caa9bb1e5e9a9ee1d144b41\r\n")) {
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n")) {
       assertEquals("", IOUtils.toString(is, UTF_8));
     }
   }
@@ -47,7 +54,7 @@ public class TestSignedChunksInputStream {
   @Test
   void testEmptyFileWithTrailer() throws IOException {
     try (InputStream is = wrapContent("0;chunk-signature"
-        + "=d8c5d9df447e12a354d30322d8c3bbbbe7b37dbd9caa9bb1e5e9a9ee1d144b41\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "x-amz-checksum-crc32c:sOO8/Q==\r\n"
         + "x-amz-trailer-signature:63bddb248ad2590c92712055f51b8e78ab024eead08276b24f010b0efd74843f\r\n")) {
       assertEquals("", IOUtils.toString(is, UTF_8));
@@ -57,7 +64,7 @@ public class TestSignedChunksInputStream {
   @Test
   void testEmptyFileWithoutEnd() throws IOException {
     try (InputStream is = wrapContent("0;chunk-signature"
-        + "=d8c5d9df447e12a354d30322d8c3bbbbe7b37dbd9caa9bb1e5e9a9ee1d144b41")) {
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40")) {
       assertEquals("", IOUtils.toString(is, UTF_8));
     }
   }
@@ -66,14 +73,14 @@ public class TestSignedChunksInputStream {
   void testSingleChunk() throws IOException {
     //test simple read()
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n")) {
       assertEquals("1234567890", IOUtils.toString(is, UTF_8));
     }
 
     //test read(byte[],int,int)
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n")) {
       byte[] bytes = new byte[10];
       IOUtils.read(is, bytes, 0, 10);
@@ -82,7 +89,7 @@ public class TestSignedChunksInputStream {
 
     //test read(byte[],int,int) with length parameter larger than the payload
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n")) {
       byte[] bytes = new byte[10];
       int readLength = IOUtils.read(is, bytes, 0, 10);
@@ -95,9 +102,9 @@ public class TestSignedChunksInputStream {
   void testSingleChunkWithTrailer() throws IOException {
     //test simple read()
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "0;chunk-signature=578bb5438c160e0c776be0c19b5502d0cea1d383f602473b5047f34afd023e8a\r\n"
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "x-amz-checksum-crc32c:sOO8/Q==\r\n"
         + "x-amz-trailer-signature:63bddb248ad2590c92712055f51b8e78ab024eead08276b24f010b0efd74843f\r\n")) {
       assertEquals("1234567890", IOUtils.toString(is, UTF_8));
@@ -105,9 +112,9 @@ public class TestSignedChunksInputStream {
 
     //test read(byte[],int,int)
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "0;chunk-signature=578bb5438c160e0c776be0c19b5502d0cea1d383f602473b5047f34afd023e8a\r\n"
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "x-amz-checksum-crc32c:sOO8/Q==\r\n"
         + "x-amz-trailer-signature:63bddb248ad2590c92712055f51b8e78ab024eead08276b24f010b0efd74843f\r\n")) {
       byte[] bytes = new byte[10];
@@ -117,9 +124,9 @@ public class TestSignedChunksInputStream {
 
     //test read(byte[],int,int) with length parameter larger than the payload
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "0;chunk-signature=578bb5438c160e0c776be0c19b5502d0cea1d383f602473b5047f34afd023e8a\r\n"
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "x-amz-checksum-crc32c:sOO8/Q==\r\n"
         + "x-amz-trailer-signature:63bddb248ad2590c92712055f51b8e78ab024eead08276b24f010b0efd74843f\r\n")) {
       byte[] bytes = new byte[10];
@@ -133,13 +140,13 @@ public class TestSignedChunksInputStream {
   void testSingleChunkWithoutEnd() throws IOException {
     //test simple read()
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890")) {
       assertEquals("1234567890", IOUtils.toString(is, UTF_8));
     }
     //test read(byte[],int,int)
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890")) {
       byte[] bytes = new byte[10];
       IOUtils.read(is, bytes, 0, 10);
@@ -147,7 +154,7 @@ public class TestSignedChunksInputStream {
     }
     //test read(byte[],int,int) with length parameter larger than the payload
     try (InputStream is = wrapContent("0A;chunk-signature"
-        + "=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+        + "=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890")) {
       byte[] bytes = new byte[15];
       int readLength = IOUtils.read(is, bytes, 0, 15);
@@ -159,35 +166,32 @@ public class TestSignedChunksInputStream {
   @Test
   void testMultiChunks() throws IOException {
     //test simple read()
-    try (InputStream is = wrapContent(
-        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
+        + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
-        + "0;chunk-signature=5414f079634ddabb64fa8fff20effb7b99e65a15632d28ff293fd0dfd54a4fd9\r\n")) {
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n")) {
       String result = IOUtils.toString(is, UTF_8);
       assertEquals("1234567890abcde", result);
     }
 
     //test read(byte[],int,int)
-    try (InputStream is = wrapContent(
-        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
+        + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
-        + "0;chunk-signature=5414f079634ddabb64fa8fff20effb7b99e65a15632d28ff293fd0dfd54a4fd9\r\n")) {
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n")) {
       byte[] bytes = new byte[15];
       IOUtils.read(is, bytes, 0, 15);
       assertEquals("1234567890abcde", new String(bytes, UTF_8));
     }
 
     //test read(byte[],int,int) with length parameter larger than the payload
-    try (InputStream is = wrapContent(
-        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
+        + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
-        + "0;chunk-signature=5414f079634ddabb64fa8fff20effb7b99e65a15632d28ff293fd0dfd54a4fd9\r\n")) {
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n")) {
       byte[] bytes = new byte[20];
       int readLength = IOUtils.read(is, bytes, 0, 20);
       assertEquals(15, readLength);
@@ -198,12 +202,11 @@ public class TestSignedChunksInputStream {
   @Test
   void testMultiChunksWithTrailer() throws Exception {
     //test simple read()
-    try (InputStream is = wrapContent(
-        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
+        + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
-        + "0;chunk-signature=5414f079634ddabb64fa8fff20effb7b99e65a15632d28ff293fd0dfd54a4fd9\r\n"
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "x-amz-checksum-crc32c:sOO8/Q==\r\n"
         + "x-amz-trailer-signature:63bddb248ad2590c92712055f51b8e78ab024eead08276b24f010b0efd74843f\r\n")) {
       String result = IOUtils.toString(is, UTF_8);
@@ -211,12 +214,11 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int)
-    try (InputStream is = wrapContent(
-        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
+        + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
-        + "0;chunk-signature=5414f079634ddabb64fa8fff20effb7b99e65a15632d28ff293fd0dfd54a4fd9\r\n"
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "x-amz-checksum-crc32c:sOO8/Q==\r\n"
         + "x-amz-trailer-signature:63bddb248ad2590c92712055f51b8e78ab024eead08276b24f010b0efd74843f\r\n")) {
       byte[] bytes = new byte[15];
@@ -225,12 +227,11 @@ public class TestSignedChunksInputStream {
     }
 
     //test read(byte[],int,int) with length parameter larger than the payload
-    try (InputStream is = wrapContent(
-        "0a;chunk-signature=3891d99b703f5558535cc44c8a9da61e17ac4ccb4ad51a064f97c68210d88a2b\r\n"
+    try (InputStream is = wrapContent("0a;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "1234567890\r\n"
-        + "05;chunk-signature=43d11a33338ed307e174646eabc4184a6257dc4917c3964ece7781588d8a4d2b\r\n"
+        + "05;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "abcde\r\n"
-        + "0;chunk-signature=5414f079634ddabb64fa8fff20effb7b99e65a15632d28ff293fd0dfd54a4fd9\r\n"
+        + "0;chunk-signature=23abb2bd920ddeeaac78a63ed808bc59fa6e7d3ef0e356474b82cdc2f8c93c40\r\n"
         + "x-amz-checksum-crc32c:sOO8/Q==\r\n"
         + "x-amz-trailer-signature:63bddb248ad2590c92712055f51b8e78ab024eead08276b24f010b0efd74843f\r\n")) {
       byte[] bytes = new byte[20];
@@ -252,6 +253,6 @@ public class TestSignedChunksInputStream {
         .build();
     return new SignedChunksInputStream(
         new ByteArrayInputStream(
-            content.getBytes(UTF_8)), STREAMING_AWS4_HMAC_SHA256_PAYLOAD, SECRET_KEY, signatureInfo, "");
+            content.getBytes(UTF_8)), chunkSignatureValidator);
   }
 }
