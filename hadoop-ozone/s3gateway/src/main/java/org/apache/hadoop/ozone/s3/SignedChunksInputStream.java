@@ -94,8 +94,6 @@ public class SignedChunksInputStream extends InputStream {
 
   private final ChunkSignatureValidator validator;
 
-
-
   public SignedChunksInputStream(
       InputStream inputStream, String amzContentSha256Header,
       byte[] derivedKey, SignatureInfo signatureInfo, String resource) {
