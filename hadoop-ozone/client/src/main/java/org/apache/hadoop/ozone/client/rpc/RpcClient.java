@@ -228,6 +228,7 @@ public class RpcClient implements ClientProtocol {
   private final long serverDefaultsValidityPeriod;
   private boolean s3AuthCheck;
 
+  @Override
   public boolean isS3AuthCheck() {
     return s3AuthCheck;
   }
