@@ -1361,4 +1361,5 @@ public interface ClientProtocol {
   void deleteObjectTagging(String volumeName, String bucketName, String keyName)
       throws IOException;
 
+  boolean isS3AuthCheck();
 }

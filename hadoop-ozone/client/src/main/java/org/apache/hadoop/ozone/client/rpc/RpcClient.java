@@ -226,6 +226,11 @@ public class RpcClient implements ClientProtocol {
   private volatile OzoneFsServerDefaults serverDefaults;
   private volatile long serverDefaultsLastUpdate;
   private final long serverDefaultsValidityPeriod;
+  private boolean s3AuthCheck;
+
+  public boolean isS3AuthCheck() {
+    return s3AuthCheck;
+  }
 
   /**
    * Creates RpcClient instance with the given configuration.
@@ -266,9 +271,9 @@ public class RpcClient implements ClientProtocol {
     if (OzoneSecurityUtil.isSecurityEnabled(conf)) {
       // If the client is authenticating using S3 style auth, all future
       // requests serviced by this client will need S3 Auth set.
-      boolean isS3 = conf.getBoolean(S3Auth.S3_AUTH_CHECK, false);
-      ozoneManagerProtocolClientSideTranslatorPB.setS3AuthCheck(isS3);
-      if (isS3) {
+      s3AuthCheck = conf.getBoolean(S3Auth.S3_AUTH_CHECK, false);
+      ozoneManagerProtocolClientSideTranslatorPB.setS3AuthCheck(s3AuthCheck);
+      if (s3AuthCheck) {
         // S3 Auth works differently and needs OM version to be at 2.0.0
         OzoneManagerVersion minOmVersion = conf.getEnum(
             OZONE_CLIENT_REQUIRED_OM_VERSION_MIN_KEY,

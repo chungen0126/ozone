@@ -808,4 +808,9 @@ public class ClientProtocolStub implements ClientProtocol {
     getBucket(volumeName, bucketName).deleteObjectTagging(keyName);
   }
 
+  @Override
+  public boolean isS3AuthCheck() {
+    return false;
+  }
+
 }

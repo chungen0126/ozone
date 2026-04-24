@@ -23,6 +23,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.apache.hadoop.ozone.om.AWSV4AuthValidator;
 import org.apache.hadoop.ozone.s3.exception.S3ErrorTable;
+import org.apache.hadoop.ozone.s3.util.S3Utils;
 import org.apache.kerby.util.Hex;
 
 /**
@@ -85,6 +86,9 @@ public class ChunkSignatureValidator {
   }
 
   public void validateChunkSignature() {
+    if (derivedKey == null || !S3Utils.isHMACSHA256SignedPayload(amzContentSha256Header)) {
+      return;
+    }
     String strToSign = buildChunkStringToSign(
         String.format("%064x", new java.math.BigInteger(1, messageDigest.digest())));
     System.out.println("strToSign: " + strToSign + ", expectedSignature: " + expectedSignature + ", derivedKey: " +
@@ -97,10 +101,16 @@ public class ChunkSignatureValidator {
   }
 
   public void update(byte[] data, int offset, int length) {
+    if (derivedKey == null) {
+      return;
+    }
     messageDigest.update(data, offset, length);
   }
 
   public void update(byte b) {
+    if (derivedKey == null) {
+      return;
+    }
     messageDigest.update(b);
   }
 
