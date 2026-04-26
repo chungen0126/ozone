@@ -28,6 +28,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.hadoop.ozone.s3.signature.ChunkSignatureValidator;
 import org.apache.hadoop.ozone.s3.signature.SignatureInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Input stream implementation to read body of a signed chunked upload. This should also work
@@ -75,6 +77,7 @@ import org.apache.hadoop.ozone.s3.signature.SignatureInfo;
  */
 public class SignedChunksInputStream extends InputStream {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SignedChunksInputStream.class);
   private final Pattern signatureLinePattern =
       Pattern.compile("([0-9A-Fa-f]+);chunk-signature=([0-9a-f]{64})");
 
@@ -105,7 +108,7 @@ public class SignedChunksInputStream extends InputStream {
       InputStream inputStream, ChunkSignatureValidator validator) {
     originalStream = inputStream;
     this.validator = validator;
-    System.out.println("Starting new SignedChunksInputStream");
+    LOG.info("Starting new SignedChunksInputStream");
   }
 
   @Override
@@ -119,6 +122,7 @@ public class SignedChunksInputStream extends InputStream {
       validator.update((byte) curr);
       remainingData--;
       if (remainingData == 0) {
+        LOG.info("Finished reading a chunk, validating the chunk signature");
         // end of the chunk payload, verify here.
         //read the "\r\n" at the end of the data section
         validator.validateChunkSignature();
@@ -128,12 +132,14 @@ public class SignedChunksInputStream extends InputStream {
       return curr;
     } else {
       // Parse the chunk header here. We should reset the SHA256 hash calculation here.
+      LOG.info("No remaining data, parsing the chunk header");
       remainingData = readContentLengthFromHeader();
       if (remainingData <= 0) {
         // there is always a final zero byte chunk so we can stop reading
         // if we encounter this chunk
         // This is the last chunk, it should be verified the signature too.
         // if remainingData < 0, we should throw an exception.
+        LOG.info("Finished reading the last chunk, validating the chunk signature");
         validator.validateChunkSignature();
         isFinalChunkEncountered = true;
         return -1;
@@ -153,6 +159,9 @@ public class SignedChunksInputStream extends InputStream {
     } else if (isFinalChunkEncountered) {
       return -1;
     }
+
+    LOG.info("read(byte[], {}, {}) called, remainingData={}",
+        off, len, remainingData);
     int currentOff = off;
     int currentLen = len;
     int totalReadBytes = 0;
@@ -165,9 +174,12 @@ public class SignedChunksInputStream extends InputStream {
         realReadLen = originalStream.read(b, currentOff, maxReadLen);
         if (realReadLen == -1) {
           // throw EOFException if the stream ends before we finish reading the chunk payload
+          LOG.info("Reached EOF before reading the chunk payload, remainingData={}", remainingData);
           throw new EOFException("EOF encountered at offset " + currentOff);
         }
         // calculate incremental hash here with the read chunk payload.
+        LOG.info("S3G DATA DEBUG: Chunk Segment Read. Length: {}, First 4 bytes: [{} {} {} {}]",
+            realReadLen, b[currentOff], b[currentOff+1], b[currentOff+2], b[currentOff+3]);
         validator.update(b, currentOff, realReadLen);
         currentOff += realReadLen;
         currentLen -= realReadLen;
@@ -176,6 +188,7 @@ public class SignedChunksInputStream extends InputStream {
         if (remainingData == 0) {
           //read the "\r\n" at the end of the data section
           // end of the chunk payload, verify here.
+          LOG.info("Finished reading a chunk, validating the chunk signature");
           validator.validateChunkSignature();
           originalStream.read();
           originalStream.read();
@@ -183,10 +196,12 @@ public class SignedChunksInputStream extends InputStream {
       } else {
         // parse the chunk header here. We should reset the SHA256 hash calculation here.
         remainingData = readContentLengthFromHeader();
+        LOG.info("No remaining data, parsing the chunk header, remainingData={}", remainingData);
         if (remainingData == 0) {
           // there is always a final zero byte chunk so we can stop reading
           // if we encounter this chunk
           // This is the last chunk, it should be verified the signature too.
+          LOG.info("Finished reading the last chunk, validating the chunk signature");
           validator.validateChunkSignature();
           isFinalChunkEncountered = true;
         }
@@ -220,15 +235,18 @@ public class SignedChunksInputStream extends InputStream {
     // the subsequent chunk payload.
     String signatureLine = buf.toString().trim();
     if (signatureLine.isEmpty()) {
+      LOG.info("Reached EOF before reading the chunk header, remainingData={}", remainingData);
       return -1;
     }
 
     //parse the data length.
     Matcher matcher = signatureLinePattern.matcher(signatureLine);
     if (matcher.matches()) {
+      LOG.info("Found chunk header: {}", signatureLine);
       validator.setExpectedSignature(matcher.group(2));
       return Integer.parseInt(matcher.group(1), 16);
     } else {
+      LOG.error("Invalid signature line: {}", signatureLine);
       throw new IOException("Invalid signature line: " + signatureLine);
     }
   }

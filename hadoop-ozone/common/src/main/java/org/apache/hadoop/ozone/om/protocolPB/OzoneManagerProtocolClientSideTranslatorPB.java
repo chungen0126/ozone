@@ -140,6 +140,7 @@ import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyI
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetKeyInfoResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetObjectTaggingResponse;
+import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3DerivedKeyResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3SecretRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3SecretResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3VolumeContextRequest;
@@ -2595,8 +2596,8 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
             .build();
     OMRequest omRequest = createOMRequest(Type.GetS3DerivedKeys)
         .setGetS3DerivedKeyRequest(getS3DerivedKeyRequest).build();
-    handleError(submitRequest(omRequest));
-    return new byte[0];
+    OMResponse resp = handleError(submitRequest(omRequest));
+    return resp.getGetS3DerivedKeyResponse().getDerivedKey().toByteArray();
   }
 
   @Override

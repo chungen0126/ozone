@@ -101,6 +101,7 @@ public interface S3SecretManager {
     S3SecretCache cache = cache();
     if (cache != null) {
       LOG.info("Updating cache for accessId/user: {}.", accessId);
+      LOG.info("secret: {}", secret);
       cache.put(accessId, secret);
     }
   }

@@ -98,6 +98,8 @@ public final class AWSV4AuthValidator {
     String dateStamp = signData[0];
     String regionName = signData[1];
     String serviceName = signData[2];
+    LOG.info("key: {}, dateStamp: {}, regionName: {}, serviceName: {}",
+        key, dateStamp, regionName, serviceName);
     byte[] kDate = sign(("AWS4" + key)
         .getBytes(StandardCharsets.UTF_8), dateStamp);
     byte[] kRegion = sign(kDate, regionName);

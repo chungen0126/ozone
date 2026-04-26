@@ -178,3 +178,15 @@ OZONE-SITE.XML_hdds.secret.key.expiry.duration=1h
 OZONE-SITE.XML_ozone.manager.delegation.token.max-lifetime=30m
 OZONE-SITE.XML_ozone.manager.delegation.token.renew-interval=5m
 OZONE-SITE.XML_ozone.manager.delegation.remover.scan.interval=1m
+
+LOG4J.PROPERTIES_log4j.rootLogger: INFO, stdout
+LOG4J.PROPERTIES_log4j.appender.stdout: org.apache.log4j.ConsoleAppender
+LOG4J.PROPERTIES_log4j.appender.stdout.layout: org.apache.log4j.PatternLayout
+LOG4J.PROPERTIES_log4j.appender.stdout.layout.ConversionPattern: '%d{yyyy-MM-ddHH:mm:ss} %-5p %c{1}:%L - %m%n'
+LOG4J.PROPERTIES_log4j.logger.org.apache.hadoop.ozone.om.S3SecretManagerImpl=TRACE
+LOG4J.PROPERTIES_log4j.logger.org.apache.hadoop.ozone.om.helpers.S3SecretValue.S3SecretManager=TRACE
+LOG4J.PROPERTIES_log4j.logger.com.amazonaws.request=DEBUG
+LOG4J.PROPERTIES_log4j.logger.com.amazonaws.auth.AWS4Signer=TRACE
+LOG4J.PROPERTIES_log4j.logger.com.amazonaws.auth=TRACE
+LOG4J.PROPERTIES_log4j.logger.org.apache.hadoop.ozone.security.OzoneDelegationTokenSecretManager=TRACE
+LOG4J.PROPERTIES_log4j.logger.org.apache.hadoop.ozone.s3.exception.S3ErrorTable=TRACE

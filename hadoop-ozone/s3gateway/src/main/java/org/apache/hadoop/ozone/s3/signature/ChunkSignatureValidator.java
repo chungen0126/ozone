@@ -126,7 +126,7 @@ public class ChunkSignatureValidator {
     // For more details refer to AWS documentation: https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-streaming.html
 
     StringBuilder stringToSign = new StringBuilder();
-    stringToSign.append(amzContentSha256Header).append(NEWLINE);
+    stringToSign.append("AWS4-HMAC-SHA256-PAYLOAD").append(NEWLINE);
     stringToSign.append(signatureInfo.getDateTime()).append(NEWLINE);
     stringToSign.append(signatureInfo.getCredentialScope()).append(NEWLINE);
     stringToSign.append(previousSignature).append(NEWLINE);

@@ -787,7 +787,8 @@ public abstract class EndpointBase {
         byte[] derivedKey = null;
         if (client.getProxy().isS3AuthCheck()) {
           derivedKey = client.getObjectStore().getS3DerivedKey(
-              s3Auth.getAccessID(), signatureInfo.getCredentialScope());
+              client.getProxy().getThreadLocalS3Auth().getAccessID(),
+              signatureInfo.getCredentialScope());
         }
         chunkInputStream = new SignedChunksInputStream(
             body, amzContentSha256Header, derivedKey, signatureInfo, keyPath);

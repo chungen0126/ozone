@@ -86,6 +86,7 @@ public class S3SecretManagerImpl implements S3SecretManager {
           "awsAccessKeyId " + awsAccessKey, S3_SECRET_NOT_FOUND);
     }
     updateCache(awsAccessKey, s3Secret);
+    LOG.info("awsSecret: {}", s3Secret.getAwsSecret());
     return s3Secret.getAwsSecret();
   }
 
