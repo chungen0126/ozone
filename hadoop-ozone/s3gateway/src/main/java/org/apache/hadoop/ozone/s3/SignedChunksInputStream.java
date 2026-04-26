@@ -178,8 +178,6 @@ public class SignedChunksInputStream extends InputStream {
           throw new EOFException("EOF encountered at offset " + currentOff);
         }
         // calculate incremental hash here with the read chunk payload.
-        LOG.info("S3G DATA DEBUG: Chunk Segment Read. Length: {}, First 4 bytes: [{} {} {} {}]",
-            realReadLen, b[currentOff], b[currentOff+1], b[currentOff+2], b[currentOff+3]);
         validator.update(b, currentOff, realReadLen);
         currentOff += realReadLen;
         currentLen -= realReadLen;
