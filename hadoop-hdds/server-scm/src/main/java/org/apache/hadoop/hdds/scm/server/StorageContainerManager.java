@@ -32,6 +32,7 @@ import static org.apache.hadoop.security.UserGroupInformation.getCurrentUser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.BlockingService;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -62,6 +63,7 @@ import org.apache.hadoop.hdds.annotation.InterfaceAudience;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.conf.ReconfigurationHandler;
+import org.apache.hadoop.hdds.conf.TracingReconfigurationCallback;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeState;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMCommandProto;
@@ -167,6 +169,7 @@ import org.apache.hadoop.hdds.server.events.EventPublisher;
 import org.apache.hadoop.hdds.server.events.EventQueue;
 import org.apache.hadoop.hdds.server.events.FixedThreadPoolWithAffinityExecutor;
 import org.apache.hadoop.hdds.server.http.RatisDropwizardExports;
+import org.apache.hadoop.hdds.tracing.TracingConfig;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutVersionManager;
 import org.apache.hadoop.hdds.utils.HAUtils;
 import org.apache.hadoop.hdds.utils.HddsServerUtil;
@@ -180,7 +183,7 @@ import org.apache.hadoop.metrics2.util.MBeans;
 import org.apache.hadoop.net.CachedDNSToSwitchMapping;
 import org.apache.hadoop.net.DNSToSwitchMapping;
 import org.apache.hadoop.net.NetUtils;
-import org.apache.hadoop.net.TableMapping;
+import org.apache.hadoop.net.ScriptBasedMapping;
 import org.apache.hadoop.ozone.OzoneConfigKeys;
 import org.apache.hadoop.ozone.OzoneSecurityUtil;
 import org.apache.hadoop.ozone.common.Storage.StorageState;
@@ -350,12 +353,15 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
     super(HddsVersionInfo.HDDS_VERSION_INFO);
 
     Objects.requireNonNull(configurator, "configurator cannot be null");
-    Objects.requireNonNull(conf, "configuration cannot be null");
+    configuration = Objects.requireNonNull(conf, "configuration cannot be null");
+    TracingConfig tracingConfig = configuration.getObject(TracingConfig.class);
+    TracingReconfigurationCallback tracingReconfigurationCallback =
+        TracingReconfigurationCallback.init("StorageContainerManager", tracingConfig);
     // It is assumed the scm --init command creates the SCM Storage Config.
     scmStorageConfig = new SCMStorageConfig(conf);
 
     scmHANodeDetails = SCMHANodeDetails.loadSCMHAConfig(conf, scmStorageConfig);
-    configuration = conf;
+
     initMetrics();
     initPerfMetrics();
 
@@ -374,8 +380,25 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
     // This is for the clusters which got upgraded from older version of Ozone.
     // We enable Ratis by default.
     if (!scmStorageConfig.isSCMHAEnabled()) {
+      // Create Ratis snapshot directory for upgrade scenario.
+      // This must be done before initializeRatis() since SCMSnapshotProvider
+      // expects the directory to already exist during normal startup.
+      String snapshotDir = SCMHAUtils.getSCMRatisSnapshotDirectory(conf);
+      HddsUtils.createDir(snapshotDir);
+      LOG.info("Upgrade: created Ratis snapshot directory: {}", snapshotDir);
+
       // Since we have initialized Ratis, we have to reload StorageConfig
       scmStorageConfig = initializeRatis(conf);
+    } else {
+      // For clusters upgraded from older versions that already have SCMHAEnabled
+      // but may not have the snapshot directory (it was auto-created by
+      // SCMSnapshotProvider in older versions), ensure the directory exists.
+      String snapshotDir = SCMHAUtils.getSCMRatisSnapshotDirectory(conf);
+      File snapshotDirFile = new File(snapshotDir);
+      if (!snapshotDirFile.exists()) {
+        HddsUtils.createDir(snapshotDir);
+        LOG.info("Created missing Ratis snapshot directory for upgraded cluster: {}", snapshotDir);
+      }
     }
 
     threadNamePrefix = getScmNodeDetails().threadNamePrefix();
@@ -400,6 +423,7 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
     serviceManager = new SCMServiceManager();
     reconfigurationHandler =
         new ReconfigurationHandler("SCM", conf, this::checkAdminAccess)
+            .register(tracingConfig)
             .register(OZONE_ADMINISTRATORS, this::reconfOzoneAdmins)
             .register(OZONE_READONLY_ADMINISTRATORS,
                 this::reconfOzoneReadOnlyAdmins)
@@ -407,6 +431,7 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
                 this::reconfigureSafeModeLogInterval);
 
     reconfigurationHandler.setReconfigurationCompleteCallback(reconfigurationHandler.defaultLoggingCallback());
+    reconfigurationHandler.registerCompleteCallback(tracingReconfigurationCallback);
 
     initializeSystemManagers(conf, configurator);
 
@@ -728,7 +753,7 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
     Class<? extends DNSToSwitchMapping> dnsToSwitchMappingClass =
         conf.getClass(
             ScmConfigKeys.NET_TOPOLOGY_NODE_SWITCH_MAPPING_IMPL_KEY,
-            TableMapping.class, DNSToSwitchMapping.class);
+            ScriptBasedMapping.class, DNSToSwitchMapping.class);
     DNSToSwitchMapping newInstance = ReflectionUtils.newInstance(
         dnsToSwitchMappingClass, conf);
     dnsToSwitchMapping =
@@ -1210,6 +1235,16 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
         scmStorageConfig.setPrimaryScmNodeId(scmInfo.getScmId());
         scmStorageConfig.setSCMHAFlag(true);
         scmStorageConfig.initialize();
+
+        // Create Ratis storage and snapshot directories during bootstrap
+        // This ensures they exist before the bootstrapped SCM starts normally
+        String ratisStorageDir = SCMHAUtils.getSCMRatisDirectory(conf);
+        String ratisSnapshotDir = SCMHAUtils.getSCMRatisSnapshotDirectory(conf);
+        HddsUtils.createDir(ratisStorageDir);
+        HddsUtils.createDir(ratisSnapshotDir);
+        LOG.info("Created Ratis storage directory: {}", ratisStorageDir);
+        LOG.info("Created Ratis snapshot directory: {}", ratisSnapshotDir);
+
         LOG.info("SCM BootStrap  is successful for ClusterID {}, SCMID {}",
             scmInfo.getClusterId(), scmStorageConfig.getScmId());
         LOG.info("Primary SCM Node ID {}",
@@ -1290,6 +1325,14 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
 
         scmStorageConfig.setPrimaryScmNodeId(scmStorageConfig.getScmId());
         scmStorageConfig.initialize();
+
+        // Create Ratis snapshot directory during init.
+        // This must be done before SCM starts normally since SCMSnapshotProvider
+        // expects the directory to already exist.
+        String snapshotDir = SCMHAUtils.getSCMRatisSnapshotDirectory(conf);
+        HddsUtils.createDir(snapshotDir);
+        LOG.info("Init: created Ratis snapshot directory: {}", snapshotDir);
+
         scmStorageConfig = initializeRatis(conf);
 
         LOG.info("SCM initialization succeeded. Current cluster id for sd={}"
@@ -1518,8 +1561,6 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
    */
   @Override
   public void start() throws IOException {
-    finalizationManager.runPrefinalizeStateActions();
-
     if (LOG.isInfoEnabled()) {
       LOG.info(buildRpcServerStartMessage(
           "StorageContainerLocationProtocol RPC server",
@@ -1610,7 +1651,7 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
   public void stop() {
     if (isStopped.getAndSet(true)) {
       LOG.info("Storage Container Manager is not running.");
-      IOUtils.close(LOG, scmHAManager);
+      IOUtils.close(LOG, reconfigurationHandler, scmHAManager);
       stopReplicationManager(); // started eagerly
       return;
     }
@@ -1918,8 +1959,23 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
     checkAdminAccess(getRemoteUser(), false);
   }
 
+  /**
+   * Check if admin privilege authorization should be enforced.
+   * This controls system-level admin operations (upgrades, decommission, etc.)
+   *
+   * @return true if admin authorization checks should be performed
+   */
+  public boolean isAdminAuthorizationEnabled() {
+    return securityConfig != null && securityConfig.isAuthorizationEnabled();
+  }
+
   public void checkAdminAccess(UserGroupInformation remoteUser, boolean isRead)
       throws IOException {
+    // Skip check if authorization is disabled
+    if (!isAdminAuthorizationEnabled()) {
+      return;
+    }
+    
     if (remoteUser != null && !scmAdmins.isAdmin(remoteUser)) {
       if (!isRead || !scmReadOnlyAdmins.isAdmin(remoteUser)) {
         throw new AccessControlException(

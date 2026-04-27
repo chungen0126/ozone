@@ -39,6 +39,7 @@ import static org.apache.hadoop.ozone.s3.util.S3Consts.TAG_KEY_LENGTH_LIMIT;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.TAG_NUM_LIMIT;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.TAG_VALUE_LENGTH_LIMIT;
 import static org.apache.hadoop.ozone.s3.util.S3Consts.X_AMZ_CONTENT_SHA256;
+import static org.apache.hadoop.ozone.s3.util.S3Utils.parseETag;
 import static org.apache.hadoop.ozone.s3.util.S3Utils.urlEncode;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -268,12 +269,13 @@ class TestObjectPut {
   @Test
   public void testPutObjectMessageDigestResetDuringException() {
     MessageDigest messageDigest = mock(MessageDigest.class);
-    try (MockedStatic<IOUtils> mocked = mockStatic(IOUtils.class)) {
+    try (MockedStatic<IOUtils> mocked = mockStatic(IOUtils.class);
+        MockedStatic<EndpointBase> endpoint = mockStatic(EndpointBase.class)) {
       // For example, EOFException during put-object due to client cancelling the operation before it completes
       mocked.when(() -> IOUtils.copyLarge(any(InputStream.class), any(OutputStream.class), anyLong(),
               anyLong(), any(byte[].class)))
           .thenThrow(IOException.class);
-      when(objectEndpoint.getMD5DigestInstance()).thenReturn(messageDigest);
+      endpoint.when(EndpointBase::getMD5DigestInstance).thenReturn(messageDigest);
 
       assertThrows(IOException.class, () -> putObject(CONTENT).close());
 
@@ -389,9 +391,11 @@ class TestObjectPut {
     assertThat(keyDetails.getMetadata().get(OzoneConsts.ETAG)).isNotEmpty();
 
     MessageDigest messageDigest = mock(MessageDigest.class);
-    try (MockedStatic<IOUtils> mocked = mockStatic(IOUtils.class)) {
+    try (MockedStatic<IOUtils> mocked = mockStatic(IOUtils.class);
+        MockedStatic<EndpointBase> endpoint = mockStatic(EndpointBase.class)) {
       // Add the mocked methods only during the copy request
-      when(objectEndpoint.getMD5DigestInstance()).thenReturn(messageDigest);
+      endpoint.when(EndpointBase::getMD5DigestInstance).thenReturn(messageDigest);
+      endpoint.when(() -> EndpointBase.parseSourceHeader(any())).thenCallRealMethod();
       mocked.when(() -> IOUtils.copyLarge(any(InputStream.class), any(OutputStream.class), anyLong(),
               anyLong(), any(byte[].class)))
           .thenThrow(IOException.class);
@@ -410,9 +414,8 @@ class TestObjectPut {
   @Test
   public void testCopyObjectWithTags() throws Exception {
     // Put object in to source bucket
-    HttpHeaders headersForPut = newMockHttpHeaders();
+    HttpHeaders headersForPut = objectEndpoint.getHeaders();
     when(headersForPut.getHeaderString(TAG_HEADER)).thenReturn("tag1=value1&tag2=value2");
-    objectEndpoint.setHeaders(headersForPut);
 
     String sourceKeyName = "sourceKey";
 
@@ -425,10 +428,9 @@ class TestObjectPut {
 
     // Copy object without x-amz-tagging-directive (default to COPY)
     String destKey = "key=value/2";
-    HttpHeaders headersForCopy = newMockHttpHeaders();
+    HttpHeaders headersForCopy = objectEndpoint.getHeaders();
     when(headersForCopy.getHeaderString(COPY_SOURCE_HEADER)).thenReturn(
         BUCKET_NAME  + "/" + urlEncode(sourceKeyName));
-    objectEndpoint.setHeaders(headersForCopy);
 
     assertSucceeds(() -> putObject(DEST_BUCKET_NAME, destKey));
 
@@ -551,27 +553,134 @@ class TestObjectPut {
     byte[] wrongMd5Bytes = MessageDigest.getInstance("MD5").digest(wrongContentBytes);
     String wrongMd5Base64 = Base64.getEncoder().encodeToString(wrongMd5Bytes);
     return Stream.of(
-        Arguments.arguments(wrongMd5Base64),
-        Arguments.arguments("invalid-base64")
+        Arguments.arguments(wrongMd5Base64, S3ErrorTable.BAD_DIGEST),
+        Arguments.arguments("invalid-base64", S3ErrorTable.INVALID_DIGEST)
     );
   }
 
   @ParameterizedTest
   @MethodSource("wrongContentMD5Provider")
-  public void testPutObjectWithWrongContentMD5(String wrongContentMD5) throws Exception {
+  public void testPutObjectWithWrongContentMD5(String wrongContentMD5, S3ErrorTable s3Error) throws Exception {
 
     // WHEN
     when(headers.getHeaderString("Content-MD5")).thenReturn(wrongContentMD5);
 
     // WHEN/THEN
-    OS3Exception ex = assertErrorResponse(S3ErrorTable.BAD_DIGEST, () -> putObject(CONTENT));
-    assertThat(ex.getErrorMessage()).contains(S3ErrorTable.BAD_DIGEST.getErrorMessage());
+    OS3Exception ex = assertErrorResponse(s3Error, () -> putObject(CONTENT));
+    assertThat(ex.getErrorMessage()).contains(s3Error.getErrorMessage());
   }
 
   private HttpHeaders newMockHttpHeaders() {
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
     when(httpHeaders.getHeaderString(X_AMZ_CONTENT_SHA256)).thenReturn("UNSIGNED-PAYLOAD");
     return httpHeaders;
+  }
+
+  @Test
+  void testIfNoneMatchKeyDoesNotExistSuccess() throws Exception {
+    when(headers.getHeaderString("If-None-Match")).thenReturn("*");
+
+    assertSucceeds(() -> putObject(CONTENT));
+    assertKeyContent(bucket, KEY_NAME, CONTENT);
+  }
+
+  @Test
+  void testIfNoneMatchKeyExistsPreconditionFailed() throws Exception {
+    // First create the key
+    assertSucceeds(() -> putObject(CONTENT));
+
+    // Now try to create again with If-None-Match: *
+    when(headers.getHeaderString("If-None-Match")).thenReturn("*");
+
+    OS3Exception ex = assertErrorResponse(
+        S3ErrorTable.PRECOND_FAILED, () -> putObject(CONTENT));
+    assertNotNull(ex);
+  }
+
+  @Test
+  void testIfMatchETagMatchesSuccess() throws Exception {
+    // First create the key to get an ETag
+    Response response = putObject(CONTENT);
+    String etag = response.getHeaderString(HttpHeaders.ETAG);
+    assertNotNull(etag);
+
+    // Now try to rewrite with matching ETag
+    when(headers.getHeaderString("If-Match")).thenReturn(etag);
+
+    assertSucceeds(() -> putObject("new-content"));
+    assertKeyContent(bucket, KEY_NAME, "new-content");
+  }
+
+  @Test
+  void testIfMatchETagMismatchPreconditionFailed() throws Exception {
+    // First create the key
+    assertSucceeds(() -> putObject(CONTENT));
+
+    // Try to rewrite with wrong ETag
+    when(headers.getHeaderString("If-Match")).thenReturn("\"wrong-etag\"");
+
+    OS3Exception ex = assertErrorResponse(
+        S3ErrorTable.PRECOND_FAILED, () -> putObject("new-content"));
+    assertNotNull(ex);
+  }
+
+  @Test
+  void testIfMatchKeyNotFoundPreconditionFailed() throws Exception {
+    // Try If-Match on a non-existent key
+    when(headers.getHeaderString("If-Match")).thenReturn("\"some-etag\"");
+
+    OS3Exception ex = assertErrorResponse(
+        S3ErrorTable.PRECOND_FAILED, () -> putObject(CONTENT));
+    assertNotNull(ex);
+  }
+
+  @Test
+  void testBothHeadersProvidedInvalidRequest() throws Exception {
+    when(headers.getHeaderString("If-None-Match")).thenReturn("*");
+    when(headers.getHeaderString("If-Match")).thenReturn("\"some-etag\"");
+
+    OS3Exception ex = assertErrorResponse(
+        INVALID_REQUEST, () -> putObject(CONTENT));
+    assertNotNull(ex);
+    assertThat(ex.getErrorMessage()).contains(
+        "If-Match and If-None-Match cannot be specified together");
+  }
+
+  @Test
+  void testBlankIfNoneMatchInvalidRequest() throws Exception {
+    when(headers.getHeaderString("If-None-Match")).thenReturn(" ");
+
+    OS3Exception ex = assertErrorResponse(
+        INVALID_REQUEST, () -> putObject(CONTENT));
+    assertThat(ex.getErrorMessage()).contains(
+        "If-None-Match header cannot be empty");
+  }
+
+  @Test
+  void testBlankIfMatchInvalidRequest() throws Exception {
+    when(headers.getHeaderString("If-Match")).thenReturn(" ");
+
+    OS3Exception ex = assertErrorResponse(
+        INVALID_REQUEST, () -> putObject(CONTENT));
+    assertThat(ex.getErrorMessage()).contains("If-Match header cannot be empty");
+  }
+
+  @Test
+  void testIfNoneMatchNotStarInvalidRequest() throws Exception {
+    when(headers.getHeaderString("If-None-Match")).thenReturn("\"etag\"");
+
+    OS3Exception ex = assertErrorResponse(
+        INVALID_REQUEST, () -> putObject(CONTENT));
+    assertThat(ex.getErrorMessage()).contains(
+        "Only If-None-Match: * is supported");
+  }
+
+  @Test
+  void testParseETag() {
+    assertEquals("abc123", parseETag("\"abc123\""));
+    assertEquals("abc123", parseETag("abc123"));
+    assertEquals("abc123", parseETag("  \"abc123\"  "));
+    assertEquals(null, parseETag(null));
   }
 
   /** Put object at {@code bucketName}/{@code keyName} with pre-defined {@link #CONTENT}. */
