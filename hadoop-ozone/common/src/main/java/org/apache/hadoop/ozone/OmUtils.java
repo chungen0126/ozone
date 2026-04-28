@@ -377,6 +377,7 @@ public final class OmUtils {
     case GetKeyInfo:
     case GetSnapshotInfo:
     case GetObjectTagging:
+    case GetS3DerivedKeys:
       return true;
     case CreateVolume:
     case SetVolumeProperty:
