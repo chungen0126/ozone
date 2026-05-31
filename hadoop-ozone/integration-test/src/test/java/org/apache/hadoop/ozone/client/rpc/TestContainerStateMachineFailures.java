@@ -114,6 +114,8 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests the containerStateMachine failure handling.
@@ -121,6 +123,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestContainerStateMachineFailures {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TestContainerStateMachineFailures.class);
   private static MiniOzoneCluster cluster;
   private static OzoneClient client;
   private static ObjectStore objectStore;
@@ -545,6 +548,7 @@ public class TestContainerStateMachineFailures {
   @Test
   void testApplyTransactionIdempotencyWithClosedContainer()
       throws Exception {
+    LOG.info("start testApplyTransactionIdempotencyWithClosedContainer");
     OzoneOutputStream key =
         objectStore.getVolume(volumeName).getBucket(bucketName)
             .createKey("ratis", 1024,
@@ -575,6 +579,7 @@ public class TestContainerStateMachineFailures {
         (SimpleStateMachineStorage) stateMachine.getStateMachineStorage();
     final FileInfo snapshot = getSnapshotFileInfo(storage);
     final Path parentPath = snapshot.getPath();
+    LOG.info("Taking snapshot");
     stateMachine.takeSnapshot();
     assertThat(parentPath.getParent().toFile().listFiles().length).isGreaterThan(0);
     assertNotNull(snapshot);
@@ -601,6 +606,7 @@ public class TestContainerStateMachineFailures {
         ContainerProtos.ContainerDataProto.State.CLOSED);
     assertTrue(stateMachine.isStateMachineHealthy());
     try {
+      LOG.info("Taking snapshot again");
       stateMachine.takeSnapshot();
     } finally {
       xceiverClientManager.releaseClient(xceiverClient, false);
@@ -608,6 +614,7 @@ public class TestContainerStateMachineFailures {
     // This is just an attempt to wait for an asynchronous call from Ratis API
     // to updateIncreasingly to finish as part of flaky test issue "HDDS-6115"
     // This doesn't solve the problem completely but reduce the failure ratio.
+    LOG.info("markIndex1 = {}", markIndex1);
     GenericTestUtils.waitFor((() -> {
       try {
         return markIndex1 != StatemachineImplTestUtil
