@@ -116,6 +116,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 /**
  * Tests the containerStateMachine failure handling.
@@ -548,6 +549,7 @@ public class TestContainerStateMachineFailures {
   @Test
   void testApplyTransactionIdempotencyWithClosedContainer()
       throws Exception {
+    GenericTestUtils.setLogLevel(HddsDispatcher.class, Level.TRACE);
     LOG.info("start testApplyTransactionIdempotencyWithClosedContainer");
     OzoneOutputStream key =
         objectStore.getVolume(volumeName).getBucket(bucketName)

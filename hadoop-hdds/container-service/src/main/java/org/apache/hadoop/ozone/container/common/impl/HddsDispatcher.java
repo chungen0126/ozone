@@ -211,6 +211,8 @@ public class HddsDispatcher implements ContainerDispatcher, Auditor {
           msg.getTraceID());
     }
 
+    LOG.trace("msg = {}", msg);
+
     AuditAction action = getAuditAction(msg.getCmdType());
     EventType eventType = getEventType(msg);
     PerformanceStringBuilder perf = new PerformanceStringBuilder();
