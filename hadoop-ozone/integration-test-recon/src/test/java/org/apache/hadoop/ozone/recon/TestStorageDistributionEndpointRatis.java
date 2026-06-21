@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
  * <p>Common infrastructure and verification helpers are provided by
  * {@link AbstractTestStorageDistributionEndpoint}.
  */
-@Unhealthy("HDDS-15519")
 public class TestStorageDistributionEndpointRatis extends AbstractTestStorageDistributionEndpoint {
 
   private static final int NUM_DATANODES = 3;
