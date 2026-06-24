@@ -111,6 +111,10 @@ public class SignedChunksInputStream extends InputStream {
     LOG.info("Starting new SignedChunksInputStream");
   }
 
+  public ChunkSignatureValidator getValidator() {
+    return validator;
+  }
+
   @Override
   public int read() throws IOException {
     if (isFinalChunkEncountered) {

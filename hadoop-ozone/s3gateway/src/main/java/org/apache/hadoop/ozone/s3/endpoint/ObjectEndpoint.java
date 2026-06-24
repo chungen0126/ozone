@@ -98,6 +98,7 @@ import org.apache.hadoop.ozone.om.helpers.OmMultipartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadCompleteInfo;
 import org.apache.hadoop.ozone.s3.HeaderPreprocessor;
 import org.apache.hadoop.ozone.s3.MultiDigestInputStream;
+import org.apache.hadoop.ozone.s3.SignedChunksInputStream;
 import org.apache.hadoop.ozone.s3.exception.OS3Exception;
 import org.apache.hadoop.ozone.s3.exception.S3ErrorTable;
 import org.apache.hadoop.ozone.s3.util.RFC1123Util;
@@ -284,12 +285,20 @@ public class ObjectEndpoint extends ObjectOperationHandler {
       } else {
         final String amzContentSha256Header =
             validateSignatureHeader(getHeaders(), keyPath, signatureInfo.isSignPayload());
+        boolean isSignedInputStream = multiDigestInputStream != null &&
+            multiDigestInputStream.getWrappedInputStream() instanceof SignedChunksInputStream;
         try (OzoneOutputStream output = openKeyForPut(
             volume.getName(), bucketName, keyPath, length,
-            replicationConfig, customMetadata, tags, writeConditions)) {
+            replicationConfig, customMetadata, tags, writeConditions, isSignedInputStream)) {
           long metadataLatencyNs =
               getMetrics().updatePutKeyMetadataStats(startNanos);
           perf.appendMetaLatencyNanos(metadataLatencyNs);
+          if (output.getDerivedKey() != null && multiDigestInputStream != null) {
+            InputStream wrapped = multiDigestInputStream.getWrappedInputStream();
+            if (wrapped instanceof SignedChunksInputStream) {
+              ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(output.getDerivedKey());
+            }
+          }
           putLength = IOUtils.copyLarge(multiDigestInputStream, output, 0, length,
               new byte[getIOBufferSize(length)]);
           md5Hash = DatatypeConverter.printHexBinary(
@@ -884,11 +893,19 @@ public class ObjectEndpoint extends ObjectOperationHandler {
         }
       } else {
         long putLength;
+        boolean isSignedInputStream = multiDigestInputStream != null &&
+            multiDigestInputStream.getWrappedInputStream() instanceof SignedChunksInputStream;
         try (OzoneOutputStream ozoneOutputStream = getClientProtocol()
             .createMultipartKey(volume.getName(), bucketName, key, length,
-                partNumber, uploadID)) {
+                partNumber, uploadID, isSignedInputStream)) {
           metadataLatencyNs =
               getMetrics().updatePutKeyMetadataStats(startNanos);
+          if (ozoneOutputStream.getDerivedKey() != null && multiDigestInputStream != null) {
+            InputStream wrapped = multiDigestInputStream.getWrappedInputStream();
+            if (wrapped instanceof SignedChunksInputStream) {
+              ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(ozoneOutputStream.getDerivedKey());
+            }
+          }
           putLength = IOUtils.copyLarge(multiDigestInputStream, ozoneOutputStream, 0, length,
               new byte[getIOBufferSize(length)]);
           byte[] digest = multiDigestInputStream.getMessageDigest(OzoneConsts.MD5_HASH).digest();
@@ -1107,21 +1124,22 @@ public class ObjectEndpoint extends ObjectOperationHandler {
   private OzoneOutputStream openKeyForPut(String volumeName, String bucketName, String keyPath, long length,
       ReplicationConfig replicationConfig, Map<String, String> customMetadata,
       Map<String, String> tags,
-      S3ConditionalRequest.WriteConditions writeConditions)
+      S3ConditionalRequest.WriteConditions writeConditions,
+      boolean isSignedInputStream)
       throws IOException {
     if (writeConditions.hasIfNoneMatch()) {
       return getClientProtocol().createKeyIfNotExists(
           volumeName, bucketName, keyPath, length, replicationConfig,
-          customMetadata, tags);
+          customMetadata, tags, isSignedInputStream);
     } else if (writeConditions.hasIfMatch()) {
       return getClientProtocol().rewriteKeyIfMatch(
           volumeName, bucketName, keyPath, length,
           writeConditions.getExpectedETag(),
-          replicationConfig, customMetadata, tags);
+          replicationConfig, customMetadata, tags, isSignedInputStream);
     } else {
       return getClientProtocol().createKey(
           volumeName, bucketName, keyPath, length, replicationConfig,
-          customMetadata, tags);
+          customMetadata, tags, isSignedInputStream);
     }
   }
 

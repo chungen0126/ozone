@@ -39,7 +39,7 @@ public class ChunkSignatureValidator {
   /**
    * Secret key for calculating the signature of the chunk payload for signature verification.
    */
-  private final byte[] derivedKey;
+  private byte[] derivedKey;
 
   /**
    * Previous chunk signature, used for calculating the string to sign for the current chunk.
@@ -83,6 +83,10 @@ public class ChunkSignatureValidator {
 
   public void setExpectedSignature(String expectedSignature) {
     this.expectedSignature = expectedSignature;
+  }
+
+  public void setDerivedKey(byte[] derivedKey) {
+    this.derivedKey = (derivedKey == null) ? null : derivedKey.clone();
   }
 
   public void validateChunkSignature() {

@@ -44,6 +44,7 @@ import org.apache.hadoop.ozone.client.io.OzoneDataStreamOutput;
 import org.apache.hadoop.ozone.om.OmConfig;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.s3.MultiDigestInputStream;
+import org.apache.hadoop.ozone.s3.SignedChunksInputStream;
 import org.apache.hadoop.ozone.s3.exception.OS3Exception;
 import org.apache.hadoop.ozone.s3.exception.S3ErrorTable;
 import org.apache.hadoop.ozone.s3.metrics.S3GatewayMetrics;
@@ -122,10 +123,17 @@ final class ObjectEndpointStreaming {
     final String amzContentSha256Header = validateSignatureHeader(headers, keyPath, isSignedPayload);
     long writeLen;
     String md5Hash;
+    boolean isSignedInputStream = body != null && body.getWrappedInputStream() instanceof SignedChunksInputStream;
     try (OzoneDataStreamOutput streamOutput = openStreamKeyForPut(bucket,
         keyPath, length, replicationConfig, keyMetadata, tags,
-        writeConditions)) {
+        writeConditions, isSignedInputStream)) {
       long metadataLatencyNs = METRICS.updatePutKeyMetadataStats(startNanos);
+      if (streamOutput.getDerivedKey() != null && body != null) {
+        java.io.InputStream wrapped = body.getWrappedInputStream();
+        if (wrapped instanceof SignedChunksInputStream) {
+          ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(streamOutput.getDerivedKey());
+        }
+      }
       writeLen = writeToStreamOutput(streamOutput, body, bufferSize, length);
       md5Hash = DatatypeConverter.printHexBinary(body.getMessageDigest(OzoneConsts.MD5_HASH).digest())
           .toLowerCase();
@@ -163,18 +171,19 @@ final class ObjectEndpointStreaming {
   private static OzoneDataStreamOutput openStreamKeyForPut(OzoneBucket bucket,
       String keyPath, long length, ReplicationConfig replicationConfig,
       Map<String, String> keyMetadata, Map<String, String> tags,
-      S3ConditionalRequest.WriteConditions writeConditions) throws IOException {
+      S3ConditionalRequest.WriteConditions writeConditions,
+      boolean isSignedInputStream) throws IOException {
     if (writeConditions.hasIfNoneMatch()) {
       return bucket.createStreamKeyIfNotExists(keyPath, length,
-          replicationConfig, keyMetadata, tags);
+          replicationConfig, keyMetadata, tags, isSignedInputStream);
     }
     if (writeConditions.hasIfMatch()) {
       return bucket.rewriteStreamKeyIfMatch(keyPath, length,
           writeConditions.getExpectedETag(), replicationConfig, keyMetadata,
-          tags);
+          tags, isSignedInputStream);
     }
     return bucket.createStreamKey(keyPath, length, replicationConfig,
-        keyMetadata, tags);
+        keyMetadata, tags, isSignedInputStream);
   }
 
   @SuppressWarnings("checkstyle:ParameterNumber")
@@ -227,10 +236,17 @@ final class ObjectEndpointStreaming {
       throws IOException, OS3Exception {
     long startNanos = Time.monotonicNowNanos();
     String eTag;
+    boolean isSignedInputStream = body != null && body.getWrappedInputStream() instanceof SignedChunksInputStream;
     try {
       try (OzoneDataStreamOutput streamOutput = ozoneBucket
-          .createMultipartStreamKey(key, length, partNumber, uploadID)) {
+          .createMultipartStreamKey(key, length, partNumber, uploadID, isSignedInputStream)) {
         long metadataLatencyNs = METRICS.updatePutKeyMetadataStats(startNanos);
+        if (streamOutput.getDerivedKey() != null && body != null) {
+          java.io.InputStream wrapped = body.getWrappedInputStream();
+          if (wrapped instanceof SignedChunksInputStream) {
+            ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(streamOutput.getDerivedKey());
+          }
+        }
         long putLength =
             writeToStreamOutput(streamOutput, body, chunkSize, length);
         eTag = DatatypeConverter.printHexBinary(

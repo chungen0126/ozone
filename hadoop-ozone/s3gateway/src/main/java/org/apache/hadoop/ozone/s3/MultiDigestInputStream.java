@@ -240,4 +240,8 @@ public class MultiDigestInputStream extends FilterInputStream {
     return getClass().getName() + " [on=" + on + ", algorithms="
         + digests.keySet() + "]";
   }
+
+  public InputStream getWrappedInputStream() {
+    return in;
+  }
 }

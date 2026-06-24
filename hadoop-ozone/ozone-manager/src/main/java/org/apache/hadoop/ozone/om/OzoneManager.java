@@ -5150,9 +5150,9 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
   }
 
   @Override
-  public byte[] getS3DerivedKey(String accessId, String credentialScope) throws IOException {
+  public byte[] getS3DerivedKey(String accessId, String signingKey) throws IOException {
     String awsSecretKey = s3SecretManager.getSecretString(accessId);
-    return AWSV4AuthValidator.getSigningKeyFromCredentialScope(awsSecretKey, credentialScope);
+    return AWSV4AuthValidator.getSigningKey(awsSecretKey, signingKey);
   }
 
   @Override
