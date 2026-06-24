@@ -890,18 +890,18 @@ public final class OzoneBucketStub extends OzoneBucket {
 
   @Override
   public OzoneOutputStream createKeyIfNotExists(String keyName, long size,
-      ReplicationConfig replicationConfig, Map<String, String> metadata,
+      ReplicationConfig rConfig, Map<String, String> metadata,
       Map<String, String> tags, boolean isSignedInputStream) throws IOException {
-    return createKeyIfNotExists(keyName, size, replicationConfig, metadata, tags);
+    return createKeyIfNotExists(keyName, size, rConfig, metadata, tags);
   }
 
   @Override
   public OzoneOutputStream rewriteKeyIfMatch(String keyName, long size,
-      String expectedETag, ReplicationConfig replicationConfig,
+      String expectedETag, ReplicationConfig rConfig,
       Map<String, String> metadata, Map<String, String> tags,
       boolean isSignedInputStream)
       throws IOException {
-    return rewriteKeyIfMatch(keyName, size, expectedETag, replicationConfig, metadata, tags);
+    return rewriteKeyIfMatch(keyName, size, expectedETag, rConfig, metadata, tags);
   }
 
   @Override
