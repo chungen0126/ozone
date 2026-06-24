@@ -2118,7 +2118,6 @@ public class RpcClient implements ClientProtocol {
     return multipartInfo;
   }
 
-
   @SuppressWarnings("checkstyle:parameternumber")
   private OpenKeySession newMultipartOpenKey(
       String volumeName, String bucketName, String keyName,
