@@ -49,11 +49,11 @@ public class OpenKeySession {
   }
 
   public void setDerivedKey(byte[] derivedKey) {
-    this.derivedKey = derivedKey;
+    this.derivedKey = derivedKey == null ? null : derivedKey.clone();
   }
 
   public byte[] getDerivedKey() {
-    return derivedKey;
+    return derivedKey == null ? null : derivedKey.clone();
   }
 
   public long getId() {

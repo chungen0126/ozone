@@ -123,12 +123,12 @@ final class ObjectEndpointStreaming {
     final String amzContentSha256Header = validateSignatureHeader(headers, keyPath, isSignedPayload);
     long writeLen;
     String md5Hash;
-    boolean isSignedInputStream = body != null && body.getWrappedInputStream() instanceof SignedChunksInputStream;
+    boolean isSignedInputStream = body.getWrappedInputStream() instanceof SignedChunksInputStream;
     try (OzoneDataStreamOutput streamOutput = openStreamKeyForPut(bucket,
         keyPath, length, replicationConfig, keyMetadata, tags,
         writeConditions, isSignedInputStream)) {
       long metadataLatencyNs = METRICS.updatePutKeyMetadataStats(startNanos);
-      if (streamOutput.getDerivedKey() != null && body != null) {
+      if (streamOutput.getDerivedKey() != null) {
         java.io.InputStream wrapped = body.getWrappedInputStream();
         if (wrapped instanceof SignedChunksInputStream) {
           ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(streamOutput.getDerivedKey());
@@ -236,12 +236,12 @@ final class ObjectEndpointStreaming {
       throws IOException, OS3Exception {
     long startNanos = Time.monotonicNowNanos();
     String eTag;
-    boolean isSignedInputStream = body != null && body.getWrappedInputStream() instanceof SignedChunksInputStream;
+    boolean isSignedInputStream = body.getWrappedInputStream() instanceof SignedChunksInputStream;
     try {
       try (OzoneDataStreamOutput streamOutput = ozoneBucket
           .createMultipartStreamKey(key, length, partNumber, uploadID, isSignedInputStream)) {
         long metadataLatencyNs = METRICS.updatePutKeyMetadataStats(startNanos);
-        if (streamOutput.getDerivedKey() != null && body != null) {
+        if (streamOutput.getDerivedKey() != null) {
           java.io.InputStream wrapped = body.getWrappedInputStream();
           if (wrapped instanceof SignedChunksInputStream) {
             ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(streamOutput.getDerivedKey());

@@ -166,10 +166,10 @@ public class OzoneOutputStream extends ByteArrayStreamOutput
   }
 
   public byte[] getDerivedKey() {
-    return derivedKey;
+    return derivedKey == null ? null : derivedKey.clone();
   }
 
   public void setDerivedKey(byte[] derivedKey) {
-    this.derivedKey = derivedKey;
+    this.derivedKey = derivedKey == null ? null : derivedKey.clone();
   }
 }

@@ -2118,13 +2118,6 @@ public class RpcClient implements ClientProtocol {
     return multipartInfo;
   }
 
-  private OpenKeySession newMultipartOpenKey(
-      String volumeName, String bucketName, String keyName,
-      long size, int partNumber, String uploadID,
-      boolean sortDatanodesInPipeline) throws IOException {
-    return newMultipartOpenKey(volumeName, bucketName, keyName, size, partNumber, uploadID,
-        sortDatanodesInPipeline, false);
-  }
 
   @SuppressWarnings("checkstyle:parameternumber")
   private OpenKeySession newMultipartOpenKey(

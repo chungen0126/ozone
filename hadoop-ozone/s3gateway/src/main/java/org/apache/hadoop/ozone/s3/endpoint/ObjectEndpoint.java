@@ -285,7 +285,7 @@ public class ObjectEndpoint extends ObjectOperationHandler {
       } else {
         final String amzContentSha256Header =
             validateSignatureHeader(getHeaders(), keyPath, signatureInfo.isSignPayload());
-        boolean isSignedInputStream = multiDigestInputStream != null &&
+        boolean isSignedInputStream =
             multiDigestInputStream.getWrappedInputStream() instanceof SignedChunksInputStream;
         try (OzoneOutputStream output = openKeyForPut(
             volume.getName(), bucketName, keyPath, length,
@@ -293,7 +293,7 @@ public class ObjectEndpoint extends ObjectOperationHandler {
           long metadataLatencyNs =
               getMetrics().updatePutKeyMetadataStats(startNanos);
           perf.appendMetaLatencyNanos(metadataLatencyNs);
-          if (output.getDerivedKey() != null && multiDigestInputStream != null) {
+          if (output.getDerivedKey() != null) {
             InputStream wrapped = multiDigestInputStream.getWrappedInputStream();
             if (wrapped instanceof SignedChunksInputStream) {
               ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(output.getDerivedKey());
@@ -893,14 +893,14 @@ public class ObjectEndpoint extends ObjectOperationHandler {
         }
       } else {
         long putLength;
-        boolean isSignedInputStream = multiDigestInputStream != null &&
+        boolean isSignedInputStream =
             multiDigestInputStream.getWrappedInputStream() instanceof SignedChunksInputStream;
         try (OzoneOutputStream ozoneOutputStream = getClientProtocol()
             .createMultipartKey(volume.getName(), bucketName, key, length,
                 partNumber, uploadID, isSignedInputStream)) {
           metadataLatencyNs =
               getMetrics().updatePutKeyMetadataStats(startNanos);
-          if (ozoneOutputStream.getDerivedKey() != null && multiDigestInputStream != null) {
+          if (ozoneOutputStream.getDerivedKey() != null) {
             InputStream wrapped = multiDigestInputStream.getWrappedInputStream();
             if (wrapped instanceof SignedChunksInputStream) {
               ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(ozoneOutputStream.getDerivedKey());
