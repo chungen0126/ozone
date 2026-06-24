@@ -880,6 +880,74 @@ public final class OzoneBucketStub extends OzoneBucket {
     }
   }
 
+  @Override
+  public OzoneOutputStream createKey(String key, long size,
+      ReplicationConfig rConfig, Map<String, String> metadata,
+      Map<String, String> tags, boolean isSignedInputStream)
+      throws IOException {
+    return createKey(key, size, rConfig, metadata, tags);
+  }
+
+  @Override
+  public OzoneOutputStream createKeyIfNotExists(String keyName, long size,
+      ReplicationConfig replicationConfig, Map<String, String> metadata,
+      Map<String, String> tags, boolean isSignedInputStream) throws IOException {
+    return createKeyIfNotExists(keyName, size, replicationConfig, metadata, tags);
+  }
+
+  @Override
+  public OzoneOutputStream rewriteKeyIfMatch(String keyName, long size,
+      String expectedETag, ReplicationConfig replicationConfig,
+      Map<String, String> metadata, Map<String, String> tags,
+      boolean isSignedInputStream)
+      throws IOException {
+    return rewriteKeyIfMatch(keyName, size, expectedETag, replicationConfig, metadata, tags);
+  }
+
+  @Override
+  public OzoneOutputStream createMultipartKey(String key, long size,
+                                              int partNumber, String uploadID,
+                                              boolean isSignedInputStream)
+      throws IOException {
+    return createMultipartKey(key, size, partNumber, uploadID);
+  }
+
+  @Override
+  public OzoneDataStreamOutput createStreamKey(String key, long size,
+                                               ReplicationConfig rConfig,
+                                               Map<String, String> keyMetadata,
+                                               Map<String, String> tags,
+                                               boolean isSignedInputStream)
+      throws IOException {
+    return createStreamKey(key, size, rConfig, keyMetadata, tags);
+  }
+
+  @Override
+  public OzoneDataStreamOutput createStreamKeyIfNotExists(String key, long size,
+      ReplicationConfig rConfig, Map<String, String> keyMetadata,
+      Map<String, String> tags, boolean isSignedInputStream) throws IOException {
+    return createStreamKeyIfNotExists(key, size, rConfig, keyMetadata, tags);
+  }
+
+  @Override
+  public OzoneDataStreamOutput rewriteStreamKeyIfMatch(String key, long size,
+      String expectedETag, ReplicationConfig rConfig,
+      Map<String, String> keyMetadata, Map<String, String> tags,
+      boolean isSignedInputStream)
+      throws IOException {
+    return rewriteStreamKeyIfMatch(key, size, expectedETag, rConfig, keyMetadata, tags);
+  }
+
+  @Override
+  public OzoneDataStreamOutput createMultipartStreamKey(String key,
+                                                        long size,
+                                                        int partNumber,
+                                                        String uploadID,
+                                                        boolean isSignedInputStream)
+      throws IOException {
+    return createMultipartStreamKey(key, size, partNumber, uploadID);
+  }
+
   /**
    * Multipart upload stub to store MPU related information.
    */
