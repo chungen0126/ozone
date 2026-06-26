@@ -22,7 +22,6 @@ import static org.apache.hadoop.hdds.protocol.DatanodeDetails.Port.Name.HTTPS;
 import static org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeOperationalState.IN_SERVICE;
 import static org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeState.HEALTHY;
 import static org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeState.HEALTHY_READONLY;
-import static org.apache.hadoop.hdds.scm.SCMCommonPlacementPolicy.hasEnoughSpace;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -63,6 +62,7 @@ import org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeState;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.StorageTypeProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.CommandQueueReportProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.LayoutVersionProto;
+import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.MetadataStorageReportProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.NodeReportProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.PipelineReportsProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMCommandProto;
@@ -126,6 +126,7 @@ public class SCMNodeManager implements NodeManager {
   private final VersionInfo version;
   private final CommandQueue commandQueue;
   private final SCMNodeMetrics metrics;
+  private final PendingContainerTracker pendingContainerTracker;
   // Node manager MXBean
   private ObjectName nmInfoBean;
   private final SCMStorageConfig scmStorageConfig;
@@ -188,6 +189,14 @@ public class SCMNodeManager implements NodeManager {
     LOG.info("Entering startup safe mode.");
     registerMXBean();
     this.metrics = SCMNodeMetrics.create(this);
+    this.pendingContainerTracker = new PendingContainerTracker(
+        (long) conf.getStorageSize(ScmConfigKeys.OZONE_SCM_CONTAINER_SIZE,
+            ScmConfigKeys.OZONE_SCM_CONTAINER_SIZE_DEFAULT, StorageUnit.BYTES),
+        conf.getTimeDuration(
+            ScmConfigKeys.OZONE_SCM_PENDING_CONTAINER_ROLL_INTERVAL,
+            ScmConfigKeys.OZONE_SCM_PENDING_CONTAINER_ROLL_INTERVAL_DEFAULT,
+            TimeUnit.MILLISECONDS),
+        this.metrics);
     this.clusterMap = networkTopology;
     this.nodeResolver = nodeResolver;
     this.useHostname = conf.getBoolean(
@@ -204,7 +213,7 @@ public class SCMNodeManager implements NodeManager {
         ScmConfigKeys.OZONE_SCM_PIPELINE_OWNER_CONTAINER_COUNT_DEFAULT);
     this.scmContext = scmContext;
     this.sendCommandNotifyMap = new HashMap<>();
-    this.nonWritableNodeFilter = new NonWritableNodeFilter(conf);
+    this.nonWritableNodeFilter = new NonWritableNodeFilter(conf, pendingContainerTracker);
   }
 
   @Override
@@ -223,6 +232,11 @@ public class SCMNodeManager implements NodeManager {
       MBeans.unregister(this.nmInfoBean);
       this.nmInfoBean = null;
     }
+  }
+
+  @Override
+  public PendingContainerTracker getPendingContainerTracker() {
+    return pendingContainerTracker;
   }
 
   protected NodeStateManager getNodeStateManager() {
@@ -891,7 +905,7 @@ public class SCMNodeManager implements NodeManager {
     try {
       int dnCount = getNodeQueuedCommandCount(datanodeDetails, cmdType);
       if (dnCount == -1) {
-        LOG.warn("No command count information for datanode {} and command {}" +
+        LOG.debug("No command count information for datanode {} and command {}" +
             ". Assuming zero", datanodeDetails, cmdType);
         dnCount = 0;
       }
@@ -1060,9 +1074,25 @@ public class SCMNodeManager implements NodeManager {
       return nodeStateManager.getNode(dn);
     } catch (NodeNotFoundException e) {
       LOG.warn("Cannot retrieve DatanodeInfo, datanode {} not found.",
-          dn.getUuid());
+          dn.getID());
       return null;
     }
+  }
+
+  @Override
+  public boolean checkSpaceAndRecordAllocation(DatanodeInfo datanodeInfo, ContainerID containerID) {
+    return pendingContainerTracker.checkSpaceAndRecordAllocation(datanodeInfo, containerID);
+  }
+
+  @Override
+  public boolean hasAvailableSpace(DatanodeInfo datanodeInfo) {
+    return pendingContainerTracker.hasAvailableSpace(datanodeInfo);
+  }
+
+  @Override
+  public void removePendingAllocationForDatanode(DatanodeInfo datanodeInfo, ContainerID containerID) {
+    pendingContainerTracker.removePendingAllocation(
+        datanodeInfo.getPendingContainerAllocations(), containerID);
   }
 
   /**
@@ -1405,7 +1435,9 @@ public class SCMNodeManager implements NodeManager {
     long capacityByte = 0;
     long scmUsedByte = 0;
     long remainingByte = 0;
+    long totalPending = 0;
     for (DatanodeInfo dni : nodeStateManager.getAllNodes()) {
+      totalPending += dni.getPendingContainerAllocations().getCount();
       List<StorageReportProto> storageReports = dni.getStorageReports();
       if (storageReports != null && !storageReports.isEmpty()) {
         for (StorageReportProto storageReport : storageReports) {
@@ -1415,6 +1447,7 @@ public class SCMNodeManager implements NodeManager {
         }
       }
     }
+    metrics.setTotalPendingContainerSlots(totalPending);
 
     long nonScmUsedByte = capacityByte - scmUsedByte - remainingByte;
     if (nonScmUsedByte < 0) {
@@ -1442,9 +1475,9 @@ public class SCMNodeManager implements NodeManager {
 
     private final long blockSize;
     private final long minRatisVolumeSizeBytes;
-    private final long containerSize;
+    private final PendingContainerTracker tracker;
 
-    NonWritableNodeFilter(ConfigurationSource conf) {
+    NonWritableNodeFilter(ConfigurationSource conf, PendingContainerTracker tracker) {
       blockSize = (long) conf.getStorageSize(
           OzoneConfigKeys.OZONE_SCM_BLOCK_SIZE,
           OzoneConfigKeys.OZONE_SCM_BLOCK_SIZE_DEFAULT,
@@ -1453,17 +1486,32 @@ public class SCMNodeManager implements NodeManager {
           ScmConfigKeys.OZONE_DATANODE_RATIS_VOLUME_FREE_SPACE_MIN,
           ScmConfigKeys.OZONE_DATANODE_RATIS_VOLUME_FREE_SPACE_MIN_DEFAULT,
           StorageUnit.BYTES);
-      containerSize = (long) conf.getStorageSize(
-          ScmConfigKeys.OZONE_SCM_CONTAINER_SIZE,
-          ScmConfigKeys.OZONE_SCM_CONTAINER_SIZE_DEFAULT,
-          StorageUnit.BYTES);
+      this.tracker = tracker;
     }
 
     @Override
     public boolean test(DatanodeInfo dn) {
       return !dn.getNodeStatus().isNodeWritable()
-          || (!hasEnoughSpace(dn, minRatisVolumeSizeBytes, containerSize)
-          && !hasEnoughCommittedVolumeSpace(dn));
+          || (!hasEnoughSpaceForNode(dn) && !hasEnoughCommittedVolumeSpace(dn));
+    }
+
+    /**
+     * Returns true if the datanode has both an available data slot (via
+     * {@link PendingContainerTracker}) and sufficient Ratis metadata volume space.
+     */
+    private boolean hasEnoughSpaceForNode(DatanodeInfo dn) {
+      if (!tracker.hasAvailableSpace(dn)) {
+        return false;
+      }
+      if (minRatisVolumeSizeBytes <= 0) {
+        return true;
+      }
+      for (MetadataStorageReportProto report : dn.getMetadataStorageReports()) {
+        if (report.getRemaining() > minRatisVolumeSizeBytes) {
+          return true;
+        }
+      }
+      return false;
     }
 
     /**

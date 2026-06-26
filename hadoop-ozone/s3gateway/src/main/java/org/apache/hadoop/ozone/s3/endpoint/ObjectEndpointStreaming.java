@@ -24,13 +24,8 @@ import static org.apache.hadoop.ozone.s3.util.S3Utils.validateSignatureHeader;
 import static org.apache.hadoop.ozone.s3.util.S3Utils.wrapInQuotes;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -39,7 +34,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.client.OzoneBucket;
-import org.apache.hadoop.ozone.client.io.KeyMetadataAware;
 import org.apache.hadoop.ozone.client.io.OzoneDataStreamOutput;
 import org.apache.hadoop.ozone.om.OmConfig;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
@@ -125,8 +119,9 @@ final class ObjectEndpointStreaming {
     String md5Hash;
     boolean isSignedInputStream = body.getWrappedInputStream() instanceof SignedChunksInputStream;
     try (OzoneDataStreamOutput streamOutput = openStreamKeyForPut(bucket,
-        keyPath, length, replicationConfig, keyMetadata, tags,
-        writeConditions, isSignedInputStream)) {
+            keyPath, length, replicationConfig, keyMetadata, tags,
+            writeConditions, isSignedInputStream);
+        S3ObjectStreamingWriteGuard writeGuard = new S3ObjectStreamingWriteGuard(streamOutput, length, keyPath)) {
       long metadataLatencyNs = METRICS.updatePutKeyMetadataStats(startNanos);
       if (streamOutput.getDerivedKey() != null) {
         java.io.InputStream wrapped = body.getWrappedInputStream();
@@ -134,19 +129,18 @@ final class ObjectEndpointStreaming {
           ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(streamOutput.getDerivedKey());
         }
       }
-      writeLen = writeToStreamOutput(streamOutput, body, bufferSize, length);
+      writeLen = writeGuard.copyFrom(body, bufferSize);
       md5Hash = DatatypeConverter.printHexBinary(body.getMessageDigest(OzoneConsts.MD5_HASH).digest())
           .toLowerCase();
       perf.appendMetaLatencyNanos(metadataLatencyNs);
-      ((KeyMetadataAware)streamOutput).getMetadata().put(OzoneConsts.ETAG, md5Hash);
+      writeGuard.getMetadata().put(OzoneConsts.ETAG, md5Hash);
 
-      List<CheckedRunnable<IOException>> preCommits = new ArrayList<>();
       String clientContentMD5 = headers.getHeaderString(S3Consts.CHECKSUM_HEADER);
       if (clientContentMD5 != null) {
         CheckedRunnable<IOException> checkContentMD5Hook = () -> {
           S3Utils.validateContentMD5(clientContentMD5, md5Hash, keyPath);
         };
-        preCommits.add(checkContentMD5Hook);
+        writeGuard.addPreCommit(checkContentMD5Hook);
       }
 
       // If sha256Digest exists, this request must validate x-amz-content-sha256
@@ -159,10 +153,8 @@ final class ObjectEndpointStreaming {
             throw S3ErrorTable.newError(S3ErrorTable.X_AMZ_CONTENT_SHA256_MISMATCH, keyPath);
           }
         };
-        preCommits.add(checkSha256Hook);
+        writeGuard.addPreCommit(checkSha256Hook);
       }
-
-      streamOutput.getKeyDataStreamOutput().setPreCommits(preCommits);
     }
     return Pair.of(md5Hash, writeLen);
   }
@@ -195,38 +187,23 @@ final class ObjectEndpointStreaming {
       ReplicationConfig replicationConfig,
       Map<String, String> keyMetadata,
       DigestInputStream body, PerformanceStringBuilder perf, long startNanos,
-      Map<String, String> tags)
+      Map<String, String> tags,
+      S3ConditionalRequest.WriteConditions writeConditions)
       throws IOException {
     long writeLen;
-    try (OzoneDataStreamOutput streamOutput = bucket.createStreamKey(keyPath,
-        length, replicationConfig, keyMetadata, tags)) {
+    try (S3ObjectStreamingWriteGuard writeGuard =
+        new S3ObjectStreamingWriteGuard(openStreamKeyForPut(bucket,
+            keyPath, length, replicationConfig, keyMetadata, tags,
+            writeConditions, false), length, keyPath)) {
       long metadataLatencyNs =
           METRICS.updateCopyKeyMetadataStats(startNanos);
-      writeLen = writeToStreamOutput(streamOutput, body, bufferSize, length);
+      writeLen = writeGuard.copyFrom(body, bufferSize);
       String eTag = DatatypeConverter.printHexBinary(body.getMessageDigest().digest())
           .toLowerCase();
       perf.appendMetaLatencyNanos(metadataLatencyNs);
-      ((KeyMetadataAware)streamOutput).getMetadata().put(OzoneConsts.ETAG, eTag);
+      writeGuard.getMetadata().put(OzoneConsts.ETAG, eTag);
     }
     return writeLen;
-  }
-
-  private static long writeToStreamOutput(OzoneDataStreamOutput streamOutput,
-                                          InputStream body, int bufferSize,
-                                          long length)
-      throws IOException {
-    final byte[] buffer = new byte[bufferSize];
-    long n = 0;
-    while (n < length) {
-      final int toRead = Math.toIntExact(Math.min(bufferSize, length - n));
-      final int readLength = body.read(buffer, 0, toRead);
-      if (readLength == -1) {
-        break;
-      }
-      streamOutput.write(ByteBuffer.wrap(buffer, 0, readLength));
-      n += readLength;
-    }
-    return n;
   }
 
   @SuppressWarnings("checkstyle:ParameterNumber")
@@ -239,7 +216,8 @@ final class ObjectEndpointStreaming {
     boolean isSignedInputStream = body.getWrappedInputStream() instanceof SignedChunksInputStream;
     try {
       try (OzoneDataStreamOutput streamOutput = ozoneBucket
-          .createMultipartStreamKey(key, length, partNumber, uploadID, isSignedInputStream)) {
+          .createMultipartStreamKey(key, length, partNumber, uploadID, isSignedInputStream);
+           S3ObjectStreamingWriteGuard writeGuard = new S3ObjectStreamingWriteGuard(streamOutput, length, key)) {
         long metadataLatencyNs = METRICS.updatePutKeyMetadataStats(startNanos);
         if (streamOutput.getDerivedKey() != null) {
           java.io.InputStream wrapped = body.getWrappedInputStream();
@@ -247,8 +225,7 @@ final class ObjectEndpointStreaming {
             ((SignedChunksInputStream) wrapped).getValidator().setDerivedKey(streamOutput.getDerivedKey());
           }
         }
-        long putLength =
-            writeToStreamOutput(streamOutput, body, chunkSize, length);
+        long putLength = writeGuard.copyFrom(body, chunkSize);
         eTag = DatatypeConverter.printHexBinary(
             body.getMessageDigest(OzoneConsts.MD5_HASH).digest()).toLowerCase();
         String clientContentMD5 = headers.getHeaderString(S3Consts.CHECKSUM_HEADER);
@@ -256,9 +233,9 @@ final class ObjectEndpointStreaming {
           CheckedRunnable<IOException> checkContentMD5Hook = () -> {
             S3Utils.validateContentMD5(clientContentMD5, eTag, key);
           };
-          streamOutput.getKeyDataStreamOutput().setPreCommits(Collections.singletonList(checkContentMD5Hook));
+          writeGuard.addPreCommit(checkContentMD5Hook);
         }
-        ((KeyMetadataAware)streamOutput).getMetadata().put(OzoneConsts.ETAG, eTag);
+        writeGuard.getMetadata().put(OzoneConsts.ETAG, eTag);
         METRICS.incPutKeySuccessLength(putLength);
         perf.appendMetaLatencyNanos(metadataLatencyNs);
         perf.appendSizeBytes(putLength);

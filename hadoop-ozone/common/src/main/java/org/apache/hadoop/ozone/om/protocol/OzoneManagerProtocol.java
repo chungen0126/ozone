@@ -91,10 +91,11 @@ public interface OzoneManagerProtocol
   /**
    * Version 1: Initial version.
    */
-  long versionID = 1L;
+      long versionID = 1L;
 
   /**
    * Creates a volume.
+   *
    * @param args - Arguments to create Volume.
    * @throws IOException
    */
@@ -105,10 +106,11 @@ public interface OzoneManagerProtocol
 
   /**
    * Changes the owner of a volume.
-   * @param volume  - Name of the volume.
-   * @param owner - Name of the owner.
+   *
+   * @param volume - Name of the volume.
+   * @param owner  - Name of the owner.
    * @return true if operation succeeded, false if specified user is
-   *         already the owner.
+   * already the owner.
    * @throws IOException
    */
   default boolean setOwner(String volume, String owner) throws IOException {
@@ -118,9 +120,10 @@ public interface OzoneManagerProtocol
 
   /**
    * Changes the Quota on a volume.
-   * @param volume - Name of the volume.
+   *
+   * @param volume           - Name of the volume.
    * @param quotaInNamespace - Volume quota in counts.
-   * @param quotaInBytes - Volume quota in bytes.
+   * @param quotaInBytes     - Volume quota in bytes.
    * @throws IOException
    */
   default void setQuota(String volume, long quotaInNamespace, long quotaInBytes)
@@ -131,10 +134,11 @@ public interface OzoneManagerProtocol
 
   /**
    * Checks if the specified user can access this volume.
-   * @param volume - volume
+   *
+   * @param volume  - volume
    * @param userAcl - user acls which needs to be checked for access
    * @return true if the user has required access for the volume,
-   *         false otherwise
+   * false otherwise
    * @throws IOException
    */
   default boolean checkVolumeAccess(String volume, OzoneAclInfo userAcl)
@@ -144,6 +148,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Gets the volume information.
+   *
    * @param volume - Volume name.
    * @return VolumeArgs or exception is thrown.
    * @throws IOException
@@ -152,6 +157,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Deletes an existing empty volume.
+   *
    * @param volume - Name of the volume.
    * @throws IOException
    */
@@ -162,10 +168,11 @@ public interface OzoneManagerProtocol
 
   /**
    * Lists volumes accessible by a specific user.
+   *
    * @param userName - user name
-   * @param prefix  - Filter prefix -- Return only entries that match this.
-   * @param prevKey - Previous key -- List starts from the next from the prevkey
-   * @param maxKeys - Max number of keys to return.
+   * @param prefix   - Filter prefix -- Return only entries that match this.
+   * @param prevKey  - Previous key -- List starts from the next from the prevkey
+   * @param maxKeys  - Max number of keys to return.
    * @return List of Volumes.
    * @throws IOException
    */
@@ -174,6 +181,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Lists volume all volumes in the cluster.
+   *
    * @param prefix  - Filter prefix -- Return only entries that match this.
    * @param prevKey - Previous key -- List starts from the next from the prevkey
    * @param maxKeys - Max number of keys to return.
@@ -185,6 +193,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Creates a bucket.
+   *
    * @param bucketInfo - BucketInfo to create Bucket.
    * @throws IOException
    */
@@ -195,6 +204,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Gets the bucket information.
+   *
    * @param volumeName - Volume name.
    * @param bucketName - Bucket name.
    * @return OmBucketInfo or exception is thrown.
@@ -205,6 +215,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Sets bucket property from args.
+   *
    * @param args - BucketArgs.
    * @throws IOException
    */
@@ -215,9 +226,10 @@ public interface OzoneManagerProtocol
 
   /**
    * Changes the owner of a bucket.
-   * @param args  - OMBucketArgs
+   *
+   * @param args - OMBucketArgs
    * @return true if operation succeeded, false if specified user is
-   *         already the owner.
+   * already the owner.
    * @throws IOException
    */
   default boolean setBucketOwner(OmBucketArgs args) throws IOException {
@@ -241,7 +253,7 @@ public interface OzoneManagerProtocol
    * Commit a key. This will make the change from the client visible. The client
    * is identified by the clientID.
    *
-   * @param args the key to commit
+   * @param args     the key to commit
    * @param clientID the client identification
    * @throws IOException
    */
@@ -255,21 +267,21 @@ public interface OzoneManagerProtocol
    * Synchronize the key length. This will make the change from the client
    * visible. The client is identified by the clientID.
    *
-   * @param args the key to commit
+   * @param args     the key to commit
    * @param clientID the client identification
    * @throws IOException
    */
   default void hsyncKey(OmKeyArgs args, long clientID)
-          throws IOException {
+      throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
-            "this to be implemented, as write requests use a new approach.");
+        "this to be implemented, as write requests use a new approach.");
   }
 
   /**
    * Recovery and commit a key. This will make the change from the client visible. The client
    * is identified by the clientID.
    *
-   * @param args the key to commit
+   * @param args     the key to commit
    * @param clientID the client identification
    * @throws IOException
    */
@@ -283,8 +295,8 @@ public interface OzoneManagerProtocol
    * Allocate a new block, it is assumed that the client is having an open key
    * session going on. This block will be appended to this open key session.
    *
-   * @param args the key to append
-   * @param clientID the client identification
+   * @param args        the key to append
+   * @param clientID    the client identification
    * @param excludeList List of datanodes/containers to exclude during block
    *                    allocation
    * @return an allocated block
@@ -311,11 +323,11 @@ public interface OzoneManagerProtocol
   /**
    * Lookup for the container of an existing key.
    *
-   * @param args the args of the key.
+   * @param args            the args of the key.
    * @param assumeS3Context if true OM will automatically lookup the S3
    *                        volume context and includes in the response.
    * @return KeyInfoWithVolumeContext includes info that client uses to talk
-   *         to containers and S3 volume context info if assumeS3Context is set.
+   * to containers and S3 volume context info if assumeS3Context is set.
    */
   @Override
   KeyInfoWithVolumeContext getKeyInfo(OmKeyArgs args, boolean assumeS3Context)
@@ -323,7 +335,8 @@ public interface OzoneManagerProtocol
 
   /**
    * Rename an existing key within a bucket.
-   * @param args the args of the key.
+   *
+   * @param args      the args of the key.
    * @param toKeyName New name to be used for the Key
    * @throws IOException
    */
@@ -334,6 +347,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Rename existing keys within a bucket.
+   *
    * @param omRenameKeys Includes volume, bucket, and fromKey toKey name map
    *                     and fromKey name toKey info Map.
    * @throws IOException
@@ -373,7 +387,7 @@ public interface OzoneManagerProtocol
    * through OzoneFileSystem.
    *
    * @param deleteKeys
-   * @param quiet - flag to not throw exception if delete fails
+   * @param quiet      - flag to not throw exception if delete fails
    * @throws IOException
    */
   default Map<String, ErrorInfo> deleteKeys(OmDeleteKeys deleteKeys, boolean quiet)
@@ -384,6 +398,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Deletes an existing empty bucket from volume.
+   *
    * @param volume - Name of the volume.
    * @param bucket - Name of the bucket.
    * @throws IOException
@@ -398,25 +413,20 @@ public interface OzoneManagerProtocol
    * in the given volume. Argument volumeName is required, others
    * are optional.
    *
-   * @param volumeName
-   *   the name of the volume.
-   * @param startBucketName
-   *   the start bucket name, only the buckets whose name is
-   *   after this value will be included in the result.
-   * @param bucketPrefix
-   *   bucket name prefix, only the buckets whose name has
-   *   this prefix will be included in the result.
-   * @param maxNumOfBuckets
-   *   the maximum number of buckets to return. It ensures
-   *   the size of the result will not exceed this limit.
-   * @param hasSnapshot
-   * flag to list bucket which have snapshots.
+   * @param volumeName      the name of the volume.
+   * @param startBucketName the start bucket name, only the buckets whose name is
+   *                        after this value will be included in the result.
+   * @param bucketPrefix    bucket name prefix, only the buckets whose name has
+   *                        this prefix will be included in the result.
+   * @param maxNumOfBuckets the maximum number of buckets to return. It ensures
+   *                        the size of the result will not exceed this limit.
+   * @param hasSnapshot     flag to list bucket which have snapshots.
    * @return a list of buckets.
    * @throws IOException
    */
   List<OmBucketInfo> listBuckets(String volumeName,
-                                 String startBucketName, String bucketPrefix,
-                                 int maxNumOfBuckets, boolean hasSnapshot)
+      String startBucketName, String bucketPrefix,
+      int maxNumOfBuckets, boolean hasSnapshot)
       throws IOException;
 
   /**
@@ -431,8 +441,9 @@ public interface OzoneManagerProtocol
 
   /**
    * List open files in OM.
-   * @param path One of: root "/", path to a bucket, key path, or key prefix
-   * @param maxKeys Limit the number of keys that can be returned in this batch.
+   *
+   * @param path      One of: root "/", path to a bucket, key path, or key prefix
+   * @param maxKeys   Limit the number of keys that can be returned in this batch.
    * @param contToken Continuation token.
    * @return ListOpenFilesResult
    * @throws IOException
@@ -443,19 +454,19 @@ public interface OzoneManagerProtocol
   /**
    * Transfer the raft leadership.
    *
-   * @param newLeaderId  the newLeaderId of the target expected leader
+   * @param newLeaderId the newLeaderId of the target expected leader
    * @throws IOException
    */
   void transferLeadership(String newLeaderId) throws IOException;
 
   /**
    * Triggers Ranger background sync task immediately.
-   *
+   * <p>
    * Requires Ozone administrator privilege.
    *
    * @param noWait set to true if client won't wait for the result.
    * @return true if noWait is true or when task completed successfully,
-   *         false otherwise.
+   * false otherwise.
    * @throws IOException OMException (e.g. PERMISSION_DENIED)
    */
   boolean triggerRangerBGSync(boolean noWait) throws IOException;
@@ -465,29 +476,27 @@ public interface OzoneManagerProtocol
    * This method when called, initiates finalization of Ozone Manager metadata
    * during an upgrade. The status returned contains the status
    * - ALREADY_FINALIZED with empty message list when the software layout
-   *    version and the metadata layout version are equal
+   * version and the metadata layout version are equal
    * - STARTING_FINALIZATION with empty message list when the finalization
-   *    has been started successfully
+   * has been started successfully
    * - If a finalization is already in progress, then the method throws an
-   *    {@link OMException} with a result code INVALID_REQUEST
-   *
-   *
+   * {@link OMException} with a result code INVALID_REQUEST
+   * <p>
+   * <p>
    * The leader Ozone Manager initiates finalization of the followers via
    * the Raft protocol in other Ozone Managers, and reports progress to the
    * client via the
    * {@link #queryUpgradeFinalizationProgress(String, boolean, boolean)}
    * call.
-   *
+   * <p>
    * The follower Ozone Managers reject this request and directs the client to
    * the leader.
    *
    * @param upgradeClientID String identifier of the upgrade finalizer client
    * @return the finalization status.
-   * @throws IOException
-   *            when finalization is failed, or this Ozone Manager is not the
-   *                leader.
-   * @throws OMException
-   *            when finalization is already in progress.
+   * @throws IOException when finalization is failed, or this Ozone Manager is not the
+   *                     leader.
+   * @throws OMException when finalization is already in progress.
    */
   UpgradeFinalization.StatusAndMessages finalizeUpgrade(String upgradeClientID) throws IOException;
 
@@ -496,28 +505,26 @@ public interface OzoneManagerProtocol
    * This method when called, returns the status messages from the finalization
    * progress, if any. The status returned is
    * - FINALIZATION_IN_PROGRESS, and the messages since the last query if the
-   *    finalization is still running
+   * finalization is still running
    * - FINALIZATION_DONE with a message list containing the messages since
-   *    the last query, if the finalization ended but the messages were not
-   *    yet emitted to the client.
+   * the last query, if the finalization ended but the messages were not
+   * yet emitted to the client.
    * - ALREADY_FINALIZED with an empty message list otherwise
    * - If finalization is not in progress, but software layout version and
-   *    metadata layout version are different, the method will throw an
-   *    {@link OMException} with a result code INVALID_REQUEST
+   * metadata layout version are different, the method will throw an
+   * {@link OMException} with a result code INVALID_REQUEST
    * - If during finalization an other client with different ID than the one
-   *    initiated finalization is calling the method, then an
-   *    {@link OMException} with a result code INVALID_REQUEST is thrown,
-   *    unless the request is forced by a new client, in which case the new
-   *    client takes over the old client and the old client should exit.
+   * initiated finalization is calling the method, then an
+   * {@link OMException} with a result code INVALID_REQUEST is thrown,
+   * unless the request is forced by a new client, in which case the new
+   * client takes over the old client and the old client should exit.
    *
-   * @param takeover set force takeover of output monitoring
-   * @param readonly set readonly of output
+   * @param takeover        set force takeover of output monitoring
+   * @param readonly        set readonly of output
    * @param upgradeClientID String identifier of the upgrade finalizer client
    * @return the finalization status and status messages.
-   * @throws IOException
-   *            if there was a problem during the query
-   * @throws OMException
-   *            if finalization is needed but not yet started
+   * @throws IOException if there was a problem during the query
+   * @throws OMException if finalization is needed but not yet started
    */
   UpgradeFinalization.StatusAndMessages queryUpgradeFinalizationProgress(
       String upgradeClientID, boolean takeover, boolean readonly
@@ -529,6 +536,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Initiate multipart upload for the specified key.
+   *
    * @param keyArgs
    * @return MultipartInfo
    * @throws IOException
@@ -541,6 +549,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Commit Multipart upload part file.
+   *
    * @param omKeyArgs
    * @param clientID
    * @return OmMultipartCommitUploadPartInfo
@@ -554,6 +563,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Complete Multipart upload Request.
+   *
    * @param omKeyArgs
    * @param multipartUploadList
    * @return OmMultipartUploadCompleteInfo
@@ -568,6 +578,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Abort multipart upload.
+   *
    * @param omKeyArgs
    * @throws IOException
    */
@@ -578,6 +589,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Returns list of parts of a multipart upload key.
+   *
    * @param volumeName
    * @param bucketName
    * @param keyName
@@ -588,7 +600,7 @@ public interface OzoneManagerProtocol
    */
   OmMultipartUploadListParts listParts(String volumeName, String bucketName,
       String keyName, String uploadID, int partNumberMarker,
-      int maxParts)  throws IOException;
+      int maxParts) throws IOException;
 
   /**
    * List in-flight uploads.
@@ -601,6 +613,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Gets s3Secret for given kerberos user.
+   *
    * @param kerberosID
    * @return S3SecretValue
    * @throws IOException
@@ -613,6 +626,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Gets s3Secret for given kerberos user.
+   *
    * @param kerberosID
    * @param createIfNotExist
    * @return S3SecretValue
@@ -626,6 +640,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Set secret key for accessId.
+   *
    * @param accessId
    * @param secretKey
    * @return S3SecretValue
@@ -639,6 +654,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Revokes s3Secret of given kerberos user.
+   *
    * @param kerberosID
    * @throws IOException
    */
@@ -649,6 +665,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Create a tenant.
+   *
    * @param omTenantArgs OmTenantArgs
    * @throws IOException
    */
@@ -659,6 +676,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Delete a tenant.
+   *
    * @param tenantId tenant name.
    * @return DeleteTenantResponse
    * @throws IOException
@@ -671,6 +689,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Assign user to a tenant.
+   *
    * @param username user name to be assigned.
    * @param tenantId tenant name.
    * @param accessId access ID.
@@ -678,8 +697,8 @@ public interface OzoneManagerProtocol
    * @throws IOException
    */
   default S3SecretValue tenantAssignUserAccessId(String username,
-                                                 String tenantId,
-                                                 String accessId)
+      String tenantId,
+      String accessId)
       throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented, as write requests use a new approach");
@@ -689,6 +708,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Revoke user accessId to a tenant.
+   *
    * @param accessId accessId to be revoked.
    * @throws IOException
    */
@@ -699,8 +719,9 @@ public interface OzoneManagerProtocol
 
   /**
    * Create snapshot.
-   * @param volumeName vol to be used
-   * @param bucketName bucket to be used
+   *
+   * @param volumeName   vol to be used
+   * @param bucketName   bucket to be used
    * @param snapshotName name to be used
    * @return name used
    * @throws IOException
@@ -713,23 +734,24 @@ public interface OzoneManagerProtocol
 
   /**
    * Rename snapshot.
-   * @param volumeName vol to be used
-   * @param bucketName bucket to be used
+   *
+   * @param volumeName      vol to be used
+   * @param bucketName      bucket to be used
    * @param snapshotOldName Old name of the snapshot
    * @param snapshotNewName New name of the snapshot
-   *
    * @throws IOException
    */
   default void renameSnapshot(String volumeName,
       String bucketName, String snapshotOldName, String snapshotNewName) throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
-         "this to be implemented");
+        "this to be implemented");
   }
 
   /**
    * Delete snapshot.
-   * @param volumeName vol to be used
-   * @param bucketName bucket to be used
+   *
+   * @param volumeName   vol to be used
+   * @param bucketName   bucket to be used
    * @param snapshotName name of the snapshot to be deleted
    * @throws IOException
    */
@@ -741,23 +763,25 @@ public interface OzoneManagerProtocol
 
   /**
    * Returns snapshot info for volume/bucket snapshot path.
-   * @param volumeName volume name
-   * @param bucketName bucket name
+   *
+   * @param volumeName   volume name
+   * @param bucketName   bucket name
    * @param snapshotName snapshot name
    * @return snapshot info for volume/bucket snapshot path.
    * @throws IOException
    */
   default SnapshotInfo getSnapshotInfo(String volumeName,
-                                       String bucketName,
-                                       String snapshotName) throws IOException {
+      String bucketName,
+      String snapshotName) throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented");
   }
 
   /**
    * Create an image of the current compaction log DAG in the OM.
-   * @param fileNamePrefix  file name prefix of the image file.
-   * @param graphType       type of node name to use in the graph image.
+   *
+   * @param fileNamePrefix file name prefix of the image file.
+   * @param graphType      type of node name to use in the graph image.
    * @return message which tells the image name, parent dir and OM leader
    * node information.
    */
@@ -769,6 +793,7 @@ public interface OzoneManagerProtocol
 
   /**
    * List snapshots in a volume/bucket.
+   *
    * @param volumeName     volume name
    * @param bucketName     bucket name
    * @param snapshotPrefix snapshot prefix to match
@@ -786,29 +811,30 @@ public interface OzoneManagerProtocol
 
   /**
    * Get the differences between two snapshots.
-   * @param volumeName Name of the volume to which the snapshotted bucket belong
-   * @param bucketName Name of the bucket to which the snapshots belong
-   * @param fromSnapshot The name of the starting snapshot
-   * @param toSnapshot The name of the ending snapshot
-   * @param token to get the index to return diff report from.
-   * @param pageSize maximum entries returned to the report.
-   * @param forceFullDiff request to force full diff, skipping DAG optimization
+   *
+   * @param volumeName        Name of the volume to which the snapshotted bucket belong
+   * @param bucketName        Name of the bucket to which the snapshots belong
+   * @param fromSnapshot      The name of the starting snapshot
+   * @param toSnapshot        The name of the ending snapshot
+   * @param token             to get the index to return diff report from.
+   * @param pageSize          maximum entries returned to the report.
+   * @param forceFullDiff     request to force full diff, skipping DAG optimization
    * @param disableNativeDiff request to force diff to perform diffs without native lib
    * @return the difference report between two snapshots
+   * @throws IOException in case of any exception while generating snapshot diff
    * @deprecated Use {@link #snapshotDiff(String, String, String, String, String, int)}
    * instead
-   * @throws IOException in case of any exception while generating snapshot diff
    */
   @Deprecated
   @SuppressWarnings("parameternumber")
   default SnapshotDiffResponse snapshotDiff(String volumeName,
-                                            String bucketName,
-                                            String fromSnapshot,
-                                            String toSnapshot,
-                                            String token,
-                                            int pageSize,
-                                            boolean forceFullDiff,
-                                            boolean disableNativeDiff)
+      String bucketName,
+      String fromSnapshot,
+      String toSnapshot,
+      String token,
+      int pageSize,
+      boolean forceFullDiff,
+      boolean disableNativeDiff)
       throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented");
@@ -816,22 +842,23 @@ public interface OzoneManagerProtocol
 
   /**
    * Get the differences between two snapshots.
-   * @param volumeName Name of the volume to which the snapshotted bucket belong
-   * @param bucketName Name of the bucket to which the snapshots belong
+   *
+   * @param volumeName   Name of the volume to which the snapshotted bucket belong
+   * @param bucketName   Name of the bucket to which the snapshots belong
    * @param fromSnapshot The name of the starting snapshot
-   * @param toSnapshot The name of the ending snapshot
-   * @param token to get the index to return diff report from.
-   * @param pageSize maximum entries returned to the report.
+   * @param toSnapshot   The name of the ending snapshot
+   * @param token        to get the index to return diff report from.
+   * @param pageSize     maximum entries returned to the report.
    * @return the difference report between two snapshots
    * instead
    * @throws IOException in case of any exception while generating snapshot diff
    */
   default SnapshotDiffResponse snapshotDiff(String volumeName,
-                                            String bucketName,
-                                            String fromSnapshot,
-                                            String toSnapshot,
-                                            String token,
-                                            int pageSize)
+      String bucketName,
+      String fromSnapshot,
+      String toSnapshot,
+      String token,
+      int pageSize)
       throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented");
@@ -839,21 +866,22 @@ public interface OzoneManagerProtocol
 
   /**
    * Submit snapshot diff job.
-   * @param volumeName Name of the volume to which the snapshot bucket belong
-   * @param bucketName Name of the bucket to which the snapshots belong
-   * @param fromSnapshot The name of the starting snapshot
-   * @param toSnapshot The name of the ending snapshot
-   * @param forceFullDiff request to force full diff, skipping DAG optimization
+   *
+   * @param volumeName        Name of the volume to which the snapshot bucket belong
+   * @param bucketName        Name of the bucket to which the snapshots belong
+   * @param fromSnapshot      The name of the starting snapshot
+   * @param toSnapshot        The name of the ending snapshot
+   * @param forceFullDiff     request to force full diff, skipping DAG optimization
    * @param disableNativeDiff request to force diff to perform diffs without native lib
    * @return the result of submitting snapshot diff job.
    * @throws IOException in case of any exception while generating snapshot diff
    */
   default SubmitSnapshotDiffResponse submitSnapshotDiff(String volumeName,
-                                                String bucketName,
-                                                String fromSnapshot,
-                                                String toSnapshot,
-                                                boolean forceFullDiff,
-                                                boolean disableNativeDiff)
+      String bucketName,
+      String fromSnapshot,
+      String toSnapshot,
+      boolean forceFullDiff,
+      boolean disableNativeDiff)
       throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented");
@@ -861,17 +889,18 @@ public interface OzoneManagerProtocol
 
   /**
    * Cancel snapshot diff job.
-   * @param volumeName Name of the volume to which the snapshotted bucket belong
-   * @param bucketName Name of the bucket to which the snapshots belong
+   *
+   * @param volumeName   Name of the volume to which the snapshotted bucket belong
+   * @param bucketName   Name of the bucket to which the snapshots belong
    * @param fromSnapshot The name of the starting snapshot
-   * @param toSnapshot The name of the ending snapshot
+   * @param toSnapshot   The name of the ending snapshot
    * @return the success if cancel succeeds.
    * @throws IOException in case of any exception while cancelling snap diff job
    */
   default CancelSnapshotDiffResponse cancelSnapshotDiff(String volumeName,
-                                                        String bucketName,
-                                                        String fromSnapshot,
-                                                        String toSnapshot)
+      String bucketName,
+      String fromSnapshot,
+      String toSnapshot)
       throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented");
@@ -879,12 +908,13 @@ public interface OzoneManagerProtocol
 
   /**
    * Get a list of the SnapshotDiff jobs for a bucket based on the JobStatus.
-   * @param volumeName Name of the volume to which the snapshotted bucket belong
-   * @param bucketName Name of the bucket to which the snapshots belong
-   * @param jobStatus JobStatus to be used to filter the snapshot diff jobs
-   * @param listAllStatus Option to specify whether to list all jobs regardless of status
+   *
+   * @param volumeName          Name of the volume to which the snapshotted bucket belong
+   * @param bucketName          Name of the bucket to which the snapshots belong
+   * @param jobStatus           JobStatus to be used to filter the snapshot diff jobs
+   * @param listAllStatus       Option to specify whether to list all jobs regardless of status
    * @param prevSnapshotDiffJob list snapshot diff jobs after this snapshot diff job.
-   * @param maxListResult maximum entries to be returned from the startSnapshotDiffJob.
+   * @param maxListResult       maximum entries to be returned from the startSnapshotDiffJob.
    * @return a list of SnapshotDiffJob objects
    * @throws IOException in case there is a failure while getting a response.
    */
@@ -901,14 +931,15 @@ public interface OzoneManagerProtocol
 
   /**
    * Assign admin role to a user identified by an accessId in a tenant.
-   * @param accessId access ID.
-   * @param tenantId tenant name.
+   *
+   * @param accessId  access ID.
+   * @param tenantId  tenant name.
    * @param delegated true if making delegated admin.
    * @throws IOException
    */
   default void tenantAssignAdmin(String accessId,
-                                 String tenantId,
-                                 boolean delegated)
+      String tenantId,
+      boolean delegated)
       throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented, as write requests use a new approach");
@@ -916,18 +947,20 @@ public interface OzoneManagerProtocol
 
   /**
    * Revoke admin role of an accessId in a tenant.
+   *
    * @param accessId access ID.
    * @param tenantId tenant name.
    * @throws IOException
    */
   default void tenantRevokeAdmin(String accessId,
-                                 String tenantId) throws IOException {
+      String tenantId) throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented, as write requests use a new approach");
   }
 
   /**
    * Get tenant info for a user.
+   *
    * @param userPrincipal Kerberos principal of a user.
    * @return TenantUserInfo
    * @throws IOException
@@ -940,6 +973,7 @@ public interface OzoneManagerProtocol
 
   /**
    * List tenants.
+   *
    * @return TenantStateList
    * @throws IOException
    */
@@ -1012,31 +1046,31 @@ public interface OzoneManagerProtocol
   /**
    * List the status for a file or a directory and its contents.
    *
-   * @param keyArgs    Key args
-   * @param recursive  For a directory if true all the descendants of a
-   *                   particular directory are listed
-   * @param startKey   Key from which listing needs to start. If startKey exists
-   *                   its status is included in the final list.
-   * @param numEntries Number of entries to list from the start key
+   * @param keyArgs              Key args
+   * @param recursive            For a directory if true all the descendants of a
+   *                             particular directory are listed
+   * @param startKey             Key from which listing needs to start. If startKey exists
+   *                             its status is included in the final list.
+   * @param numEntries           Number of entries to list from the start key
    * @param allowPartialPrefixes if partial prefixes should be allowed,
    *                             this is needed in context of ListKeys
    * @return list of file status
    */
   @Override
   List<OzoneFileStatus> listStatus(OmKeyArgs keyArgs, boolean recursive,
-                                   String startKey, long numEntries,
-                                   boolean allowPartialPrefixes)
+      String startKey, long numEntries,
+      boolean allowPartialPrefixes)
       throws IOException;
 
   /**
    * Lightweight listStatus API.
    *
-   * @param keyArgs    Key args
-   * @param recursive  For a directory if true all the descendants of a
-   *                   particular directory are listed
-   * @param startKey   Key from which listing needs to start. If startKey exists
-   *                   its status is included in the final list.
-   * @param numEntries Number of entries to list from the start key
+   * @param keyArgs              Key args
+   * @param recursive            For a directory if true all the descendants of a
+   *                             particular directory are listed
+   * @param startKey             Key from which listing needs to start. If startKey exists
+   *                             its status is included in the final list.
+   * @param numEntries           Number of entries to list from the start key
    * @param allowPartialPrefixes if partial prefixes should be allowed,
    *                             this is needed in context of ListKeys
    * @return list of file status
@@ -1049,11 +1083,11 @@ public interface OzoneManagerProtocol
   /**
    * Add acl for Ozone object. Return true if acl is added successfully else
    * false.
+   *
    * @param obj Ozone object for which acl should be added.
    * @param acl ozone acl to be added.
-   *
    * @throws IOException if there is error.
-   * */
+   */
   default boolean addAcl(OzoneObj obj, OzoneAcl acl) throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented, as write requests use a new approach.");
@@ -1062,11 +1096,11 @@ public interface OzoneManagerProtocol
   /**
    * Remove acl for Ozone object. Return true if acl is removed successfully
    * else false.
+   *
    * @param obj Ozone object.
    * @param acl Ozone acl to be removed.
-   *
    * @throws IOException if there is error.
-   * */
+   */
   default boolean removeAcl(OzoneObj obj, OzoneAcl acl) throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented, as write requests use a new approach.");
@@ -1075,11 +1109,11 @@ public interface OzoneManagerProtocol
   /**
    * Acls to be set for given Ozone object. This operations reset ACL for
    * given object to list of ACLs provided in argument.
-   * @param obj Ozone object.
-   * @param acls List of acls.
    *
+   * @param obj  Ozone object.
+   * @param acls List of acls.
    * @throws IOException if there is error.
-   * */
+   */
   default boolean setAcl(OzoneObj obj, List<OzoneAcl> acls) throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented, as write requests use a new approach.");
@@ -1087,6 +1121,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Get DB updates since a specific sequence number.
+   *
    * @param dbUpdatesRequest request that encapsulates a sequence number.
    * @return Wrapper containing the updates.
    */
@@ -1095,10 +1130,9 @@ public interface OzoneManagerProtocol
       throws IOException;
 
   /**
-   *
-   * @param txnApplyWaitTimeoutSeconds Max time in SECONDS to wait for all
-   *                                   transactions before the prepare request
-   *                                   to be applied to the OM DB.
+   * @param txnApplyWaitTimeoutSeconds   Max time in SECONDS to wait for all
+   *                                     transactions before the prepare request
+   *                                     to be applied to the OM DB.
    * @param txnApplyCheckIntervalSeconds Time in SECONDS to wait between
    *                                     successive checks for all transactions
    *                                     to be applied to the OM DB.
@@ -1112,6 +1146,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Check if Ozone Manager is 'prepared' at a specific Txn Id.
+   *
    * @param txnId passed in Txn Id
    * @return PrepareStatus response
    * @throws IOException on exception.
@@ -1127,6 +1162,7 @@ public interface OzoneManagerProtocol
   /**
    * Cancel the prepare state of the Ozone Manager. If ozone manager is not
    * prepared, has no effect.
+   *
    * @throws IOException on exception.
    */
   default CancelPrepareResponse cancelOzoneManagerPrepare() throws IOException {
@@ -1136,14 +1172,15 @@ public interface OzoneManagerProtocol
   /**
    * Send RPC request with or without payload to OM
    * to benchmark RPC communication performance.
-   * @param payloadReq payload in request.
+   *
+   * @param payloadReq      payload in request.
    * @param payloadSizeResp payload size of response.
-   * @param writeToRatis write to Ratis log if flag is set to true.
-   * @throws IOException if there is error in the RPC communication.
+   * @param writeToRatis    write to Ratis log if flag is set to true.
    * @return EchoRPCResponse.
+   * @throws IOException if there is error in the RPC communication.
    */
   EchoRPCResponse echoRPCReq(byte[] payloadReq, int payloadSizeResp,
-                             boolean writeToRatis) throws IOException;
+      boolean writeToRatis) throws IOException;
 
 
   /**
@@ -1151,8 +1188,8 @@ public interface OzoneManagerProtocol
    *
    * @param volumeName - The volume name.
    * @param bucketName - The bucket name.
-   * @param keyName - The key user want to recover.
-   * @param force - force recover the file.
+   * @param keyName    - The key user want to recover.
+   * @param force      - force recover the file.
    * @return LeaseKeyInfo KeyInfo of file under recovery
    * @throws IOException if an error occurs
    */
@@ -1163,8 +1200,8 @@ public interface OzoneManagerProtocol
    * Access time is currently ignored by Ozone Manager.
    *
    * @param keyArgs - The key argument.
-   * @param mtime - modification time.
-   * @param atime - access time. Ignored by Ozone Manager.
+   * @param mtime   - modification time.
+   * @param atime   - access time. Ignored by Ozone Manager.
    * @throws IOException
    */
   void setTimes(OmKeyArgs keyArgs, long mtime, long atime)
@@ -1180,15 +1217,16 @@ public interface OzoneManagerProtocol
    * @param isChecked If true check only for Active metadata node /
    *                  NameNode's status, else check first metadata node /
    *                  NameNode's status.
-   * @throws IOException if set safe mode fails to proceed.
    * @return true if the action is successfully accepted, otherwise false
    * means rejected.
+   * @throws IOException if set safe mode fails to proceed.
    */
   boolean setSafeMode(SafeModeAction action, boolean isChecked)
       throws IOException;
 
   /**
    * Gets the tags for the specified key.
+   *
    * @param args Key args
    * @return Tags associated with the key.
    */
@@ -1197,6 +1235,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Sets the tags to an existing key.
+   *
    * @param args Key args
    */
   default void putObjectTagging(OmKeyArgs args) throws IOException {
@@ -1206,6 +1245,7 @@ public interface OzoneManagerProtocol
 
   /**
    * Removes all the tags from the specified key.
+   *
    * @param args Key args
    */
   default void deleteObjectTagging(OmKeyArgs args) throws IOException {
@@ -1214,7 +1254,21 @@ public interface OzoneManagerProtocol
   }
 
   /**
+   * Gets the tags for the specified bucket.
+   *
+   * @param args Bucket args
+   * @return Tags associated with the bucket.
+   */
+  @Override
+  default Map<String, String> getBucketTagging(OmBucketArgs args) throws IOException {
+    // This will be removed in the follow-up ticket HDDS-15511.
+    throw new UnsupportedOperationException("OzoneManager does not require " +
+        "this to be implemented, as bucket tagging client support is pending.");
+  }
+
+  /**
    * Get status of last triggered quota repair in OM.
+   *
    * @return String
    * @throws IOException
    */
@@ -1222,15 +1276,8 @@ public interface OzoneManagerProtocol
 
   /**
    * start quota repair in OM.
+   *
    * @throws IOException
    */
   void startQuotaRepair(List<String> buckets) throws IOException;
-
-  /**
-   * Get the S3 derived key for the given accessId.
-   * @param accessId Access ID for which the S3 derived key is requested.
-   * @return S3 derived key in byte array format.
-   * @throws IOException if there is an error while fetching the S3 derived key.
-   */
-  byte[] getS3DerivedKey(String accessId, String credentialScope) throws IOException;
 }

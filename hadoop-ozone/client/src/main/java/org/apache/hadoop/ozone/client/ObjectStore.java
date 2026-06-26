@@ -216,10 +216,6 @@ public class ObjectStore {
     return proxy.setS3Secret(accessId, secretKey);
   }
 
-  public byte[] getS3DerivedKey(String accessId, String credentialScope) throws IOException {
-    return proxy.getS3DerivedKey(accessId, credentialScope);
-  }
-
   public void revokeS3Secret(String kerberosID) throws IOException {
     proxy.revokeS3Secret(kerberosID);
   }
