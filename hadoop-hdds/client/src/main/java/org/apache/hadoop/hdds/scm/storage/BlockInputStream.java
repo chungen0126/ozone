@@ -322,10 +322,7 @@ public class BlockInputStream extends BlockExtendedInputStream {
     }
 
     while (len > 0) {
-      if (chunkStreams.isEmpty() ||
-          (chunkStreams.size() - 1 <= chunkIdx &&
-              chunkStreams.get(chunkIdx)
-                  .getRemaining() == 0)) {
+      if (chunkIdx >= chunkStreams.size()) {
         return true;
       }
 
