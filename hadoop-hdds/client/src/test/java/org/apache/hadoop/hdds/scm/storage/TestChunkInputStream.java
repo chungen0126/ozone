@@ -269,7 +269,7 @@ public class TestChunkInputStream {
                 ByteStringConversion::safeWrap));
 
     try (ChunkInputStream subject = new ChunkInputStream(chunkInfo, blockID,
-        clientFactory, pipelineRef::get, false, tokenRef::get)) {
+        clientFactory, pipelineRef::get, false, tokenRef::get, null)) {
       // WHEN
       subject.unbuffer();
       pipelineRef.set(newPipeline);

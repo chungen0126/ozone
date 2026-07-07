@@ -26,8 +26,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hadoop.fs.ByteBufferPositionedReadable;
 import org.apache.hadoop.fs.ByteBufferReadable;
 import org.apache.hadoop.fs.CanUnbuffer;
 import org.apache.hadoop.fs.Seekable;
@@ -37,6 +39,8 @@ import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ChunkInfo;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandRequestProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandResponseProto;
+import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.DatanodeBlockID;
+import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.DatanodeBlockID.Builder;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ReadChunkResponseProto;
 import org.apache.hadoop.hdds.scm.XceiverClientFactory;
 import org.apache.hadoop.hdds.scm.XceiverClientSpi;
@@ -55,12 +59,12 @@ import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
  * instances.
  */
 public class ChunkInputStream extends InputStream
-    implements Seekable, CanUnbuffer, ByteBufferReadable {
+    implements Seekable, CanUnbuffer, ByteBufferReadable, ByteBufferPositionedReadable {
 
   private final ChunkInfo chunkInfo;
   private final long length;
   private final BlockID blockID;
-  private ContainerProtos.DatanodeBlockID datanodeBlockID;
+  private DatanodeBlockID datanodeBlockID;
   private final XceiverClientFactory xceiverClientFactory;
   private XceiverClientSpi xceiverClient;
   private final Supplier<Pipeline> pipelineSupplier;
@@ -101,11 +105,13 @@ public class ChunkInputStream extends InputStream
   private static final int EOF = -1;
   private final List<Validator> validators;
 
+  private ReentrantLock lock = new ReentrantLock();
+
   ChunkInputStream(ChunkInfo chunkInfo, BlockID blockId,
       XceiverClientFactory xceiverClientFactory,
       Supplier<Pipeline> pipelineSupplier,
       boolean verifyChecksum,
-      Supplier<Token<?>> tokenSupplier) {
+      Supplier<Token<?>> tokenSupplier, ReentrantLock lock) {
     this.chunkInfo = chunkInfo;
     this.length = chunkInfo.getLen();
     this.blockID = blockId;
@@ -114,6 +120,7 @@ public class ChunkInputStream extends InputStream
     this.verifyChecksum = verifyChecksum;
     this.tokenSupplier = tokenSupplier;
     validators = ContainerProtocolCalls.toValidatorList(this::validateChunk);
+    this.lock = lock != null ? lock : new ReentrantLock();
   }
 
   public synchronized long getRemaining() {
@@ -297,7 +304,7 @@ public class ChunkInputStream extends InputStream
   private void updateDatanodeBlockId(Pipeline pipeline) throws IOException {
     DatanodeDetails closestNode = pipeline.getClosestNode();
     int replicaIdx = pipeline.getReplicaIndex(closestNode);
-    ContainerProtos.DatanodeBlockID.Builder builder = blockID.getDatanodeBlockIDProtobufBuilder();
+    Builder builder = blockID.getDatanodeBlockIDProtobufBuilder();
     if (replicaIdx > 0) {
       builder.setReplicaIndex(replicaIdx);
     }
@@ -309,9 +316,15 @@ public class ChunkInputStream extends InputStream
    */
   protected synchronized void acquireClient() throws IOException {
     if (xceiverClientFactory != null && xceiverClient == null) {
-      Pipeline pipeline = pipelineSupplier.get();
-      xceiverClient = xceiverClientFactory.acquireClientForReadData(pipeline);
-      updateDatanodeBlockId(pipeline);
+      lock.lock();
+      try {
+        Pipeline pipeline = pipelineSupplier.get();
+        xceiverClient = xceiverClientFactory.acquireClientForReadData(pipeline);
+        updateDatanodeBlockId(pipeline);
+      } finally {
+        lock.unlock();
+      }
+
     }
   }
 
@@ -745,5 +758,98 @@ public class ChunkInputStream extends InputStream
 
   public ChunkInfo getChunkInfo() {
     return chunkInfo;
+  }
+
+  @Override
+  public int read(long pos, ByteBuffer buffer) throws IOException {
+    Preconditions.checkArgument(buffer != null);
+    int len = buffer.remaining();
+    if (len == 0) {
+      return 0;
+    }
+    XceiverClientSpi client = null;
+    Builder builder = blockID.getDatanodeBlockIDProtobufBuilder();
+    if (xceiverClientFactory != null) {
+      lock.lock();
+      try {
+        Pipeline pipeline = pipelineSupplier.get();
+        client = xceiverClientFactory.acquireClientForReadData(pipeline);
+        DatanodeDetails closestNode = pipeline.getClosestNode();
+        int replicaIdx = pipeline.getReplicaIndex(closestNode);
+        if (replicaIdx > 0) {
+          builder.setReplicaIndex(replicaIdx);
+        }
+      } finally {
+        lock.unlock();
+      }
+    }
+
+    int total = 0;
+    long adjustedBuffersOffset, adjustedBuffersLen;
+    if (verifyChecksum) {
+      // Adjust the chunk offset and length to include required checksum
+      // boundaries
+      Pair<Long, Long> adjustedOffsetAndLength =
+          computeChecksumBoundaries(pos, len);
+      adjustedBuffersOffset = adjustedOffsetAndLength.getLeft();
+      adjustedBuffersLen = adjustedOffsetAndLength.getRight();
+    } else {
+      // Read from the startByteIndex
+      adjustedBuffersOffset = pos;
+      adjustedBuffersLen = len;
+    }
+
+    final ChunkInfo readChunkInfo = ChunkInfo.newBuilder(chunkInfo)
+        .setOffset(chunkInfo.getOffset() + adjustedBuffersOffset)
+        .setLen(adjustedBuffersLen)
+        .build();
+
+    ReadChunkResponseProto readChunkResponse =
+        ContainerProtocolCalls.readChunk(client, readChunkInfo, builder.build(), validators,
+            tokenSupplier.get());
+
+    ByteBuffer[] readBuffers;
+    if (readChunkResponse.hasData()) {
+      readBuffers = readChunkResponse.getData().asReadOnlyByteBufferList()
+          .toArray(new ByteBuffer[0]);
+    } else if (readChunkResponse.hasDataBuffers()) {
+      List<ByteString> buffersList = readChunkResponse.getDataBuffers()
+          .getBuffersList();
+      readBuffers = BufferUtils.getReadOnlyByteBuffersArray(buffersList);
+    } else {
+      throw new IOException("Unexpected error while reading chunk data " +
+          "from container. No data returned.");
+    }
+
+    if (readBuffers == null) {
+      return EOF;
+    }
+    int bufferIdx = 0;
+    while (len > 0) {
+      if (bufferIdx >= readBuffers.length) {
+        break;
+      }
+      ByteBuffer readBuf = readBuffers[bufferIdx];
+      int available = Math.min(len, readBuf.remaining());
+
+      ByteBuffer tmpBuf = readBuf.duplicate();
+      tmpBuf.limit(tmpBuf.position() + available);
+      buffer.put(tmpBuf);
+      readBuf.position(tmpBuf.position());
+
+      len -= available;
+      total += available;
+      bufferIdx++;
+    }
+    return total;
+  }
+
+  @Override
+  public void readFully(long l, ByteBuffer byteBuffer) throws IOException {
+    int bytesRead = read(l, byteBuffer);
+    if (bytesRead < byteBuffer.capacity()) {
+      throw new EOFException("EOF encountered at pos: " + l + " for chunk: "
+          + chunkInfo.getChunkName());
+    }
   }
 }

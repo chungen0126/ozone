@@ -43,7 +43,7 @@ public class DummyChunkInputStream extends ChunkInputStream {
       boolean verifyChecksum,
       byte[] data, Pipeline pipeline) {
     super(chunkInfo, blockId, xceiverClientFactory, () -> pipeline,
-        verifyChecksum, () -> null);
+        verifyChecksum, () -> null, null);
     this.chunkData = data.clone();
   }
 
