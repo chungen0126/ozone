@@ -54,6 +54,12 @@ public class KeyInputStream extends MultipartInputStream {
     super(keyName, inputStreams);
   }
 
+  public KeyInputStream(String keyName,
+                        List<? extends BlockExtendedInputStream> inputStreams,
+                        boolean isPositionedReadEnabled) {
+    super(keyName, inputStreams, isPositionedReadEnabled);
+  }
+
   private static List<BlockExtendedInputStream> createStreams(
       OmKeyInfo keyInfo,
       List<OmKeyLocationInfo> blockInfos,
@@ -132,7 +138,7 @@ public class KeyInputStream extends MultipartInputStream {
         locationInfos, xceiverClientFactory, retryFunction,
         blockStreamFactory, config);
     KeyInputStream keyInputStream =
-        new KeyInputStream(keyInfo.getKeyName(), streams);
+        new KeyInputStream(keyInfo.getKeyName(), streams, config.isPositionedReadEnabled());
     return new LengthInputStream(keyInputStream, keyInputStream.getLength());
   }
 

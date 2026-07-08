@@ -257,7 +257,8 @@ public class BasicOzoneFileSystem extends FileSystem {
   }
 
   protected InputStream createFSInputStream(InputStream inputStream) {
-    return new OzoneFSInputStream(inputStream, statistics);
+    boolean isPositionedReadable = getConf().getBoolean("ozone.fs.positioned.readable.enabled", true);
+    return new OzoneFSInputStream(inputStream, statistics, isPositionedReadable);
   }
 
   protected void incrementCounter(Statistic statistic) {

@@ -226,6 +226,7 @@ public class RpcClient implements ClientProtocol {
   private volatile OzoneFsServerDefaults serverDefaults;
   private volatile long serverDefaultsLastUpdate;
   private final long serverDefaultsValidityPeriod;
+  private final boolean isPositionedReadSupported;
 
   /**
    * Creates RpcClient instance with the given configuration.
@@ -337,6 +338,7 @@ public class RpcClient implements ClientProtocol {
         OZONE_CLIENT_SERVER_DEFAULTS_VALIDITY_PERIOD_MS_DEFAULT,
         TimeUnit.MILLISECONDS);
 
+    this.isPositionedReadSupported = clientConfig.isPositionedReadEnabled();
     TracingUtil.initTracing("client", conf);
   }
 
@@ -2562,7 +2564,7 @@ public class RpcClient implements ClientProtocol {
         cryptoInputStreams.add(ozoneCryptoInputStream);
       }
       return new OzoneInputStream(
-          new MultipartInputStream(keyInfo.getKeyName(), cryptoInputStreams));
+          new MultipartInputStream(keyInfo.getKeyName(), cryptoInputStreams, clientConfig.isPositionedReadEnabled()));
     }
   }
 

@@ -34,6 +34,7 @@ import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.hdds.annotation.InterfaceAudience;
 import org.apache.hadoop.hdds.annotation.InterfaceStability;
 import org.apache.hadoop.hdds.scm.storage.ExtendedInputStream;
+import org.apache.hadoop.hdds.scm.storage.MultipartInputStream;
 import org.apache.hadoop.hdds.tracing.TracingUtil;
 import org.apache.hadoop.hdds.utils.VectoredReadUtils;
 
@@ -50,10 +51,17 @@ public class OzoneFSInputStream extends FSInputStream
 
   private final InputStream inputStream;
   private final Statistics statistics;
+  private final boolean isPositionedReadable;
 
   public OzoneFSInputStream(InputStream inputStream, Statistics statistics) {
+    this(inputStream, statistics, true);
+  }
+
+  public OzoneFSInputStream(InputStream inputStream, Statistics statistics,
+                            boolean isPositionedReadable) {
     this.inputStream = inputStream;
     this.statistics = statistics;
+    this.isPositionedReadable = isPositionedReadable;
   }
 
   @Override
@@ -201,7 +209,7 @@ public class OzoneFSInputStream extends FSInputStream
    * @throws EOFException if end of file reached before reading fully
    */
   @Override
-  public synchronized void readFully(long position, ByteBuffer buf) throws IOException {
+  public void readFully(long position, ByteBuffer buf) throws IOException {
     int bytesRead;
     for (int readCount = 0; buf.hasRemaining(); readCount += bytesRead) {
       bytesRead = this.read(position + (long)readCount, buf);
@@ -225,30 +233,51 @@ public class OzoneFSInputStream extends FSInputStream
    *          concurrent readVectored() calls on the same stream instance.
    */
   @Override
-  public synchronized void readVectored(List<? extends FileRange> ranges,
+  public void readVectored(List<? extends FileRange> ranges,
                            IntFunction<ByteBuffer> allocate) throws IOException {
     TracingUtil.executeInNewSpan("OzoneFSInputStream.readVectored", () -> {
       // Save the initial position
       final long initialPosition = getPos();
 
-      // Use common vectored read implementation
-      VectoredReadUtils.performVectoredRead(
-          ranges,
-          allocate,
-          (offset, buffer) -> {
-            // readFully is synchronized and uses positioned reads
-            // which automatically preserve stream position
-            readFully(offset, buffer);
-            if (statistics != null) {
-              statistics.incrementBytesRead(buffer.remaining());
+      if (isPositionedReadable) {
+        VectoredReadUtils.performVectoredRead(
+            ranges,
+            allocate,
+            (offset, buffer) -> {
+              // readFully is synchronized and uses positioned reads
+              // which automatically preserve stream position
+              readRange(offset, buffer);
+              if (statistics != null) {
+                statistics.incrementBytesRead(buffer.remaining());
+              }
             }
-          }
-      );
+        );
+      } else {
+        VectoredReadUtils.performVectoredRead(
+            ranges,
+            allocate,
+            (offset, buffer) -> {
+              // readFully is synchronized and uses positioned reads
+              // which automatically preserve stream position
+              readFully(offset, buffer);
+              if (statistics != null) {
+                statistics.incrementBytesRead(buffer.remaining());
+              }
+            }
+        );
+      }
+      // Use common vectored read implementation
 
       // Restore position before returning from method
       seek(initialPosition);
 
       return null;
     });
+  }
+
+  private void readRange(long offset, ByteBuffer buffer) throws IOException {
+    if (inputStream instanceof MultipartInputStream) {
+      ((MultipartInputStream) inputStream).readRange(offset, buffer);
+    }
   }
 }

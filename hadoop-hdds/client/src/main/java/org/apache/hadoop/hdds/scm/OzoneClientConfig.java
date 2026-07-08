@@ -319,6 +319,21 @@ public class OzoneClientConfig {
       description = "Timeout for receiving streaming read responses.")
   private Duration streamReadTimeout = Duration.ofSeconds(10);
 
+  @Config(key = "ozone.client.positioned.read.enabled",
+      defaultValue = "true",
+      type = ConfigType.BOOLEAN,
+      description = "Enable positioned read support on the Ozone Client.",
+      tags = ConfigTag.CLIENT)
+  private boolean positionedReadEnabled = true;
+
+  public boolean isPositionedReadEnabled() {
+    return positionedReadEnabled;
+  }
+
+  public void setPositionedReadEnabled(boolean positionedReadEnabled) {
+    this.positionedReadEnabled = positionedReadEnabled;
+  }
+
   @PostConstruct
   public void validate() {
     Preconditions.checkState(streamBufferSize > 0);

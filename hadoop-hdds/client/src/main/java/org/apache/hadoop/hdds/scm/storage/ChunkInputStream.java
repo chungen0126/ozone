@@ -35,7 +35,6 @@ import org.apache.hadoop.fs.CanUnbuffer;
 import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
-import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ChunkInfo;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandRequestProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandResponseProto;
@@ -825,6 +824,17 @@ public class ChunkInputStream extends InputStream
       return EOF;
     }
     int bufferIdx = 0;
+    long skipLen = pos - adjustedBuffersOffset;
+    while (skipLen > 0 && bufferIdx < readBuffers.length) {
+      ByteBuffer readBuf = readBuffers[bufferIdx];
+      if (readBuf.remaining() <= skipLen) {
+        skipLen -= readBuf.remaining();
+        bufferIdx++;
+      } else {
+        readBuf.position(readBuf.position() + (int) skipLen);
+        skipLen = 0;
+      }
+    }
     while (len > 0) {
       if (bufferIdx >= readBuffers.length) {
         break;

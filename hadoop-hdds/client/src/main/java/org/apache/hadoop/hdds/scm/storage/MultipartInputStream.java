@@ -63,8 +63,16 @@ public class MultipartInputStream extends ExtendedInputStream {
 
   private boolean initialized = false;
 
+  private boolean isPositionedReadSupported = false;
+
   public MultipartInputStream(String keyName,
                               List<? extends PartInputStream> inputStreams) {
+    this(keyName, inputStreams, true);
+  }
+
+  public MultipartInputStream(String keyName,
+                              List<? extends PartInputStream> inputStreams,
+                              boolean isPositionedReadEnabled) {
     Objects.requireNonNull(inputStreams, "inputStreams == null");
 
     this.key = keyName;
@@ -83,6 +91,9 @@ public class MultipartInputStream extends ExtendedInputStream {
       streamLength += partInputStream.getLength();
     }
     this.length = streamLength;
+    this.isPositionedReadSupported = isPositionedReadEnabled
+        && !inputStreams.isEmpty()
+        && inputStreams.stream().allMatch(s -> s instanceof BlockInputStream);
   }
 
   public boolean isStreamBlockInputStream() {
@@ -279,7 +290,7 @@ public class MultipartInputStream extends ExtendedInputStream {
    * @apiNote This method is synchronized to prevent race conditions from
    *          concurrent readVectored() calls on the same stream instance.
    */
-  public synchronized void readVectored(
+  public void readVectored(
       List<? extends FileRange> ranges,
       IntFunction<ByteBuffer> allocate
   ) throws IOException {
@@ -292,11 +303,20 @@ public class MultipartInputStream extends ExtendedInputStream {
     final long initialPosition = getPos();
 
     // Use common vectored read implementation
-    VectoredReadUtils.performVectoredRead(
-        ranges,
-        allocate,
-        (offset, buffer) -> readRangeData(offset, buffer, initialPosition)
-    );
+    if (isPositionedReadSupported) {
+      VectoredReadUtils.performVectoredRead(
+          ranges,
+          allocate,
+          this::readRange
+      );
+      return;
+    } else {
+      VectoredReadUtils.performVectoredRead(
+          ranges,
+          allocate,
+          (offset, buffer) -> readRangeData(offset, buffer, initialPosition)
+      );
+    }
 
     // Restore position
     seek(initialPosition);
@@ -354,6 +374,49 @@ public class MultipartInputStream extends ExtendedInputStream {
         // Restore position
         seek(initialPosition);
       }
+    }
+  }
+
+  public void readRange(long offset, ByteBuffer buffer) throws IOException {
+    int partIdx = Arrays.binarySearch(partOffsets, offset);
+    if (partIdx < 0) {
+      partIdx = -partIdx - 2;
+    }
+
+    int len = buffer.remaining();
+    while (len > 0) {
+      if (partIdx < 0 || partIdx >= partStreams.size()) {
+        throw new EOFException("EOF encountered at pos: " + offset + " for key: " + key);
+      }
+
+      PartInputStream current = partStreams.get(partIdx);
+      if (!(current instanceof ExtendedInputStream)) {
+        throw new IOException("Positioned read is not supported by stream type: "
+            + current.getClass().getName());
+      }
+      ExtendedInputStream extendedStream = (ExtendedInputStream) current;
+
+      long offsetInPart = offset - partOffsets[partIdx];
+      int numBytesToRead = Math.min(len, (int) (current.getLength() - offsetInPart));
+      if (numBytesToRead <= 0) {
+        throw new EOFException("EOF encountered at pos: " + offset + " for key: " + key);
+      }
+
+      int bufferLimit = buffer.limit();
+      try {
+        if (numBytesToRead < len) {
+          buffer.limit(buffer.position() + numBytesToRead);
+        }
+        if (!extendedStream.readFully(offsetInPart, buffer)) {
+          throw new IOException("Positioned read failed on part stream");
+        }
+      } finally {
+        buffer.limit(bufferLimit);
+      }
+
+      len -= numBytesToRead;
+      offset += numBytesToRead;
+      partIdx++;
     }
   }
 
