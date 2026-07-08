@@ -217,7 +217,11 @@ public class BlockInputStream extends BlockExtendedInputStream {
   private void refreshBlockInfo(IOException cause) throws IOException {
     lock.lock();
     try {
-      refreshBlockInfo(cause, blockID, pipelineRef, tokenRef, refreshFunction);
+      if (failedPipeline != pipelineRef.get()) {
+        refreshBlockInfo(cause, blockID, pipelineRef, tokenRef, refreshFunction);
+        failedPipeline = pipelineRef.get();
+      }
+
     } finally {
       lock.unlock();
     }

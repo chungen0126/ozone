@@ -226,7 +226,6 @@ public class RpcClient implements ClientProtocol {
   private volatile OzoneFsServerDefaults serverDefaults;
   private volatile long serverDefaultsLastUpdate;
   private final long serverDefaultsValidityPeriod;
-  private final boolean isPositionedReadSupported;
 
   /**
    * Creates RpcClient instance with the given configuration.
