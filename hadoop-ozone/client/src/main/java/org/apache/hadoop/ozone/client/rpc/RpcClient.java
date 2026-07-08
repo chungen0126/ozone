@@ -337,7 +337,6 @@ public class RpcClient implements ClientProtocol {
         OZONE_CLIENT_SERVER_DEFAULTS_VALIDITY_PERIOD_MS_DEFAULT,
         TimeUnit.MILLISECONDS);
 
-    this.isPositionedReadSupported = clientConfig.isPositionedReadEnabled();
     TracingUtil.initTracing("client", conf);
   }
 
