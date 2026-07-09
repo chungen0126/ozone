@@ -284,32 +284,7 @@ abstract class AbstractOzoneContractTest extends ClusterForTests<MiniOzoneCluste
 
     @Override
     protected Configuration createConfiguration() {
-      Configuration conf = createOzoneConfig();
-      conf.setBoolean("ozone.fs.positioned.readable.enabled", true);
-      conf.setBoolean("ozone.client.positioned.read.enabled", true);
-      return conf;
-    }
-
-    @Override
-    protected AbstractFSContract createContract(Configuration conf) {
-      return createOzoneContract(conf);
-    }
-  }
-
-  @Nested
-  @ParameterizedClass(name = "buffer-{0}")
-  @MethodSource("params")
-  class TestContractVectoredReadPositionedReadDisabled extends AbstractContractVectoredReadTest {
-    TestContractVectoredReadPositionedReadDisabled(String bufferType) {
-      super(bufferType);
-    }
-
-    @Override
-    protected Configuration createConfiguration() {
-      Configuration conf = createOzoneConfig();
-      conf.setBoolean("ozone.fs.positioned.readable.enabled", false);
-      conf.setBoolean("ozone.client.positioned.read.enabled", false);
-      return conf;
+      return createOzoneConfig();
     }
 
     @Override

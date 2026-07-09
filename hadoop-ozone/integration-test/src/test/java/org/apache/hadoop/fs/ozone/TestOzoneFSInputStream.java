@@ -335,7 +335,6 @@ public abstract class TestOzoneFSInputStream implements NonHATests.TestCase {
     for (boolean positionedReadable : new boolean[]{true, false}) {
       for (boolean clientPositionedRead : new boolean[]{true, false}) {
         Configuration conf = new Configuration(cluster().getConf());
-        conf.setBoolean("ozone.fs.positioned.readable.enabled", positionedReadable);
         conf.setBoolean("ozone.client.positioned.read.enabled", clientPositionedRead);
         try (FileSystem configuredFs = FileSystem.newInstance(fs.getUri(), conf)) {
           System.out.println(">>> RUNNING WITH positionedReadable=" + positionedReadable

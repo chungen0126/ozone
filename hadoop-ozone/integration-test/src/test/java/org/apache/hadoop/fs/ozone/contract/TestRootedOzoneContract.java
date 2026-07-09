@@ -19,11 +19,20 @@ package org.apache.hadoop.fs.ozone.contract;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.contract.AbstractFSContract;
+import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 
 /**
  * Tests OFS.
  */
 class TestRootedOzoneContract extends AbstractOzoneContractTest {
+
+  @Override
+  protected OzoneConfiguration createOzoneConfig() {
+    OzoneConfiguration conf = super.createOzoneConfig();
+    conf.setBoolean("ozone.client.positioned.read.enabled", true);
+    return conf;
+  }
+
   @Override
   AbstractFSContract createOzoneContract(Configuration conf) {
     return new RootedOzoneContract(getCluster());

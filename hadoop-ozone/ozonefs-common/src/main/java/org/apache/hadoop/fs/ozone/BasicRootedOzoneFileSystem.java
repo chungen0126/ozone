@@ -252,7 +252,7 @@ public class BasicRootedOzoneFileSystem extends FileSystem {
   }
 
   protected InputStream createFSInputStream(InputStream inputStream) {
-    boolean isPositionedReadable = getConf().getBoolean("ozone.fs.positioned.readable.enabled", true);
+    boolean isPositionedReadable = getConf().getBoolean("ozone.client.positioned.read.enabled", true);
     return new OzoneFSInputStream(inputStream, statistics, isPositionedReadable);
   }
 

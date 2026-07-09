@@ -33,6 +33,7 @@ class TestOzoneContractLegacy extends AbstractOzoneContractTest {
   protected OzoneConfiguration createOzoneConfig() {
     OzoneConfiguration conf = super.createOzoneConfig();
     conf.set(OZONE_DEFAULT_BUCKET_LAYOUT, LEGACY.name());
+    conf.setBoolean("ozone.client.positioned.read.enabled", true);
     return conf;
   }
 
