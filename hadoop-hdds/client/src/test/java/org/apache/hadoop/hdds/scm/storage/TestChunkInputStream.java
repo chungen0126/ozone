@@ -289,82 +289,26 @@ public class TestChunkInputStream {
 
   @Test
   public void testPositionedRead() throws Exception {
-    Pipeline pipeline = MockPipeline.createSingleNodePipeline();
-    Token<?> token = mock(Token.class);
-    when(token.encodeToUrlString()).thenReturn("dummyToken");
-    AtomicReference<Pipeline> pipelineRef = new AtomicReference<>(pipeline);
-    AtomicReference<Token<?>> tokenRef = new AtomicReference<>(token);
+    byte[] buffer = new byte[50];
+    ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
+    int bytesRead = chunkStream.read(30, byteBuffer);
 
-    XceiverClientFactory clientFactory = mock(XceiverClientFactory.class);
-    XceiverClientSpi client = mock(XceiverClientSpi.class);
-    when(clientFactory.acquireClientForReadData(any()))
-        .thenReturn(client);
-    ArgumentCaptor<ContainerCommandRequestProto> requestCaptor =
-        ArgumentCaptor.forClass(ContainerCommandRequestProto.class);
-    when(client.getPipeline())
-        .thenAnswer(invocation -> pipelineRef.get());
-    when(client.sendCommand(requestCaptor.capture(), any()))
-        .thenAnswer(invocation -> {
-          ContainerCommandRequestProto request = requestCaptor.getValue();
-          int requestedLen = (int) request.getReadChunk().getChunkData().getLen();
-          int offset = (int) (request.getReadChunk().getChunkData().getOffset() - chunkInfo.getOffset());
-          byte[] requestedData = Arrays.copyOfRange(chunkData, offset, offset + requestedLen);
-          return getReadChunkResponse(
-              request,
-              ChunkBuffer.wrap(ByteBuffer.wrap(requestedData)),
-              ByteStringConversion::safeWrap);
-        });
+    assertEquals(50, bytesRead);
+    byte[] expected = Arrays.copyOfRange(chunkData, 30, 80);
+    assertArrayEquals(expected, buffer);
 
-    try (ChunkInputStream subject = new ChunkInputStream(chunkInfo, blockID,
-        clientFactory, pipelineRef::get, false, tokenRef::get, new ReentrantLock())) {
-      byte[] buffer = new byte[50];
-      ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
-      int bytesRead = subject.read(30, byteBuffer);
-
-      assertEquals(50, bytesRead);
-      byte[] expected = Arrays.copyOfRange(chunkData, 30, 80);
-      assertArrayEquals(expected, buffer);
-    }
   }
 
   @Test
   public void testPositionedReadFully() throws Exception {
-    Pipeline pipeline = MockPipeline.createSingleNodePipeline();
-    Token<?> token = mock(Token.class);
-    when(token.encodeToUrlString()).thenReturn("dummyToken");
-    AtomicReference<Pipeline> pipelineRef = new AtomicReference<>(pipeline);
-    AtomicReference<Token<?>> tokenRef = new AtomicReference<>(token);
+    ByteBuffer byteBuffer = ByteBuffer.allocate(40);
+    chunkStream.readFully(50, byteBuffer);
+    byteBuffer.flip();
+    byte[] actual = new byte[40];
+    byteBuffer.get(actual);
+    byte[] expected = Arrays.copyOfRange(chunkData, 50, 90);
+    assertArrayEquals(expected, actual);
 
-    XceiverClientFactory clientFactory = mock(XceiverClientFactory.class);
-    XceiverClientSpi client = mock(XceiverClientSpi.class);
-    when(clientFactory.acquireClientForReadData(any()))
-        .thenReturn(client);
-    ArgumentCaptor<ContainerCommandRequestProto> requestCaptor =
-        ArgumentCaptor.forClass(ContainerCommandRequestProto.class);
-    when(client.getPipeline())
-        .thenAnswer(invocation -> pipelineRef.get());
-    when(client.sendCommand(requestCaptor.capture(), any()))
-        .thenAnswer(invocation -> {
-          ContainerCommandRequestProto request = requestCaptor.getValue();
-          int requestedLen = (int) request.getReadChunk().getChunkData().getLen();
-          int offset = (int) (request.getReadChunk().getChunkData().getOffset() - chunkInfo.getOffset());
-          byte[] requestedData = Arrays.copyOfRange(chunkData, offset, offset + requestedLen);
-          return getReadChunkResponse(
-              request,
-              ChunkBuffer.wrap(ByteBuffer.wrap(requestedData)),
-              ByteStringConversion::safeWrap);
-        });
-
-    try (ChunkInputStream subject = new ChunkInputStream(chunkInfo, blockID,
-        clientFactory, pipelineRef::get, false, tokenRef::get, new ReentrantLock())) {
-      ByteBuffer byteBuffer = ByteBuffer.allocate(40);
-      subject.readFully(50, byteBuffer);
-      byteBuffer.flip();
-      byte[] actual = new byte[40];
-      byteBuffer.get(actual);
-      byte[] expected = Arrays.copyOfRange(chunkData, 50, 90);
-      assertArrayEquals(expected, actual);
-    }
   }
 }
 

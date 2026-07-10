@@ -21,9 +21,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ChunkInfo;
+import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.DatanodeBlockID;
 import org.apache.hadoop.hdds.scm.XceiverClientFactory;
+import org.apache.hadoop.hdds.scm.XceiverClientSpi;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.ozone.common.utils.BufferUtils;
 import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
@@ -49,7 +52,8 @@ public class DummyChunkInputStream extends ChunkInputStream {
   }
 
   @Override
-  protected ByteBuffer[] readChunk(ChunkInfo readChunkInfo) {
+  protected ByteBuffer[] readChunk(
+      XceiverClientSpi client, ChunkInfo readChunkInfo, DatanodeBlockID datanodeBlockID) {
     int offset = (int) readChunkInfo.getOffset();
     int remainingToRead = (int) readChunkInfo.getLen();
 
@@ -90,17 +94,8 @@ public class DummyChunkInputStream extends ChunkInputStream {
   }
 
   @Override
-  public int read(long pos, ByteBuffer buffer) throws IOException {
-    int len = buffer.remaining();
-    if (len == 0) {
-      return 0;
-    }
-    int available = Math.min(len, (int) (getLength() - pos));
-    if (available <= 0) {
-      return -1;
-    }
-    buffer.put(chunkData, (int) pos, available);
-    return available;
+  protected Pair<XceiverClientSpi, DatanodeBlockID> getClientAndUpdateBlock() throws IOException {
+    return Pair.of(null, null);
   }
 }
 

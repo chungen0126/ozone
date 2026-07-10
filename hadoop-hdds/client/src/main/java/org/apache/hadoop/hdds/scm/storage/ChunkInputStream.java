@@ -426,7 +426,7 @@ public class ChunkInputStream extends InputStream
 
   private void readChunkDataIntoBuffers(ChunkInfo readChunkInfo)
       throws IOException {
-    buffers = readChunk(readChunkInfo);
+    buffers = readChunk(xceiverClient, readChunkInfo, datanodeBlockID);
     buffersSize = readChunkInfo.getLen();
 
     bufferOffsets = new long[buffers.length];
@@ -445,7 +445,8 @@ public class ChunkInputStream extends InputStream
    * Send RPC call to get the chunk from the container.
    */
   @VisibleForTesting
-  protected ByteBuffer[] readChunk(ChunkInfo readChunkInfo)
+  protected ByteBuffer[] readChunk(
+      XceiverClientSpi xceiverClient, ChunkInfo readChunkInfo, DatanodeBlockID datanodeBlockID)
       throws IOException {
 
     ReadChunkResponseProto readChunkResponse =
@@ -766,22 +767,8 @@ public class ChunkInputStream extends InputStream
     if (len == 0) {
       return 0;
     }
-    XceiverClientSpi client = null;
-    Builder builder = blockID.getDatanodeBlockIDProtobufBuilder();
-    if (xceiverClientFactory != null) {
-      lock.lock();
-      try {
-        Pipeline pipeline = pipelineSupplier.get();
-        client = xceiverClientFactory.acquireClientForReadData(pipeline);
-        DatanodeDetails closestNode = pipeline.getClosestNode();
-        int replicaIdx = pipeline.getReplicaIndex(closestNode);
-        if (replicaIdx > 0) {
-          builder.setReplicaIndex(replicaIdx);
-        }
-      } finally {
-        lock.unlock();
-      }
-    }
+
+    Pair<XceiverClientSpi, DatanodeBlockID> pair = getClientAndUpdateBlock();
 
     int total = 0;
     long adjustedBuffersOffset, adjustedBuffersLen;
@@ -803,22 +790,7 @@ public class ChunkInputStream extends InputStream
         .setLen(adjustedBuffersLen)
         .build();
 
-    ReadChunkResponseProto readChunkResponse =
-        ContainerProtocolCalls.readChunk(client, readChunkInfo, builder.build(), validators,
-            tokenSupplier.get());
-
-    ByteBuffer[] readBuffers;
-    if (readChunkResponse.hasData()) {
-      readBuffers = readChunkResponse.getData().asReadOnlyByteBufferList()
-          .toArray(new ByteBuffer[0]);
-    } else if (readChunkResponse.hasDataBuffers()) {
-      List<ByteString> buffersList = readChunkResponse.getDataBuffers()
-          .getBuffersList();
-      readBuffers = BufferUtils.getReadOnlyByteBuffersArray(buffersList);
-    } else {
-      throw new IOException("Unexpected error while reading chunk data " +
-          "from container. No data returned.");
-    }
+    ByteBuffer[] readBuffers = readChunk(pair.getLeft(), readChunkInfo, pair.getRight());
 
     if (readBuffers == null) {
       return EOF;
@@ -861,5 +833,26 @@ public class ChunkInputStream extends InputStream
       throw new EOFException("EOF encountered at pos: " + l + " for chunk: "
           + chunkInfo.getChunkName());
     }
+  }
+
+  protected Pair<XceiverClientSpi, DatanodeBlockID> getClientAndUpdateBlock()
+      throws IOException{
+    Builder builder = blockID.getDatanodeBlockIDProtobufBuilder();
+    XceiverClientSpi client = null;
+    if (xceiverClientFactory != null) {
+      lock.lock();
+      try {
+        Pipeline pipeline = pipelineSupplier.get();
+        client = xceiverClientFactory.acquireClientForReadData(pipeline);
+        DatanodeDetails closestNode = pipeline.getClosestNode();
+        int replicaIdx = pipeline.getReplicaIndex(closestNode);
+        if (replicaIdx > 0) {
+          builder.setReplicaIndex(replicaIdx);
+        }
+      } finally {
+        lock.unlock();
+      }
+    }
+    return Pair.of(client, builder.build());
   }
 }
