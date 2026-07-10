@@ -446,11 +446,11 @@ public class ChunkInputStream extends InputStream
    */
   @VisibleForTesting
   protected ByteBuffer[] readChunk(
-      XceiverClientSpi xceiverClient, ChunkInfo readChunkInfo, DatanodeBlockID datanodeBlockID)
+      XceiverClientSpi client, ChunkInfo readChunkInfo, DatanodeBlockID dnBlockID)
       throws IOException {
 
     ReadChunkResponseProto readChunkResponse =
-        ContainerProtocolCalls.readChunk(xceiverClient, readChunkInfo, datanodeBlockID, validators,
+        ContainerProtocolCalls.readChunk(client, readChunkInfo, dnBlockID, validators,
             tokenSupplier.get());
 
     if (readChunkResponse.hasData()) {
@@ -836,7 +836,7 @@ public class ChunkInputStream extends InputStream
   }
 
   protected Pair<XceiverClientSpi, DatanodeBlockID> getClientAndUpdateBlock()
-      throws IOException{
+      throws IOException {
     Builder builder = blockID.getDatanodeBlockIDProtobufBuilder();
     XceiverClientSpi client = null;
     if (xceiverClientFactory != null) {
