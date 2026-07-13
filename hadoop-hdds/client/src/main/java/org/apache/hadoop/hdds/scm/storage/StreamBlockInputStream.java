@@ -483,7 +483,7 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
   }
 
   @Override
-  public void releaseStreamResources() {
+  public synchronized void releaseStreamResources() {
     sharedResourceLock.lock();
     try {
       if (xceiverClient != null) {
