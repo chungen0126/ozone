@@ -316,22 +316,35 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
 
     ParallelReaderContext context = new ParallelReaderContext(pos);
     StreamingReader localReader = null;
+    XceiverClientGrpc localClient = null;
     try {
       while (buf.hasRemaining()) {
         if (localReader == null) {
-          sharedResourceLock.lock();
           try {
             checkOpen();
-            acquireClient();
+            final Pipeline pipeline = pipelineRef.get();
+            final XceiverClientSpi spiClient = xceiverClientFactory.acquireClientForReadData(pipeline);
+            if (spiClient == null) {
+              throw new IOException("Failed to acquire client for " + pipeline);
+            }
+            if (!(spiClient instanceof XceiverClientGrpc)) {
+              xceiverClientFactory.releaseClientForReadData(spiClient, false);
+              throw new IOException("Unexpected client class: " + spiClient.getClass().getName() + ", " + pipeline);
+            }
+            localClient = (XceiverClientGrpc) spiClient;
+            context.setClient(localClient);
+
             localReader = new StreamingReader(context);
             context.setReader(localReader);
-            xceiverClient.initStreamRead(blockID, localReader);
+            localClient.initStreamRead(blockID, localReader);
           } catch (IOException ioe) {
             localReader = null;
+            if (localClient != null) {
+              xceiverClientFactory.releaseClientForReadData(localClient, false);
+              localClient = null;
+            }
             handleExceptions(ioe);
             continue;
-          } finally {
-            sharedResourceLock.unlock();
           }
         }
 
@@ -351,12 +364,11 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
             closeLocalReader(localReader);
             localReader = null;
           }
-          sharedResourceLock.lock();
-          try {
-            handleExceptions(ioe);
-          } finally {
-            sharedResourceLock.unlock();
+          if (localClient != null) {
+            xceiverClientFactory.releaseClientForReadData(localClient, false);
+            localClient = null;
           }
+          handleExceptions(ioe);
         }
       }
       if (buf.hasRemaining()) {
@@ -365,6 +377,9 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
     } finally {
       if (localReader != null) {
         closeLocalReader(localReader);
+      }
+      if (localClient != null) {
+        xceiverClientFactory.releaseClientForReadData(localClient, false);
       }
     }
     return true;
@@ -420,7 +435,7 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
         blockID, requestedLength, length, responseDataSize, tokenRef.get(), pipelineRef.get()), r);
   }
 
-  private void handleExceptions(IOException cause) throws IOException {
+  private synchronized void handleExceptions(IOException cause) throws IOException {
     sharedResourceLock.lock();
     try {
       if (cause instanceof StorageContainerException || isConnectivityIssue(cause)) {
@@ -517,6 +532,7 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
     private long currentPosition;
     private long localRequestedLength;
     private StreamingReader localReader;
+    private XceiverClientGrpc client;
     private final String readerName = name + "-parallel-reader" + STREAM_ID.getAndIncrement();
 
     ParallelReaderContext(long startPosition) {
@@ -527,6 +543,10 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
     void setReader(StreamingReader reader) {
       this.localReader = reader;
       this.localRequestedLength = currentPosition;
+    }
+
+    void setClient(XceiverClientGrpc client) {
+      this.client = client;
     }
 
     @Override
@@ -571,28 +591,18 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
       if (r == null) {
         throw new IOException("Uninitialized StreamingReadResponse: " + blockID);
       }
-      sharedResourceLock.lock();
-      try {
-        checkOpen();
-        if (xceiverClient == null) {
-          throw new IOException("Client is not acquired: " + blockID);
-        }
-        xceiverClient.streamRead(ContainerProtocolCalls.buildReadBlockCommandProto(
-            blockID, offset, length, responseDataSize, tokenRef.get(), pipelineRef.get()), r);
-      } finally {
-        sharedResourceLock.unlock();
+      checkOpen();
+      if (client == null) {
+        throw new IOException("Client is not acquired: " + blockID);
       }
+      client.streamRead(ContainerProtocolCalls.buildReadBlockCommandProto(
+          blockID, offset, length, responseDataSize, tokenRef.get(), pipelineRef.get()), r);
     }
 
     @Override
     public void releaseStreamResources() {
-      sharedResourceLock.lock();
-      try {
-        if (xceiverClient != null) {
-          xceiverClient.completeStreamRead();
-        }
-      } finally {
-        sharedResourceLock.unlock();
+      if (client != null) {
+        client.completeStreamRead();
       }
     }
 
