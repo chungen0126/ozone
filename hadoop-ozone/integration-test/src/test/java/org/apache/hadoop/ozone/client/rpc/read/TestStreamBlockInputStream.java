@@ -23,10 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
 import org.apache.hadoop.hdds.scm.OzoneClientConfig;
+import org.apache.hadoop.hdds.scm.storage.BlockExtendedInputStream;
 import org.apache.hadoop.hdds.scm.storage.StreamBlockInputStream;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
 import org.apache.hadoop.ozone.client.OzoneClient;
@@ -278,6 +281,59 @@ public class TestStreamBlockInputStream extends TestInputStreamBase {
     try (KeyInputStream keyInputStream = bucket.getKeyInputStream(keyName)) {
       assertTrue(keyInputStream.getPartStreams().isEmpty());
       assertEquals(-1, keyInputStream.read());
+    }
+  }
+
+  @Test
+  void testReadFullyParallel() throws Exception {
+    try (MiniOzoneCluster cluster = newCluster()) {
+      cluster.waitForClusterToBeReady();
+      OzoneConfiguration conf = cluster.getConf();
+      OzoneClientConfig clientConfig = conf.getObject(OzoneClientConfig.class);
+      clientConfig.setStreamReadBlock(true);
+      OzoneConfiguration copy = new OzoneConfiguration(conf);
+      copy.setFromObject(clientConfig);
+      String keyName = getNewKeyName();
+      try (OzoneClient client = OzoneClientFactory.getRpcClient(copy)) {
+        bucket = TestBucket.newBuilder(client).build();
+        inputData = bucket.writeRandomBytes(keyName, DATA_LENGTH);
+        try (KeyInputStream keyInputStream = bucket.getKeyInputStream(keyName)) {
+          List<BlockExtendedInputStream> partStreams = keyInputStream.getPartStreams();
+          for (BlockExtendedInputStream stream : partStreams) {
+            if (stream instanceof StreamBlockInputStream) {
+              StreamBlockInputStream sbis = (StreamBlockInputStream) stream;
+              long len = sbis.getLength();
+              if (len > 0) {
+                int numThreads = 5;
+                Thread[] threads = new Thread[numThreads];
+                AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
+                for (int t = 0; t < numThreads; t++) {
+                  final int threadIndex = t;
+                  threads[t] = new Thread(() -> {
+                    try {
+                      int offset = Math.min((int) len - 1, threadIndex * 100);
+                      int readLen = (int) Math.min(len - offset, 20);
+                      ByteBuffer buf = ByteBuffer.allocate(readLen);
+                      boolean success = sbis.readFully(offset, buf);
+                      assertTrue(success);
+                      assertEquals(readLen, buf.position());
+                    } catch (Throwable ex) {
+                      exceptionRef.set(ex);
+                    }
+                  });
+                  threads[t].start();
+                }
+                for (Thread thread : threads) {
+                  thread.join();
+                }
+                if (exceptionRef.get() != null) {
+                  throw new AssertionError("Parallel readFully failed", exceptionRef.get());
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

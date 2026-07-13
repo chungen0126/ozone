@@ -26,12 +26,14 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hadoop.hdds.StringUtils;
 import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.client.RatisReplicationConfig;
@@ -39,6 +41,7 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.conf.StorageUnit;
 import org.apache.hadoop.hdds.scm.OzoneClientConfig;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
+import org.apache.hadoop.hdds.scm.storage.BlockExtendedInputStream;
 import org.apache.hadoop.hdds.scm.storage.StreamBlockInputStream;
 import org.apache.hadoop.hdds.utils.db.CodecBuffer;
 import org.apache.hadoop.ozone.ClientConfigForTesting;
@@ -210,6 +213,40 @@ public class TestStreamRead {
       TestBucket bucket, String keyName) throws Exception {
     try (KeyInputStream in = bucket.getKeyInputStream(keyName)) {
       assertTrue(in.isStreamBlockInputStream());
+      List<BlockExtendedInputStream> partStreams = in.getPartStreams();
+      for (BlockExtendedInputStream stream : partStreams) {
+        if (stream instanceof StreamBlockInputStream) {
+          StreamBlockInputStream sbis = (StreamBlockInputStream) stream;
+          long len = sbis.getLength();
+          if (len > 0) {
+            int numThreads = 3;
+            Thread[] threads = new Thread[numThreads];
+            AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
+            for (int t = 0; t < numThreads; t++) {
+              final int threadIndex = t;
+              threads[t] = new Thread(() -> {
+                try {
+                  int offset = Math.min((int) len - 1, threadIndex * 10);
+                  int readLen = (int) Math.min(len - offset, 5);
+                  ByteBuffer buf = ByteBuffer.allocate(readLen);
+                  boolean success = sbis.readFully(offset, buf);
+                  assertTrue(success);
+                  assertEquals(readLen, buf.position());
+                } catch (Throwable ex) {
+                  exceptionRef.set(ex);
+                }
+              });
+              threads[t].start();
+            }
+            for (Thread thread : threads) {
+              thread.join();
+            }
+            if (exceptionRef.get() != null) {
+              throw new AssertionError("Parallel readFully failed", exceptionRef.get());
+            }
+          }
+        }
+      }
       runTestReadKey(keySize, bufferSize, expectedMD5, in);
     }
   }

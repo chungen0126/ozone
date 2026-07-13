@@ -19,6 +19,7 @@ package org.apache.hadoop.hdds.scm.storage;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -364,6 +365,33 @@ public class TestStreamBlockInputStream {
       int bytesRead = sbis.read(buf);
       assertEquals(length, bytesRead, "expected all bytes to be read");
       assertEquals(length, buf.position(), "buffer position should be at end of block");
+    }
+  }
+
+  @Test
+  public void testReadFully() throws Exception {
+    OzoneClientConfig clientConfig = newStreamReadConfig();
+    BlockID blockID = new BlockID(1L, 12L);
+    byte[] data = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
+    long length = data.length;
+    Pipeline pipeline = mockStandalonePipeline();
+    ClientCallStreamObserver<ContainerCommandRequestProto> requestObserver = mock(ClientCallStreamObserver.class);
+    XceiverClientGrpc xceiverClient = mockStreamingReadClient(data, requestObserver);
+    XceiverClientFactory xceiverClientFactory = mock(XceiverClientFactory.class);
+    when(xceiverClientFactory.acquireClientForReadData(any(Pipeline.class)))
+        .thenReturn(xceiverClient);
+
+    try (StreamBlockInputStream sbis = new StreamBlockInputStream(
+        blockID, length, pipeline, null, xceiverClientFactory,
+        NO_REFRESH, clientConfig)) {
+      ByteBuffer buf = ByteBuffer.allocate(4);
+      boolean success = sbis.readFully(2, buf);
+      assertTrue(success);
+      buf.flip();
+      assertEquals(3, buf.get());
+      assertEquals(4, buf.get());
+      assertEquals(5, buf.get());
+      assertEquals(6, buf.get());
     }
   }
 

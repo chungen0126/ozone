@@ -122,7 +122,10 @@ public class StreamingReader implements StreamingReaderSpi {
 
     while (true) {
       final ByteBuffer buf = readFromQueue();
-      if (buf != null && buf.hasRemaining()) {
+      if (buf == null) {
+        return null;
+      }
+      if (buf.hasRemaining()) {
         return buf;
       }
     }
@@ -130,6 +133,9 @@ public class StreamingReader implements StreamingReaderSpi {
 
   ByteBuffer readFromQueue() throws IOException {
     final ReadBlockResponseProto readBlock = poll();
+    if (readBlock == null) {
+      return null;
+    }
     // The server always returns data starting from the last checksum boundary. Therefore if the reader position is
     // ahead of the position we received from the server, we need to adjust the buffer position accordingly.
     // If the reader position is behind
@@ -161,6 +167,10 @@ public class StreamingReader implements StreamingReaderSpi {
   public void onNext(ContainerProtos.ContainerCommandResponseProto containerCommandResponseProto) {
     final ReadBlockResponseProto readBlock = containerCommandResponseProto.getReadBlock();
     try {
+      ContainerProtocolCalls.validateContainerResponse(containerCommandResponseProto);
+      if (readBlock == null) {
+        throw new IOException("Received successful response without readBlock payload: " + containerCommandResponseProto);
+      }
       ByteBuffer data = readBlock.getData().asReadOnlyByteBuffer();
       if (context.isVerifyChecksum()) {
         ChecksumData checksumData = ChecksumData.getFromProtoBuf(readBlock.getChecksumData());
@@ -168,15 +178,23 @@ public class StreamingReader implements StreamingReaderSpi {
       }
       offerToQueue(readBlock);
     } catch (Exception e) {
-      final ByteString data = readBlock.getData();
-      final long offset = readBlock.getOffset();
+      final ByteString data = readBlock != null ? readBlock.getData() : ByteString.EMPTY;
+      final long offset = readBlock != null ? readBlock.getOffset() : 0;
       final StreamingReadResponse r = getResponse();
-      LOG.warn("Failed to process block {} response at offset={}, size={}: {}, {}",
-          context.getBlockID().getContainerBlockID(),
-          offset, data.size(), StringUtils.bytes2Hex(data.substring(0, 10).asReadOnlyByteBuffer()),
-          readBlock.getChecksumData(), e);
+      if (readBlock != null) {
+        LOG.warn("Failed to process block {} response at offset={}, size={}: {}, {}",
+            context.getBlockID().getContainerBlockID(),
+            offset, data.size(), StringUtils.bytes2Hex(data.substring(0, 10).asReadOnlyByteBuffer()),
+            readBlock.getChecksumData(), e);
+      } else {
+        LOG.warn("Failed to process block {} response: {}",
+            context.getBlockID().getContainerBlockID(),
+            containerCommandResponseProto, e);
+      }
       setFailed(e);
-      r.getRequestObserver().onError(e);
+      if (r != null && r.getRequestObserver() != null) {
+        r.getRequestObserver().onError(e);
+      }
       releaseResources();
     }
   }
