@@ -120,22 +120,22 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
     System.out.println("======================================================================");
     System.out.println(" Starting OzoneFSInputStream#readVectored Micro-Benchmark");
     System.out.println("======================================================================");
-    System.out.printf("File Size   : %d MB\n", FILE_SIZE / (1024 * 1024));
-    System.out.printf("Block Size  : %d MB\n", BLOCK_SIZE / (1024 * 1024));
-    System.out.printf("Chunk Size  : %d MB\n", CHUNK_SIZE / (1024 * 1024));
+    System.out.printf("File Size   : %d MB%n", FILE_SIZE / (1024 * 1024));
+    System.out.printf("Block Size  : %d MB%n", BLOCK_SIZE / (1024 * 1024));
+    System.out.printf("Chunk Size  : %d MB%n", CHUNK_SIZE / (1024 * 1024));
     System.out.println("======================================================================");
 
     // 1. Consecutive range pattern (20 ranges, 1 MB each)
     List<FileRange> consecutiveRanges = new ArrayList<>();
     for (int i = 0; i < 20; i++) {
-      consecutiveRanges.add(FileRange.createFileRange(i * 1024 * 1024, 1024 * 1024));
+      consecutiveRanges.add(FileRange.createFileRange((long) i * 1024 * 1024, 1024 * 1024));
     }
 
     // 2. Random range pattern (20 ranges, 1 MB each, spread randomly)
     List<FileRange> randomRanges = new ArrayList<>();
     Random rand = new Random(1337);
     for (int i = 0; i < 20; i++) {
-      long offset = rand.nextInt((FILE_SIZE - 1024 * 1024) / (1024 * 1024)) * 1024 * 1024;
+      long offset = (long) rand.nextInt((FILE_SIZE - 1024 * 1024) / (1024 * 1024)) * 1024 * 1024;
       randomRanges.add(FileRange.createFileRange(offset, 1024 * 1024));
     }
     randomRanges.sort((r1, r2) -> Long.compare(r1.getOffset(), r2.getOffset()));
@@ -163,10 +163,10 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
   }
 
   private void benchmarkPattern(String patternName, List<FileRange> templateRanges) throws Exception {
-    System.out.println("\n--- Pattern: " + patternName + " ---");
+    System.out.println("%n--- Pattern: " + patternName + " ---");
     System.out.println("Number of ranges: " + templateRanges.size());
     long totalBytes = templateRanges.stream().mapToLong(FileRange::getLength).sum();
-    System.out.printf("Total read size : %.2f MB\n", (double) totalBytes / (1024 * 1024));
+    System.out.printf("Total read size : %.2f MB%n", (double) totalBytes / (1024 * 1024));
 
     // Warm-up
     for (int i = 0; i < WARMUP_ITERATIONS; i++) {
@@ -265,7 +265,7 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
     double mb = (double) totalBytes / (1024.0 * 1024.0);
     double throughputMBs = mb / (meanMs / 1000.0);
 
-    System.out.printf("  %-40s : Mean: %7.2f ms | Min: %7.2f ms | Max: %7.2f ms | Throughput: %7.2f MB/s\n",
+    System.out.printf("  %-40s : Mean: %7.2f ms | Min: %7.2f ms | Max: %7.2f ms | Throughput: %7.2f MB/s%n",
         label, meanMs, minMs, maxMs, throughputMBs);
   }
 
