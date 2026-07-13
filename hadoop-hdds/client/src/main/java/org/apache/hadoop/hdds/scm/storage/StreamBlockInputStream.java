@@ -211,7 +211,7 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
     releaseClient();
   }
 
-  private void closeStream() {
+  private synchronized void closeStream() {
     sharedResourceLock.lock();
     try {
       if (streamingReader == null) {
@@ -283,7 +283,7 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
     }
   }
 
-  private void initialize() throws IOException {
+  private synchronized void initialize() throws IOException {
     sharedResourceLock.lock();
     try {
       while (streamingReader == null) {
@@ -439,7 +439,7 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
     }
   }
 
-  protected void releaseClient() {
+  protected synchronized void releaseClient() {
     sharedResourceLock.lock();
     try {
       if (xceiverClientFactory != null && xceiverClient != null) {
@@ -453,7 +453,7 @@ public class StreamBlockInputStream extends BlockExtendedInputStream
   }
 
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     sharedResourceLock.lock();
     try {
       releaseClient();

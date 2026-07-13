@@ -169,7 +169,8 @@ public class StreamingReader implements StreamingReaderSpi {
     try {
       ContainerProtocolCalls.validateContainerResponse(containerCommandResponseProto);
       if (readBlock == null) {
-        throw new IOException("Received successful response without readBlock payload: " + containerCommandResponseProto);
+        throw new IOException("Received successful response without readBlock payload: "
+            + containerCommandResponseProto);
       }
       ByteBuffer data = readBlock.getData().asReadOnlyByteBuffer();
       if (context.isVerifyChecksum()) {
