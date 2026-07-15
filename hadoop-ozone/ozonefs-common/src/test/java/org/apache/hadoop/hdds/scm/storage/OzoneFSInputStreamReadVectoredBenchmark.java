@@ -138,7 +138,7 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
       long offset = (long) rand.nextInt((FILE_SIZE - 1024 * 1024) / (1024 * 1024)) * 1024 * 1024;
       randomRanges.add(FileRange.createFileRange(offset, 1024 * 1024));
     }
-    randomRanges.sort((r1, r2) -> Long.compare(r1.getOffset(), r2.getOffset()));
+
     for (int i = 0; i < randomRanges.size() - 1; i++) {
       if (randomRanges.get(i).getOffset() + randomRanges.get(i).getLength() > randomRanges.get(i + 1).getOffset()) {
         randomRanges.remove(i + 1);
@@ -162,21 +162,21 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
     benchmarkPattern("Sparse Ranges", sparseRanges);
   }
 
-  private void benchmarkPattern(String patternName, List<FileRange> templateRanges) throws Exception {
+  private void benchmarkPattern(String patternName, List<FileRange> ranges) throws Exception {
     System.out.println("%n--- Pattern: " + patternName + " ---");
-    System.out.println("Number of ranges: " + templateRanges.size());
-    long totalBytes = templateRanges.stream().mapToLong(FileRange::getLength).sum();
+    System.out.println("Number of ranges: " + ranges.size());
+    long totalBytes = ranges.stream().mapToLong(FileRange::getLength).sum();
     System.out.printf("Total read size : %.2f MB%n", (double) totalBytes / (1024 * 1024));
 
     // Warm-up
     for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-      List<FileRange> ranges = resetRanges(templateRanges);
       OzoneFSInputStream stream = createMockStream(true);
+      cleanUpRanges(ranges);
       executeVectoredRead(stream, ranges);
       stream.close();
 
-      ranges = resetRanges(templateRanges);
       stream = createMockStream(false);
+      cleanUpRanges(ranges);
       executeVectoredRead(stream, ranges);
       stream.close();
     }
@@ -184,8 +184,8 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
     // Measurement - Positioned Read Enabled (true)
     long[] enabledTimes = new long[MEASURE_ITERATIONS];
     for (int i = 0; i < MEASURE_ITERATIONS; i++) {
-      List<FileRange> ranges = resetRanges(templateRanges);
       OzoneFSInputStream stream = createMockStream(true);
+      cleanUpRanges(ranges);
       long start = System.nanoTime();
       executeVectoredRead(stream, ranges);
       enabledTimes[i] = System.nanoTime() - start;
@@ -204,8 +204,8 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
     // Measurement - Positioned Read Disabled (false)
     long[] disabledTimes = new long[MEASURE_ITERATIONS];
     for (int i = 0; i < MEASURE_ITERATIONS; i++) {
-      List<FileRange> ranges = resetRanges(templateRanges);
       OzoneFSInputStream stream = createMockStream(false);
+      cleanUpRanges(ranges);
       long start = System.nanoTime();
       executeVectoredRead(stream, ranges);
       disabledTimes[i] = System.nanoTime() - start;
@@ -224,14 +224,6 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
     // Report Results
     reportResults("Vectored Read (Positioned Enabled=true)", enabledTimes, totalBytes);
     reportResults("Vectored Read (Positioned Enabled=false)", disabledTimes, totalBytes);
-  }
-
-  private List<FileRange> resetRanges(List<FileRange> ranges) {
-    List<FileRange> cloned = new ArrayList<>();
-    for (FileRange r : ranges) {
-      cloned.add(FileRange.createFileRange(r.getOffset(), r.getLength()));
-    }
-    return cloned;
   }
 
   private void executeVectoredRead(OzoneFSInputStream stream, List<FileRange> ranges) throws Exception {
@@ -272,5 +264,11 @@ public class OzoneFSInputStreamReadVectoredBenchmark {
   public static void main(String[] args) throws Exception {
     OzoneFSInputStreamReadVectoredBenchmark benchmark = new OzoneFSInputStreamReadVectoredBenchmark();
     benchmark.runBenchmark();
+  }
+
+  private void cleanUpRanges(List<FileRange> ranges) {
+    for (FileRange range : ranges) {
+      range.setData(null);
+    }
   }
 }
