@@ -17,6 +17,8 @@
 
 package org.apache.hadoop.hdds.scm.pipeline;
 
+import static org.apache.hadoop.hdds.protocol.DatanodeDetails.Port.Name.RATIS_DATASTREAM;
+
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -141,7 +143,12 @@ public class RatisPipelineProvider
 
   @Override
   public synchronized Pipeline create(RatisReplicationConfig replicationConfig,
-      List<DatanodeDetails> excludedNodes, List<DatanodeDetails> favoredNodes)
+      List<DatanodeDetails> excludedNodes, List<DatanodeDetails> favoredNodes) throws IOException {
+    return create(replicationConfig, excludedNodes, favoredNodes, false);
+  }
+
+  public synchronized Pipeline create(RatisReplicationConfig replicationConfig,
+      List<DatanodeDetails> excludedNodes, List<DatanodeDetails> favoredNodes, boolean isRatisStreaming)
       throws IOException {
     if (exceedPipelineNumberLimit(replicationConfig)) {
       String limitInfo = (datanodePipelineLimit > 0)
@@ -160,15 +167,15 @@ public class RatisPipelineProvider
         replicationConfig.getReplicationFactor();
     switch (factor) {
     case ONE:
-      dns = pickNodesNotUsed(replicationConfig, minRatisVolumeSizeBytes, containerSizeBytes);
+      dns = pickNodesNotUsed(replicationConfig, minRatisVolumeSizeBytes, containerSizeBytes, isRatisStreaming);
       break;
     case THREE:
-      List<DatanodeDetails> excludeDueToEngagement = filterPipelineEngagement();
-      if (!excludeDueToEngagement.isEmpty()) {
+      List<DatanodeDetails> excludeNodes = filterNodes(isRatisStreaming);
+      if (!excludeNodes.isEmpty()) {
         if (excludedNodes.isEmpty()) {
-          excludedNodes = excludeDueToEngagement;
+          excludedNodes = excludeNodes;
         } else {
-          excludedNodes.addAll(excludeDueToEngagement);
+          excludedNodes.addAll(excludeNodes);
         }
       }
       dns = placementPolicy.chooseDatanodes(excludedNodes,
@@ -179,11 +186,15 @@ public class RatisPipelineProvider
       throw new IllegalStateException("Unknown factor: " + factor.name());
     }
 
+        ;
+
     DatanodeDetails suggestedLeader = leaderChoosePolicy.chooseLeader(dns);
 
     Pipeline pipeline = newPipelineBuilder(RatisReplicationConfig.getInstance(factor), dns)
         .setId(PipelineID.randomId())
         .setSuggestedLeaderId(suggestedLeader != null ? suggestedLeader.getID() : null)
+        .setSupportRatisStreaming(isRatisStreaming |
+            dns.stream().allMatch(d -> d.hasPort(RATIS_DATASTREAM)))
         .build();
 
     // Send command to datanodes to create pipeline
@@ -224,14 +235,21 @@ public class RatisPipelineProvider
         .build();
   }
 
-  private List<DatanodeDetails> filterPipelineEngagement() {
+  /**
+   * Filter out nodes that have reached the pipeline limit.
+   * Also, filter out nodes that are not supported ratis streaming if needed.
+   *
+   * @param isStreaming - whether the pipeline is for streaming or not
+   * @return list of nodes that have reached the pipeline limit
+   */
+  private List<DatanodeDetails> filterNodes(boolean isStreaming) {
     final NodeManager nodeManager = getNodeManager();
     final PipelineStateManager stateManager = getPipelineStateManager();
     final List<DatanodeDetails> healthyNodes = nodeManager.getNodes(NodeStatus.inServiceHealthy());
     final List<DatanodeDetails> excluded = new ArrayList<>();
     for (DatanodeDetails d : healthyNodes) {
       final int count = PipelinePlacementPolicy.currentRatisThreePipelineCount(nodeManager, stateManager, d);
-      if (count >= nodeManager.pipelineLimit(d)) {
+      if (count >= nodeManager.pipelineLimit(d) || (isStreaming && !d.hasPort(RATIS_DATASTREAM))) {
         excluded.add(d);
       }
     }

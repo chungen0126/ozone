@@ -17,6 +17,8 @@
 
 package org.apache.hadoop.hdds.scm.pipeline;
 
+import static org.apache.hadoop.hdds.protocol.DatanodeDetails.Port.Name.RATIS_DATASTREAM;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -82,13 +84,14 @@ public abstract class PipelineProvider<REPLICATION_CONFIG
 
   List<DatanodeDetails> pickNodesNotUsed(REPLICATION_CONFIG replicationConfig,
                                          long metadataSizeRequired,
-                                         long dataSizeRequired)
+                                         long dataSizeRequired, boolean isRatisStreaming)
       throws SCMException {
     int nodesRequired = replicationConfig.getRequiredNodes();
     List<DatanodeDetails> healthyDNs = pickAllNodesNotUsed(replicationConfig);
     List<DatanodeDetails> healthyDNsWithSpace = healthyDNs.stream()
         .filter(dn -> SCMCommonPlacementPolicy.hasEnoughSpace(
             dn, metadataSizeRequired, nodeManager))
+        .filter(dn -> !isRatisStreaming || dn.hasPort(RATIS_DATASTREAM))
         .limit(nodesRequired)
         .collect(Collectors.toList());
 

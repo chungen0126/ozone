@@ -57,6 +57,7 @@ import org.apache.hadoop.hdds.scm.exceptions.SCMException;
 import org.apache.hadoop.hdds.scm.ha.SCMHAManager;
 import org.apache.hadoop.hdds.scm.ha.SCMHAManagerStub;
 import org.apache.hadoop.hdds.scm.metadata.SCMDBDefinition;
+import org.apache.hadoop.hdds.scm.net.NetworkTopologyImpl;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
@@ -179,6 +180,87 @@ public class TestRatisPipelineProvider {
       nodes.add(MockDatanodeDetails.randomDatanodeDetails());
     }
     return nodes;
+  }
+
+  private DatanodeDetails createNodeWithoutRatisDataStreamPort() {
+    DatanodeID id = DatanodeID.randomID();
+    DatanodeDetails.Builder dn = DatanodeDetails.newBuilder()
+        .setID(id)
+        .setHostName("localhost")
+        .setIpAddress("127.0.0.1")
+        .setNetworkLocation("/default-rack")
+        .setPersistedOpState(HddsProtos.NodeOperationalState.IN_SERVICE)
+        .setPersistedOpStateExpiry(0);
+
+    for (DatanodeDetails.Port.Name name : DatanodeDetails.Port.Name.values()) {
+      if (name != DatanodeDetails.Port.Name.RATIS_DATASTREAM) {
+        dn.addPort(DatanodeDetails.newPort(name, 0));
+      }
+    }
+    return dn.build();
+  }
+
+  @Test
+  public void testCreatePipelineWithRatisStreaming() throws Exception {
+    List<DatanodeDetails> nodes = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+      // 3 nodes WITH ratis streaming
+      nodes.add(MockDatanodeDetails.randomDatanodeDetails());
+    }
+    for (int i = 0; i < 7; i++) {
+      // 7 nodes WITHOUT ratis streaming
+      nodes.add(createNodeWithoutRatisDataStreamPort());
+    }
+    nodeManager = new MockNodeManager(new NetworkTopologyImpl(new OzoneConfiguration()), nodes, false, 0);
+    nodeManager.setNumPipelinePerDatanode(1);
+
+    SCMHAManager scmhaManager = SCMHAManagerStub.getInstance(true);
+    OzoneConfiguration conf = new OzoneConfiguration();
+    conf.set(HddsConfigKeys.OZONE_METADATA_DIRS, testDir.getAbsolutePath());
+    dbStore = DBStoreBuilder.createDBStore(conf, SCMDBDefinition.get());
+    stateManager = PipelineStateManagerImpl.newBuilder()
+        .setPipelineStore(SCMDBDefinition.PIPELINES.getTable(dbStore))
+        .setRatisServer(scmhaManager.getRatisServer())
+        .setNodeManager(nodeManager)
+        .setSCMDBTransactionBuffer(scmhaManager.getDBTransactionBuffer())
+        .build();
+    provider = new MockRatisPipelineProvider(nodeManager, stateManager, conf);
+
+    HddsProtos.ReplicationFactor factor = HddsProtos.ReplicationFactor.THREE;
+    Pipeline pipeline = provider.create(RatisReplicationConfig.getInstance(factor), new ArrayList<>(), new ArrayList<>(), true);
+
+    assertPipelineProperties(pipeline, factor, REPLICATION_TYPE, Pipeline.PipelineState.ALLOCATED);
+    assertTrue(pipeline.isSupportRatisStreaming());
+    for (DatanodeDetails dn : pipeline.getNodes()) {
+      assertTrue(dn.hasPort(DatanodeDetails.Port.Name.RATIS_DATASTREAM));
+    }
+  }
+
+  @Test
+  public void testCreatePipelineWithRatisStreamingFailsWhenNoNodes() throws Exception {
+    List<DatanodeDetails> nodes = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      nodes.add(createNodeWithoutRatisDataStreamPort());
+    }
+    nodeManager = new MockNodeManager(new NetworkTopologyImpl(new OzoneConfiguration()), nodes, false, 0);
+    nodeManager.setNumPipelinePerDatanode(1);
+
+    SCMHAManager scmhaManager = SCMHAManagerStub.getInstance(true);
+    OzoneConfiguration conf = new OzoneConfiguration();
+    conf.set(HddsConfigKeys.OZONE_METADATA_DIRS, testDir.getAbsolutePath());
+    dbStore = DBStoreBuilder.createDBStore(conf, SCMDBDefinition.get());
+    stateManager = PipelineStateManagerImpl.newBuilder()
+        .setPipelineStore(SCMDBDefinition.PIPELINES.getTable(dbStore))
+        .setRatisServer(scmhaManager.getRatisServer())
+        .setNodeManager(nodeManager)
+        .setSCMDBTransactionBuffer(scmhaManager.getDBTransactionBuffer())
+        .build();
+    provider = new MockRatisPipelineProvider(nodeManager, stateManager, conf);
+
+    HddsProtos.ReplicationFactor factor = HddsProtos.ReplicationFactor.THREE;
+    SCMException e = assertThrows(SCMException.class, () ->
+        provider.create(RatisReplicationConfig.getInstance(factor), new ArrayList<>(), new ArrayList<>(), true));
+    assertEquals(SCMException.ResultCodes.FAILED_TO_FIND_SUITABLE_NODE, e.getResult());
   }
 
   @Test

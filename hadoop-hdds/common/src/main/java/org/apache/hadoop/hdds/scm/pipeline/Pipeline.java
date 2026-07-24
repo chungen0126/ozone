@@ -89,6 +89,8 @@ public final class Pipeline {
 
   private final Instant stateEnterTime;
 
+  private final boolean supportRatisStreaming;
+
   /**
    * The immutable properties of pipeline object is used in
    * ContainerStateManager#getMatchingContainerByPipeline to take a lock on
@@ -114,6 +116,7 @@ public final class Pipeline {
     replicaIndexes = b.replicaIndexes;
     creationTimestamp = b.creationTimestamp != null ? b.creationTimestamp : Instant.now();
     stateEnterTime = Instant.now();
+    supportRatisStreaming = b.supportRatisStreaming;
   }
 
   public static Codec<Pipeline> getCodec() {
@@ -184,6 +187,15 @@ public final class Pipeline {
    */
   public DatanodeID getLeaderId() {
     return leaderId;
+  }
+
+  /**
+   * Return whether the pipeline supports Ratis streaming.
+   *
+   * @return true if the pipeline supports Ratis streaming, false otherwise.
+   */
+  public boolean isSupportRatisStreaming() {
+    return supportRatisStreaming;
   }
 
   /**
@@ -572,6 +584,7 @@ public final class Pipeline {
     private Instant creationTimestamp = null;
     private DatanodeID suggestedLeaderId = null;
     private Map<DatanodeDetails, Integer> replicaIndexes = ImmutableMap.of();
+    private boolean supportRatisStreaming = false;
 
     private Builder() { }
 
@@ -594,6 +607,12 @@ public final class Pipeline {
         }
         replicaIndexes = b.build();
       }
+      this.supportRatisStreaming = pipeline.supportRatisStreaming;
+    }
+
+    public Builder setSupportRatisStreaming(boolean supportRatisStreaming) {
+      this.supportRatisStreaming = supportRatisStreaming;
+      return this;
     }
 
     public Builder setId(DatanodeID datanodeID) {
