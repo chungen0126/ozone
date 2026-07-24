@@ -20,6 +20,7 @@ package org.apache.hadoop.ozone.om.request.key;
 import static org.apache.hadoop.ozone.OzoneConsts.TRANSACTION_INFO_KEY;
 import static org.apache.hadoop.ozone.om.request.OMRequestTestUtils.setupReplicationConfigValidation;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyLong;
@@ -221,7 +222,7 @@ public class OMKeyRequestTests {
     when(scmBlockLocationProtocol.allocateBlock(anyLong(), anyInt(),
         any(ReplicationConfig.class),
         anyString(), any(ExcludeList.class),
-        anyString())).thenAnswer(invocation -> {
+        anyString(), anyBoolean())).thenAnswer(invocation -> {
           int num = invocation.getArgument(1);
           List<AllocatedBlock> allocatedBlocks = new ArrayList<>(num);
           for (int i = 0; i < num; i++) {

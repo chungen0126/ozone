@@ -92,6 +92,25 @@ public class MockPipelineManager implements PipelineManager {
   }
 
   @Override
+  public Pipeline createPipeline(ReplicationConfig replicationConfig, boolean isRatisStreaming) throws IOException {
+    Pipeline pipeline;
+    pipeline = Pipeline.newBuilder()
+        .setId(PipelineID.randomId())
+        .setReplicationConfig(replicationConfig)
+        .setNodes(ImmutableList.of(MockDatanodeDetails.randomDatanodeDetails(),
+            MockDatanodeDetails.randomDatanodeDetails(),
+            MockDatanodeDetails.randomDatanodeDetails()))
+        .setState(Pipeline.PipelineState.OPEN)
+        .setSupportRatisStreaming(true)
+        .build();
+
+
+    stateManager.addPipeline(pipeline.getProtobufMessage(
+        ClientVersion.CURRENT_VERSION));
+    return pipeline;
+  }
+
+  @Override
   public Pipeline buildECPipeline(ReplicationConfig replicationConfig,
       List<DatanodeDetails> excludedNodes, List<DatanodeDetails> favoredNodes) {
     final List<DatanodeDetails> nodes = Stream.generate(

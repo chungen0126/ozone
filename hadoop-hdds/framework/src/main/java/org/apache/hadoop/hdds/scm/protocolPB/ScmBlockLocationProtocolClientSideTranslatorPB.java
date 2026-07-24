@@ -156,6 +156,12 @@ public final class ScmBlockLocationProtocolClientSideTranslatorPB
     return resp;
   }
 
+  @Override
+  public List<AllocatedBlock> allocateBlock(long size, int numBlocks, ReplicationConfig replicationConfig, String owner,
+      ExcludeList excludeList, String clientMachine) throws IOException {
+    return allocateBlock(size, numBlocks, replicationConfig, owner, excludeList, clientMachine, false);
+  }
+
   /**
    * Asks SCM where a block should be allocated. SCM responds with the
    * set of datanodes that should be used creating this block.
@@ -165,7 +171,8 @@ public final class ScmBlockLocationProtocolClientSideTranslatorPB
    * @param replicationConfig - replication configuration of the blocks.
    * @param excludeList       - exclude list while allocating blocks.
    * @param clientMachine     - client address, depends, can be hostname or
-   *                            ipaddress.
+   *                          ipaddress.
+   * @param isRatisStreaming
    * @return allocated block accessing info (key, pipeline).
    * @throws IOException
    */
@@ -174,8 +181,8 @@ public final class ScmBlockLocationProtocolClientSideTranslatorPB
       long size, int num,
       ReplicationConfig replicationConfig,
       String owner, ExcludeList excludeList,
-      String clientMachine
-  ) throws IOException {
+      String clientMachine,
+      boolean isRatisStreaming) throws IOException {
     Preconditions.checkArgument(size > 0, "block size must be greater than 0");
 
     final AllocateScmBlockRequestProto.Builder requestBuilder =

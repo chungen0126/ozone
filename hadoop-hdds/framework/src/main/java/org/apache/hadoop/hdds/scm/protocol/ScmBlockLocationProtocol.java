@@ -87,7 +87,7 @@ public interface ScmBlockLocationProtocol extends Closeable {
        ReplicationConfig replicationConfig, String owner,
        ExcludeList excludeList) throws IOException {
     return allocateBlock(size, numBlocks, replicationConfig, owner,
-        excludeList, null);
+        excludeList, null, false);
   }
 
   /**
@@ -102,14 +102,37 @@ public interface ScmBlockLocationProtocol extends Closeable {
    * @param excludeList       List of datanodes/containers to exclude during
    *                          block
    *                          allocation.
-   * @param clientMachine client address, depends, can be hostname or
-   *                      ipaddress.
+   * @param clientMachine     client address, depends, can be hostname or
+   *                          ipaddress.
+   * @param isRatisStreaming
+   * @return allocated block accessing info (key, pipeline).
+   * @throws IOException
+   */
+  List<AllocatedBlock> allocateBlock(long size, int numBlocks,
+      ReplicationConfig replicationConfig, String owner,
+      ExcludeList excludeList, String clientMachine, boolean isRatisStreaming) throws IOException;
+
+  /**
+   * Asks SCM where a block should be allocated. SCM responds with the
+   * set of datanodes that should be used creating this block, sorted
+   * based on the client address.
+   *
+   * @param size              - size of the block.
+   * @param numBlocks         - number of blocks.
+   * @param replicationConfig - replicationConfiguration
+   * @param owner             - service owner of the new block
+   * @param excludeList       List of datanodes/containers to exclude during
+   *                          block
+   *                          allocation.
+   * @param clientMachine     client address, depends, can be hostname or
+   *                          ipaddress.
    * @return allocated block accessing info (key, pipeline).
    * @throws IOException
    */
   List<AllocatedBlock> allocateBlock(long size, int numBlocks,
       ReplicationConfig replicationConfig, String owner,
       ExcludeList excludeList, String clientMachine) throws IOException;
+
 
   /**
    * Delete blocks for a set of object keys.

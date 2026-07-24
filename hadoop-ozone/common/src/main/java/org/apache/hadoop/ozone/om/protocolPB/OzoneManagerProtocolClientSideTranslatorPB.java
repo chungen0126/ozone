@@ -2401,6 +2401,12 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
   @Override
   public OpenKeySession createFile(OmKeyArgs args,
       boolean overWrite, boolean recursive) throws IOException {
+    return createFile(args, overWrite, recursive, false);
+  }
+
+  @Override
+  public OpenKeySession createFile(OmKeyArgs args, boolean overWrite, boolean recursive, boolean isRatisStreaming)
+      throws IOException {
     KeyArgs.Builder keyArgsBuilder = KeyArgs.newBuilder()
         .setVolumeName(args.getVolumeName())
         .setBucketName(args.getBucketName())
@@ -2422,10 +2428,11 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
       keyArgsBuilder.setType(args.getReplicationConfig().getReplicationType());
     }
     CreateFileRequest createFileRequest = CreateFileRequest.newBuilder()
-            .setKeyArgs(keyArgsBuilder.build())
-            .setIsOverwrite(overWrite)
-            .setIsRecursive(recursive)
-            .build();
+        .setKeyArgs(keyArgsBuilder.build())
+        .setIsOverwrite(overWrite)
+        .setIsRecursive(recursive)
+        .setIsRatisStreaming(isRatisStreaming)
+        .build();
     OMRequest omRequest = createOMRequest(Type.CreateFile)
         .setCreateFileRequest(createFileRequest)
         .build();

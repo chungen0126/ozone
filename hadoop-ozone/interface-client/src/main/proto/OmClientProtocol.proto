@@ -1330,6 +1330,7 @@ message CreateFileRequest {
     // Set in OM HA during preExecute step. This way all OM's use same ID in
     // OM HA.
     optional uint64 clientID = 4;
+    optional bool isRatisStreaming = 5;
 }
 
 message CreateFileResponse {

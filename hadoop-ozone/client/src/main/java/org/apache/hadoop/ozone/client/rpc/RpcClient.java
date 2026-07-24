@@ -2426,7 +2426,7 @@ public class RpcClient implements ClientProtocol {
         .setOwnerName(ownerName)
         .build();
     OpenKeySession keySession =
-        ozoneManagerClient.createFile(keyArgs, overWrite, recursive);
+        ozoneManagerClient.createFile(keyArgs, overWrite, recursive, true);
     return createDataStreamOutput(keySession);
   }
 

@@ -248,6 +248,19 @@ public class PipelineManagerImpl implements PipelineManager {
   public Pipeline createPipeline(ReplicationConfig replicationConfig,
       List<DatanodeDetails> excludedNodes, List<DatanodeDetails> favoredNodes)
       throws IOException {
+    return createPipelineInternal(replicationConfig, excludedNodes,favoredNodes, false);
+  }
+
+  @Override
+  public Pipeline createPipeline(ReplicationConfig replicationConfig,
+      boolean isRatisStreaming) throws IOException {
+    return createPipelineInternal(replicationConfig, Collections.emptyList(),
+        Collections.emptyList(), isRatisStreaming);
+  }
+
+  private Pipeline createPipelineInternal(ReplicationConfig replicationConfig,
+      List<DatanodeDetails> excludedNodes, List<DatanodeDetails> favoredNodes,
+      boolean isRatisStreaming) throws IOException {
     checkIfPipelineCreationIsAllowed(replicationConfig);
 
     acquireWriteLock();
@@ -255,7 +268,7 @@ public class PipelineManagerImpl implements PipelineManager {
     try {
       try {
         pipeline = pipelineFactory.create(replicationConfig,
-            excludedNodes, favoredNodes);
+            excludedNodes, favoredNodes, isRatisStreaming);
       } catch (IOException e) {
         metrics.incNumPipelineCreationFailed();
         throw e;

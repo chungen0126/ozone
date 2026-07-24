@@ -44,6 +44,10 @@ public interface PipelineManager extends Closeable, PipelineManagerMXBean {
                           List<DatanodeDetails> favoredNodes)
       throws IOException;
 
+  Pipeline createPipeline(ReplicationConfig replicationConfig,
+      boolean isRatisStreaming)
+      throws IOException;
+
   Pipeline buildECPipeline(ReplicationConfig replicationConfig,
                            List<DatanodeDetails> excludedNodes,
                            List<DatanodeDetails> favoredNodes)

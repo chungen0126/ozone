@@ -184,12 +184,18 @@ public class SCMBlockProtocolServer implements
   }
 
   @Override
+  public List<AllocatedBlock> allocateBlock(long size, int numBlocks, ReplicationConfig replicationConfig, String owner,
+      ExcludeList excludeList, String clientMode) throws IOException {
+    return allocateBlock(size, numBlocks, replicationConfig, owner, excludeList, clientMode, false);
+  }
+
+  @Override
   public List<AllocatedBlock> allocateBlock(
       long size, int num,
       ReplicationConfig replicationConfig,
       String owner, ExcludeList excludeList,
-      String clientMachine
-  ) throws IOException {
+      String clientMachine,
+      boolean isRatisStreaming) throws IOException {
     long startNanos = Time.monotonicNowNanos();
     Map<String, String> auditMap = Maps.newHashMap();
     auditMap.put("size", String.valueOf(size));

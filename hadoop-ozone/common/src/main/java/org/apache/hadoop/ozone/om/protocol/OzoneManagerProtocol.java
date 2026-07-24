@@ -983,6 +983,28 @@ public interface OzoneManagerProtocol
   }
 
   /**
+   * OzoneFS api to creates an output stream for a file.
+   *
+   * @param keyArgs   Key args
+   * @param overWrite if true existing file at the location will be overwritten
+   * @param recursive if true file would be created even if parent directories
+   *                  do not exist
+   * @param isRatisStreaming if true, create a pipeline supporting ratis streaming for the file.
+   * @throws OMException if given key is a directory
+   *                     if file exists and isOverwrite flag is false
+   *                     if an ancestor exists as a file
+   *                     if bucket does not exist
+   * @throws IOException if there is error in the db
+   *                     invalid arguments
+   */
+  default OpenKeySession createFile(OmKeyArgs keyArgs, boolean overWrite,
+      boolean recursive, boolean isRatisStreaming) throws IOException {
+    throw new UnsupportedOperationException("OzoneManager does not require " +
+        "this to be implemented, as write requests use a new approach.");
+  }
+
+
+  /**
    * OzoneFS api to lookup for a file.
    *
    * @param keyArgs Key args

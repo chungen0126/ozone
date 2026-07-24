@@ -108,18 +108,26 @@ public class ScmBlockLocationTestingClient implements ScmBlockLocationProtocol {
 
   }
 
+  @Override
+  public List<AllocatedBlock> allocateBlock(long size, int numBlocks, ReplicationConfig replicationConfig, String owner,
+      ExcludeList excludeList, String clientMachine) throws IOException {
+    return allocateBlock(size, numBlocks, replicationConfig, owner, excludeList, clientMachine, false);
+  }
+
   /**
    * Returns Fake blocks to the BlockManager so we get blocks in the Database.
-   * @param size - size of the block.
-   * @param owner - String owner.
-   * @param excludeList list of dns/pipelines to exclude
+   *
+   * @param size             - size of the block.
+   * @param owner            - String owner.
+   * @param excludeList      list of dns/pipelines to exclude
+   * @param isRatisStreaming
    * @return
    * @throws IOException
    */
   @Override
   public List<AllocatedBlock> allocateBlock(long size, int num,
       ReplicationConfig config,
-      String owner, ExcludeList excludeList, String clientMachine)
+      String owner, ExcludeList excludeList, String clientMachine, boolean isRatisStreaming)
       throws IOException {
     DatanodeDetails datanodeDetails = randomDatanodeDetails();
     Pipeline pipeline = createPipeline(datanodeDetails);

@@ -23,9 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.hadoop.hdds.client.RatisReplicationConfig;
 import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.scm.PlacementPolicy;
 import org.apache.hadoop.hdds.scm.container.ContainerReplica;
@@ -82,8 +84,20 @@ public class PipelineFactory {
       ReplicationConfig replicationConfig, List<DatanodeDetails> excludedNodes,
       List<DatanodeDetails> favoredNodes)
       throws IOException {
-    Pipeline pipeline = providers.get(replicationConfig.getReplicationType())
-        .create(replicationConfig, excludedNodes, favoredNodes);
+    return create(replicationConfig, excludedNodes, favoredNodes, false);
+  }
+  public Pipeline create(
+      ReplicationConfig replicationConfig, List<DatanodeDetails> excludedNodes,
+      List<DatanodeDetails> favoredNodes, boolean isRatisStreaming)
+      throws IOException {
+    PipelineProvider pipelineProvider = providers.get(replicationConfig.getReplicationType());
+    Pipeline pipeline = null;
+    if (pipelineProvider instanceof RatisPipelineProvider && isRatisStreaming) {
+      pipeline = ((RatisPipelineProvider) pipelineProvider)
+          .create((RatisReplicationConfig) replicationConfig, excludedNodes, favoredNodes, isRatisStreaming);
+    } else {
+      pipeline = pipelineProvider.create(replicationConfig, excludedNodes, favoredNodes);
+    }
     checkPipeline(pipeline);
     return pipeline;
   }
