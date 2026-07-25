@@ -154,7 +154,7 @@ public class OMKeyCreateRequest extends OMKeyRequest {
         effectiveDataSize = keyArgs.getDataSize();
         omKeyLocationInfoList = captureLatencyNs(perfMetrics.getCreateKeyAllocateBlockLatencyNs(),
             () -> allocateBlock(repConfig, new ExcludeList(), effectiveDataSize,
-                keyArgs.getSortDatanodes(), userInfo, ozoneManager));
+                keyArgs.getSortDatanodes(), userInfo, ozoneManager, createKeyRequest.getIsRatisStreaming()));
       }
 
       newKeyArgs = keyArgs.toBuilder().setModificationTime(Time.now())

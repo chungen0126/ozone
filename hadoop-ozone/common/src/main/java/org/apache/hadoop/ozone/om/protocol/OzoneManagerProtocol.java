@@ -293,6 +293,23 @@ public interface OzoneManagerProtocol
    * @throws IOException
    */
   default OmKeyLocationInfo allocateBlock(OmKeyArgs args, long clientID,
+      ExcludeList excludeList, boolean isRatisStreaming) throws IOException {
+    throw new UnsupportedOperationException("OzoneManager does not require " +
+        "this to be implemented, as write requests use a new approach.");
+  }
+
+  /**
+   * Allocate a new block, it is assumed that the client is having an open key
+   * session going on. This block will be appended to this open key session.
+   *
+   * @param args the key to append
+   * @param clientID the client identification
+   * @param excludeList List of datanodes/containers to exclude during block
+   *                    allocation
+   * @return an allocated block
+   * @throws IOException
+   */
+  default OmKeyLocationInfo allocateBlock(OmKeyArgs args, long clientID,
       ExcludeList excludeList) throws IOException {
     throw new UnsupportedOperationException("OzoneManager does not require " +
         "this to be implemented, as write requests use a new approach.");

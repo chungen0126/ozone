@@ -28,6 +28,7 @@ import org.apache.hadoop.hdds.scm.container.ContainerInfo;
 import org.apache.hadoop.hdds.scm.container.ContainerManager;
 import org.apache.hadoop.hdds.scm.container.common.helpers.ExcludeList;
 import org.apache.hadoop.hdds.scm.exceptions.SCMException;
+import org.apache.hadoop.hdds.scm.pipeline.Pipeline.PipelineState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,7 @@ public class WritableRatisContainerProvider
 
   @Override
   public ContainerInfo getContainer(final long size,
-      ReplicationConfig repConfig, String owner, ExcludeList excludeList)
+      ReplicationConfig repConfig, String owner, ExcludeList excludeList, boolean isRatisStreaming)
       throws IOException {
     /*
       Here is the high level logic.
@@ -80,7 +81,7 @@ public class WritableRatisContainerProvider
         PipelineRequestInformation.Builder.getBuilder().setSize(size).build();
 
     ContainerInfo containerInfo =
-        getContainer(repConfig, owner, excludeList, req);
+        getContainer(repConfig, owner, excludeList, req, isRatisStreaming);
     if (containerInfo != null) {
       return containerInfo;
     }
@@ -88,7 +89,7 @@ public class WritableRatisContainerProvider
     try {
       // TODO: #CLUTIL Remove creation logic when all replication types
       //  and factors are handled by pipeline creator
-      Pipeline pipeline = pipelineManager.createPipeline(repConfig);
+      Pipeline pipeline = pipelineManager.createPipeline(repConfig, isRatisStreaming);
 
       // wait until pipeline is ready
       pipelineManager.waitPipelineReady(pipeline.getId(), 0);
@@ -100,7 +101,7 @@ public class WritableRatisContainerProvider
               repConfig, se);
       List<Pipeline> allocatedPipelines = findPipelinesByState(repConfig,
               excludeList,
-              Pipeline.PipelineState.ALLOCATED);
+              Pipeline.PipelineState.ALLOCATED, isRatisStreaming);
       if (!allocatedPipelines.isEmpty()) {
         List<PipelineID> allocatedPipelineIDs =
                 allocatedPipelines.stream()
@@ -126,7 +127,7 @@ public class WritableRatisContainerProvider
 
     // If Exception occurred or successful creation of pipeline do one
     // final try to fetch pipelines.
-    containerInfo = getContainer(repConfig, owner, excludeList, req);
+    containerInfo = getContainer(repConfig, owner, excludeList, req, isRatisStreaming);
     if (containerInfo != null) {
       return containerInfo;
     }
@@ -143,14 +144,14 @@ public class WritableRatisContainerProvider
 
   @Nullable
   private ContainerInfo getContainer(ReplicationConfig repConfig, String owner,
-      ExcludeList excludeList, PipelineRequestInformation req) {
+      ExcludeList excludeList, PipelineRequestInformation req, boolean isRatisStreaming) {
     // Acquire pipeline manager lock, to avoid any updates to pipeline
     // while allocate container happens. This is to avoid scenario like
     // mentioned in HDDS-5655.
     pipelineManager.acquireReadLock();
     try {
       List<Pipeline> availablePipelines = findPipelinesByState(repConfig,
-          excludeList, Pipeline.PipelineState.OPEN);
+          excludeList, Pipeline.PipelineState.OPEN, isRatisStreaming);
       return selectContainer(availablePipelines, req, owner, excludeList);
     } finally {
       pipelineManager.releaseReadLock();
@@ -160,7 +161,7 @@ public class WritableRatisContainerProvider
   private List<Pipeline> findPipelinesByState(
           final ReplicationConfig repConfig,
           final ExcludeList excludeList,
-          final Pipeline.PipelineState pipelineState) {
+          final PipelineState pipelineState, boolean isRatisStreaming) {
     List<Pipeline> pipelines = pipelineManager.getPipelines(repConfig,
             pipelineState, excludeList.getDatanodes(),
             excludeList.getPipelineIds());
@@ -169,6 +170,12 @@ public class WritableRatisContainerProvider
       // exclusion
       pipelines = pipelineManager.getPipelines(repConfig, pipelineState);
     }
+
+    if (isRatisStreaming) {
+      pipelines = pipelines.stream().filter(p -> p.isSupportRatisStreaming())
+          .collect(Collectors.toList());
+    }
+
     return pipelines;
   }
 

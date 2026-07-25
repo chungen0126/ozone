@@ -78,7 +78,7 @@ class TestWritableRatisContainerProvider {
 
     existingPipelines(pipeline);
 
-    ContainerInfo container = createSubject().getContainer(CONTAINER_SIZE, REPLICATION_CONFIG, OWNER, NO_EXCLUSION);
+    ContainerInfo container = createSubject().getContainer(CONTAINER_SIZE, REPLICATION_CONFIG, OWNER, NO_EXCLUSION, );
 
     assertSame(existingContainer, container);
     verifyPipelineNotCreated();
@@ -92,7 +92,7 @@ class TestWritableRatisContainerProvider {
     Pipeline pipelineWithoutContainer = MockPipeline.createPipeline(3);
     existingPipelines(pipelineWithoutContainer, pipeline);
 
-    ContainerInfo container = createSubject().getContainer(CONTAINER_SIZE, REPLICATION_CONFIG, OWNER, NO_EXCLUSION);
+    ContainerInfo container = createSubject().getContainer(CONTAINER_SIZE, REPLICATION_CONFIG, OWNER, NO_EXCLUSION, );
 
     assertSame(existingContainer, container);
     verifyPipelineNotCreated();
@@ -102,7 +102,7 @@ class TestWritableRatisContainerProvider {
   void createsNewContainerIfNoneFound() throws Exception {
     ContainerInfo newContainer = createNewContainerOnDemand();
 
-    ContainerInfo container = createSubject().getContainer(CONTAINER_SIZE, REPLICATION_CONFIG, OWNER, NO_EXCLUSION);
+    ContainerInfo container = createSubject().getContainer(CONTAINER_SIZE, REPLICATION_CONFIG, OWNER, NO_EXCLUSION, );
 
     assertSame(newContainer, container);
     verifyPipelineCreated();
@@ -113,7 +113,7 @@ class TestWritableRatisContainerProvider {
     throwWhenCreatePipeline();
 
     assertThrows(IOException.class,
-        () -> createSubject().getContainer(CONTAINER_SIZE, REPLICATION_CONFIG, OWNER, NO_EXCLUSION));
+        () -> createSubject().getContainer(CONTAINER_SIZE, REPLICATION_CONFIG, OWNER, NO_EXCLUSION, ));
 
     verifyPipelineCreated();
   }

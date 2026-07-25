@@ -782,9 +782,16 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
     return resp;
   }
 
+
   @Override
   public OmKeyLocationInfo allocateBlock(OmKeyArgs args, long clientId,
       ExcludeList excludeList) throws IOException {
+    return allocateBlock(args, clientId, excludeList, false);
+  }
+
+  @Override
+  public OmKeyLocationInfo allocateBlock(OmKeyArgs args, long clientId, ExcludeList excludeList,
+      boolean isRatisStreaming) throws IOException {
     AllocateBlockRequest.Builder req = AllocateBlockRequest.newBuilder();
     KeyArgs.Builder keyArgs = KeyArgs.newBuilder()
         .setVolumeName(args.getVolumeName())
@@ -807,6 +814,7 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
     req.setKeyArgs(keyArgs);
     req.setClientID(clientId);
     req.setExcludeList(excludeList.getProtoBuf());
+    req.setIsRatisStreaming(isRatisStreaming);
 
 
     OMRequest omRequest = createOMRequest(Type.AllocateBlock)

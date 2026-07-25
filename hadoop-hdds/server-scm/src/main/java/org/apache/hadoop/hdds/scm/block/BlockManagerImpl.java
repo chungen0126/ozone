@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import javax.management.ObjectName;
 import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.client.ContainerBlockID;
@@ -146,7 +147,13 @@ public class BlockManagerImpl implements BlockManager, BlockmanagerMXBean {
   public AllocatedBlock allocateBlock(final long size,
       ReplicationConfig replicationConfig,
       String owner, ExcludeList excludeList)
-      throws IOException {
+      throws IOException, TimeoutException {
+    return allocateBlock(size, replicationConfig, owner, excludeList, false);
+  }
+
+  @Override
+  public AllocatedBlock allocateBlock(long size, ReplicationConfig replicationConfig, String owner,
+      ExcludeList excludeList, boolean isRatisStreaming) throws IOException, TimeoutException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Size : {} , replicationConfig: {}", size, replicationConfig);
     }
@@ -161,7 +168,7 @@ public class BlockManagerImpl implements BlockManager, BlockmanagerMXBean {
     }
 
     ContainerInfo containerInfo = writableContainerFactory.getContainer(
-        size, replicationConfig, owner, excludeList);
+        size, replicationConfig, owner, excludeList, isRatisStreaming);
 
     if (containerInfo != null) {
       return newBlock(containerInfo);

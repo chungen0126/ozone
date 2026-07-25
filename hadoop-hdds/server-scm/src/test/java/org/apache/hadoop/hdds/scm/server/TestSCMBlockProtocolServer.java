@@ -100,6 +100,12 @@ public class TestSCMBlockProtocolServer {
     public AllocatedBlock allocateBlock(long size,
         ReplicationConfig replicationConfig, String owner,
         ExcludeList excludeList) throws IOException, TimeoutException {
+      return allocateBlock(size, replicationConfig, owner, excludeList);
+    }
+
+    @Override
+    public AllocatedBlock allocateBlock(long size, ReplicationConfig replicationConfig, String owner,
+        ExcludeList excludeList, boolean isRatisStreaming) throws IOException, TimeoutException {
       List<DatanodeDetails> nodes = new ArrayList<>(datanodes);
       Collections.shuffle(nodes);
       Pipeline pipeline;
@@ -115,6 +121,7 @@ public class TestSCMBlockProtocolServer {
           .setState(PipelineState.OPEN)
           .setReplicationConfig(replicationConfig)
           .setNodes(nodes.subList(0, 3))
+          .setSupportRatisStreaming(isRatisStreaming)
           .build();
 
       long localID = ThreadLocalRandom.current().nextLong();

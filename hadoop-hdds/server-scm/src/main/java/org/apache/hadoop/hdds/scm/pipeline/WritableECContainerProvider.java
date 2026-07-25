@@ -76,22 +76,21 @@ public class WritableECContainerProvider
   }
 
   /**
-   *
-   * @param size The max size of block in bytes which will be written. This
-   *             comes from Ozone Manager and will be the block size configured
-   *             for the cluster. The client cannot pass any arbitrary value
-   *             from this setting.
-   * @param repConfig The replication Config indicating the EC data and partiy
-   *                  block counts.
-   * @param owner The owner of the container
-   * @param excludeList A set of datanodes, container and pipelines which should
-   *                    not be considered.
+   * @param size             The max size of block in bytes which will be written. This
+   *                         comes from Ozone Manager and will be the block size configured
+   *                         for the cluster. The client cannot pass any arbitrary value
+   *                         from this setting.
+   * @param repConfig        The replication Config indicating the EC data and partiy
+   *                         block counts.
+   * @param owner            The owner of the container
+   * @param excludeList      A set of datanodes, container and pipelines which should
+   *                         not be considered.
    * @return A containerInfo representing a block group with space for the
-   *         write, or null if no container can be allocated.
+   * write, or null if no container can be allocated.
    */
   @Override
   public ContainerInfo getContainer(final long size,
-      ECReplicationConfig repConfig, String owner, ExcludeList excludeList)
+      ECReplicationConfig repConfig, String owner, ExcludeList excludeList, boolean isRatisStreaming)
       throws IOException {
     int maximumPipelines = getMaximumPipelines(repConfig);
     int openPipelineCount;

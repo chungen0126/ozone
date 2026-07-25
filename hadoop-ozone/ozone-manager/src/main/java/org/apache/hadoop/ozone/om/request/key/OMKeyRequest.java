@@ -186,7 +186,7 @@ public abstract class OMKeyRequest extends OMClientRequest {
   protected List<OmKeyLocationInfo> allocateBlock(
       ReplicationConfig replicationConfig, ExcludeList excludeList,
       long requestedSize, boolean shouldSortDatanodes,
-      UserInfo userInfo, OzoneManager ozoneManager)
+      UserInfo userInfo, OzoneManager ozoneManager, boolean isRatisStreaming)
       throws IOException {
     final long scmBlockSize = ozoneManager.getScmBlockSize();
 
@@ -205,7 +205,8 @@ public abstract class OMKeyRequest extends OMClientRequest {
     final List<AllocatedBlock> allocatedBlocks;
     try {
       allocatedBlocks = ozoneManager.getScmClient().getBlockClient().allocateBlock(
-          scmBlockSize, numBlocks, replicationConfig, ozoneManager.getOMServiceId(), excludeList, clientMachine);
+          scmBlockSize, numBlocks, replicationConfig, ozoneManager.getOMServiceId(),
+          excludeList, clientMachine, isRatisStreaming);
     } catch (SCMException ex) {
       ozoneManager.getMetrics().incNumBlockAllocateCallFails();
       if (ex.getResult() == SCMException.ResultCodes.SAFE_MODE_EXCEPTION) {

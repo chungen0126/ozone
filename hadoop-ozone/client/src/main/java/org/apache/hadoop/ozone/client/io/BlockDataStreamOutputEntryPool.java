@@ -237,7 +237,7 @@ public class BlockDataStreamOutputEntryPool implements KeyMetadataAware {
       LOG.debug("Allocating block with {}", excludeList);
     }
     OmKeyLocationInfo subKeyInfo =
-        omClient.allocateBlock(buildKeyArgs(), openID, excludeList);
+        omClient.allocateBlock(buildKeyArgs(), openID, excludeList, true);
     addKeyLocationInfo(subKeyInfo);
   }
 

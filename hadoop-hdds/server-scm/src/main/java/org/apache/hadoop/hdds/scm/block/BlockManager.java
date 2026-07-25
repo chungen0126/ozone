@@ -46,6 +46,19 @@ public interface BlockManager extends Closeable {
       ExcludeList excludeList) throws IOException, TimeoutException;
 
   /**
+   * Allocates a new block for a given size.
+   * @param size - Block Size
+   * @param replicationConfig configuration of the replication method
+   * @param excludeList List of datanodes/containers to exclude during block
+   *                    allocation.
+   * @return AllocatedBlock
+   * @throws IOException
+   */
+  AllocatedBlock allocateBlock(long size, ReplicationConfig replicationConfig,
+      String owner,
+      ExcludeList excludeList, boolean isRatisStreaming) throws IOException, TimeoutException;
+
+  /**
    * Deletes a list of blocks in an atomic operation. Internally, SCM
    * writes these blocks into a {@link DeletedBlockLog} and deletes them
    * from SCM DB. If this is successful, given blocks are entering pending

@@ -1371,6 +1371,7 @@ message CreateKeyRequest {
     // Set in OM HA during preExecute step. This way all OM's use same ID in
     // OM HA.
     optional uint64 clientID = 2;
+    optional bool isRatisStreaming = 3;
 }
 
 message CreateKeyResponse {
@@ -1633,6 +1634,7 @@ message AllocateBlockRequest {
     // AllocateBlockRequest with keyLocation set. If this is set, no need to
     // call scm again in OM Ratis applyTransaction just append it to DB.
     optional KeyLocation keyLocation = 4;
+    optional bool isRatisStreaming = 5;
 }
 
 message AllocateBlockResponse {

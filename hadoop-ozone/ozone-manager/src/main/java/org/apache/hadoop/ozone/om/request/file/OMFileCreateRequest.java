@@ -128,7 +128,8 @@ public class OMFileCreateRequest extends OMKeyRequest {
     // the placeholder for the data size. Therefore, we should at least allocate a
     // single block and we cannot simply skip the allocate block call
     final List< OmKeyLocationInfo > omKeyLocationInfoList = allocateBlock(
-        repConfig, new ExcludeList(), requestedSize, keyArgs.getSortDatanodes(), userInfo, ozoneManager);
+        repConfig, new ExcludeList(), requestedSize, keyArgs.getSortDatanodes(),
+        userInfo, ozoneManager,createFileRequest.getIsRatisStreaming());
 
     KeyArgs.Builder newKeyArgs = keyArgs.toBuilder()
         .setModificationTime(Time.now()).setType(type).setFactor(factor)
