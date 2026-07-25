@@ -56,6 +56,13 @@ public class WritableRatisContainerProvider
 
   @Override
   public ContainerInfo getContainer(final long size,
+      ReplicationConfig repConfig, String owner, ExcludeList excludeList)
+      throws IOException {
+    return getContainer(size, repConfig, owner, excludeList, false);
+  }
+
+  @Override
+  public ContainerInfo getContainer(final long size,
       ReplicationConfig repConfig, String owner, ExcludeList excludeList, boolean isRatisStreaming)
       throws IOException {
     /*

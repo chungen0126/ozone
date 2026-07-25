@@ -899,7 +899,7 @@ public class TestPipelineManagerImpl {
 
     
     ContainerInfo c = provider.getContainer(1, repConfig,
-        owner, new ExcludeList(), );
+        owner, new ExcludeList());
     assertEquals(c, container, "Expected container was returned");
 
     // Confirm that waitOnePipelineReady was called on allocated pipelines

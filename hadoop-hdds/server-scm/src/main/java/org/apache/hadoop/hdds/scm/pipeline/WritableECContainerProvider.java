@@ -75,6 +75,12 @@ public class WritableECContainerProvider
     this.containerSize = containerSize;
   }
 
+  @Override
+  public ContainerInfo getContainer(long size, ECReplicationConfig repConfig, String owner, ExcludeList excludeList,
+      boolean isRatisStreaming) throws IOException {
+    return null;
+  }
+
   /**
    * @param size             The max size of block in bytes which will be written. This
    *                         comes from Ozone Manager and will be the block size configured
@@ -90,7 +96,7 @@ public class WritableECContainerProvider
    */
   @Override
   public ContainerInfo getContainer(final long size,
-      ECReplicationConfig repConfig, String owner, ExcludeList excludeList, boolean isRatisStreaming)
+      ECReplicationConfig repConfig, String owner, ExcludeList excludeList)
       throws IOException {
     int maximumPipelines = getMaximumPipelines(repConfig);
     int openPipelineCount;
