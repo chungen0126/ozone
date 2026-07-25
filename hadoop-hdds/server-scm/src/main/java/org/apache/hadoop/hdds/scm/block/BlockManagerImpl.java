@@ -147,13 +147,13 @@ public class BlockManagerImpl implements BlockManager, BlockmanagerMXBean {
   public AllocatedBlock allocateBlock(final long size,
       ReplicationConfig replicationConfig,
       String owner, ExcludeList excludeList)
-      throws IOException, TimeoutException {
+      throws IOException {
     return allocateBlock(size, replicationConfig, owner, excludeList, false);
   }
 
   @Override
   public AllocatedBlock allocateBlock(long size, ReplicationConfig replicationConfig, String owner,
-      ExcludeList excludeList, boolean isRatisStreaming) throws IOException, TimeoutException {
+      ExcludeList excludeList, boolean isRatisStreaming) throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Size : {} , replicationConfig: {}", size, replicationConfig);
     }
