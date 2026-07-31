@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
@@ -50,10 +49,6 @@ import org.junit.jupiter.api.io.TempDir;
  * This class tests the metrics of XceiverClient.
  */
 public class TestXceiverClientMetrics {
-
-  // only for testing
-  private volatile boolean breakFlag;
-  private CountDownLatch latch;
 
   private static MiniOzoneCluster cluster;
   private static StorageContainerLocationProtocolClientSideTranslatorPB
@@ -104,66 +99,46 @@ public class TestXceiverClientMetrics {
       // the counter value of average latency metric should be increased
       assertCounter("CreateContainerLatencyNumOps", 1L, containerMetrics);
 
-      breakFlag = false;
-      latch = new CountDownLatch(1);
-
-      int numRequest = 10;
       List<CompletableFuture<ContainerCommandResponseProto>> computeResults
           = new ArrayList<>();
-      // start new thread to send async requests
-      Thread sendThread = new Thread(() -> {
-        while (!breakFlag) {
-          try {
-            // use async interface for testing pending metrics
-            for (int i = 0; i < numRequest; i++) {
-              BlockID blockID = ContainerTestHelper.
-                  getTestBlockID(container.getContainerInfo().getContainerID());
-              ContainerProtos.ContainerCommandRequestProto smallFileRequest;
 
-              smallFileRequest = ContainerTestHelper.getWriteSmallFileRequest(
-                  client.getPipeline(), blockID, 1024);
-              CompletableFuture<ContainerProtos.ContainerCommandResponseProto>
-                  response =
-                  client.sendCommandAsync(smallFileRequest).getResponse();
-              computeResults.add(response);
-            }
+      boolean metricsSpiked = false;
+      long timeout = System.currentTimeMillis() + 60000;
+      while (System.currentTimeMillis() < timeout) {
+        try {
+          BlockID blockID = ContainerTestHelper.
+              getTestBlockID(container.getContainerInfo().getContainerID());
+          ContainerProtos.ContainerCommandRequestProto smallFileRequest;
 
-            Thread.sleep(1000);
-          } catch (Exception ignored) {
-          }
+          smallFileRequest = ContainerTestHelper.getWriteSmallFileRequest(
+              client.getPipeline(), blockID, 1024);
+          CompletableFuture<ContainerProtos.ContainerCommandResponseProto>
+              response =
+              client.sendCommandAsync(smallFileRequest).getResponse();
+          computeResults.add(response);
+        } catch (Exception e) {
+          e.printStackTrace();
         }
 
-        latch.countDown();
-      });
-      sendThread.start();
-
-      GenericTestUtils.waitFor(() -> {
         // check if pending metric count is increased
-        MetricsRecordBuilder metric =
-            getMetrics(XceiverClientMetrics.SOURCE_NAME);
-        long pendingOps = getLongCounter("PendingOps", metric);
-        long pendingPutSmallFileOps =
-            getLongCounter("numPendingPutSmallFile", metric);
+        XceiverClientMetrics clientMetrics = XceiverClientManager.getXceiverClientMetrics();
+        long pendingPutSmallFileOps = clientMetrics.getPendingContainerOpCountMetrics(ContainerProtos.Type.PutSmallFile);
 
-        if (pendingOps > 0 && pendingPutSmallFileOps > 0) {
-          // reset break flag
-          breakFlag = true;
-          return true;
-        } else {
-          return false;
+        if (pendingPutSmallFileOps > 0) {
+          metricsSpiked = true;
+          break;
         }
-      }, 100, 60000);
+      }
+      
+      org.junit.jupiter.api.Assertions.assertTrue(metricsSpiked, "Pending metric should be increased");
 
-      // blocking until we stop sending async requests
-      latch.await();
       // Wait for all futures being done.
       GenericTestUtils.waitFor(() -> {
-        for (CompletableFuture future : computeResults) {
+        for (CompletableFuture<ContainerCommandResponseProto> future : computeResults) {
           if (!future.isDone()) {
             return false;
           }
         }
-
         return true;
       }, 100, 60000);
 
