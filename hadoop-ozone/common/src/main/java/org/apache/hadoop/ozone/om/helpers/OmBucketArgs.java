@@ -63,6 +63,9 @@ public final class OmBucketArgs extends WithMetadata implements Auditable {
    * Bucket Owner Name.
    */
   private final String ownerName;
+
+  private final BucketRetentionConfig defaultRetention;
+
   /**
    * Tags for S3 bucket tagging RPC.
    */
@@ -81,6 +84,7 @@ public final class OmBucketArgs extends WithMetadata implements Auditable {
     this.quotaInNamespaceSet = b.quotaInNamespaceSet;
     this.quotaInNamespace = quotaInNamespaceSet ? b.quotaInNamespace : OzoneConsts.QUOTA_RESET;
     this.bekInfo = b.bekInfo;
+    this.defaultRetention = b.defaultRetention;
     this.tags = b.tags.build();
   }
 
@@ -166,6 +170,10 @@ public final class OmBucketArgs extends WithMetadata implements Auditable {
     return ownerName;
   }
 
+  public BucketRetentionConfig getDefaultRetention() {
+    return defaultRetention;
+  }
+
   /**
    * Tags supplied for bucket tagging operations; never null (may be empty).
    */
@@ -233,6 +241,7 @@ public final class OmBucketArgs extends WithMetadata implements Auditable {
     private boolean quotaInNamespaceSet = false;
     private long quotaInNamespace;
     private BucketEncryptionKeyInfo bekInfo;
+    private BucketRetentionConfig defaultRetention;
     private DefaultReplicationConfig defaultReplicationConfig;
     private String ownerName;
     private final MapBuilder<String, String> tags;
@@ -295,6 +304,11 @@ public final class OmBucketArgs extends WithMetadata implements Auditable {
     public Builder setDefaultReplicationConfig(
         DefaultReplicationConfig defaultRepConfig) {
       this.defaultReplicationConfig = defaultRepConfig;
+      return this;
+    }
+
+    public Builder setDefaultRetention(BucketRetentionConfig retentionConfig) {
+      this.defaultRetention = retentionConfig;
       return this;
     }
 
@@ -365,6 +379,10 @@ public final class OmBucketArgs extends WithMetadata implements Auditable {
       builder.addAllTags(KeyValueUtil.toProtobuf(tags));
     }
 
+    if (defaultRetention != null) {
+      builder.setDefaultRetention(defaultRetention.toProtobuf());
+    }
+
     return builder.build();
   }
 
@@ -408,6 +426,10 @@ public final class OmBucketArgs extends WithMetadata implements Auditable {
 
     if (!bucketArgs.getTagsList().isEmpty()) {
       builder.setTags(KeyValueUtil.getFromProtobuf(bucketArgs.getTagsList()));
+    }
+
+    if (bucketArgs.hasDefaultRetention()) {
+      builder.setDefaultRetention(BucketRetentionConfig.fromProtobuf(bucketArgs.getDefaultRetention()));
     }
 
     return builder;

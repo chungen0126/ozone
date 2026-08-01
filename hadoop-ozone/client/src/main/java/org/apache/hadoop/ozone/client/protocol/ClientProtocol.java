@@ -570,6 +570,21 @@ public interface ClientProtocol {
       throws IOException;
 
   /**
+   * Deletes an existing key if the key's current ETag matches expectedETag.
+   * @param volumeName Name of the Volume
+   * @param bucketName Name of the Bucket
+   * @param keyName Name of the Key
+   * @param recursive recursive deletion of all sub path keys if true,
+   *                  otherwise non-recursive
+   * @param expectedETag expected ETag, or "*" to require the key to exist
+   * @param bypassGovernanceRetention whether to bypass S3 Object Lock governance retention
+   * @throws IOException
+   */
+  void deleteKey(String volumeName, String bucketName, String keyName,
+                 boolean recursive, String expectedETag, boolean bypassGovernanceRetention)
+      throws IOException;
+
+  /**
    * Deletes keys through the list.
    * @param volumeName Name of the Volume
    * @param bucketName Name of the Bucket
@@ -590,6 +605,20 @@ public interface ClientProtocol {
    */
   Map<String, ErrorInfo> deleteKeys(String volumeName, String bucketName,
                                     List<String> keyNameList, boolean quiet)
+      throws IOException;
+
+  /**
+   * Deletes keys through the list.
+   * @param volumeName Name of the Volume
+   * @param bucketName Name of the Bucket
+   * @param keyNameList List of the Key
+   * @param quiet flag to not throw exception if delete fails
+   * @param bypassGovernanceRetention whether to bypass S3 Object Lock governance retention
+   * @throws IOException
+   */
+  Map<String, ErrorInfo> deleteKeys(String volumeName, String bucketName,
+                                    List<String> keyNameList, boolean quiet,
+                                    boolean bypassGovernanceRetention)
       throws IOException;
 
   /**

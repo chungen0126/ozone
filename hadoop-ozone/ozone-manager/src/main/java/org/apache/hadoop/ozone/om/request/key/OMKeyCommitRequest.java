@@ -243,6 +243,10 @@ public class OMKeyCommitRequest extends OMKeyRequest {
         }
       }
 
+      if (keyToDelete != null && !isSameHsyncKey && !isRecovery) {
+        checkWormRetention(ozoneManager, keyToDelete, commitKeyArgs.getBypassGovernanceRetention());
+      }
+
       if (isRecovery && keyToDelete != null) {
         String clientId = keyToDelete.getMetadata().get(OzoneConsts.HSYNC_CLIENT_ID);
         if (clientId == null) {

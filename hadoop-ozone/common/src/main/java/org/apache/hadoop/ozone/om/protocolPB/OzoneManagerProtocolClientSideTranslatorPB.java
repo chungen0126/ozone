@@ -754,6 +754,18 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
     if (args.getExpectedETag() != null) {
       keyArgs.setExpectedETag(args.getExpectedETag());
     }
+    if (args.getRetentionMode() != null) {
+      keyArgs.setRetentionMode(args.getRetentionMode());
+    }
+    if (args.getRetainUntilDate() != null) {
+      keyArgs.setRetainUntilDate(args.getRetainUntilDate());
+    }
+    if (args.getLegalHold()) {
+      keyArgs.setLegalHold(args.getLegalHold());
+    }
+    if (args.isBypassGovernanceRetention()) {
+      keyArgs.setBypassGovernanceRetention(args.isBypassGovernanceRetention());
+    }
 
     req.setKeyArgs(keyArgs.build());
 
@@ -995,7 +1007,9 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
     DeleteKeyArgs deletedKeys = DeleteKeyArgs.newBuilder()
         .setBucketName(deleteKeys.getBucket())
         .setVolumeName(deleteKeys.getVolume())
-        .addAllKeys(deleteKeys.getKeyNames()).build();
+        .addAllKeys(deleteKeys.getKeyNames())
+        .setBypassGovernanceRetention(deleteKeys.isBypassGovernanceRetention())
+        .build();
     req.setDeleteKeys(deletedKeys);
     OMRequest omRequest = createOMRequest(Type.DeleteKeys)
         .setDeleteKeysRequest(req)
@@ -2413,6 +2427,18 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
             ReplicationConfig.getLegacyFactor(args.getReplicationConfig()));
       }
       keyArgsBuilder.setType(args.getReplicationConfig().getReplicationType());
+    }
+    if (args.getRetentionMode() != null) {
+      keyArgsBuilder.setRetentionMode(args.getRetentionMode());
+    }
+    if (args.getRetainUntilDate() != null) {
+      keyArgsBuilder.setRetainUntilDate(args.getRetainUntilDate());
+    }
+    if (args.getLegalHold()) {
+      keyArgsBuilder.setLegalHold(args.getLegalHold());
+    }
+    if (args.isBypassGovernanceRetention()) {
+      keyArgsBuilder.setBypassGovernanceRetention(args.isBypassGovernanceRetention());
     }
     CreateFileRequest createFileRequest = CreateFileRequest.newBuilder()
             .setKeyArgs(keyArgsBuilder.build())

@@ -333,6 +333,14 @@ public class ClientProtocolStub implements ClientProtocol {
   }
 
   @Override
+  public void deleteKey(String volumeName, String bucketName, String keyName,
+                        boolean recursive, String expectedETag, boolean bypassGovernanceRetention)
+      throws IOException {
+    ((OzoneBucketStub) getBucket(volumeName, bucketName))
+        .deleteKey(keyName, expectedETag);
+  }
+
+  @Override
   public void deleteKeys(String volumeName, String bucketName,
                          List<String> keyNameList) throws IOException {
 
@@ -341,6 +349,14 @@ public class ClientProtocolStub implements ClientProtocol {
   @Override
   public Map<String, ErrorInfo> deleteKeys(String volumeName, String bucketName,
                                            List<String> keyNameList, boolean quiet)
+      throws IOException {
+    return new HashMap<>();
+  }
+
+  @Override
+  public Map<String, ErrorInfo> deleteKeys(String volumeName, String bucketName,
+                                           List<String> keyNameList, boolean quiet,
+                                           boolean bypassGovernanceRetention)
       throws IOException {
     return new HashMap<>();
   }

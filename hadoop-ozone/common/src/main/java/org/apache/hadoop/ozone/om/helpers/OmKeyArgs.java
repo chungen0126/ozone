@@ -62,6 +62,10 @@ public final class OmKeyArgs extends WithMetadata implements Auditable {
   // been modified.
   private Long expectedDataGeneration = null;
   private final String expectedETag;
+  private final String retentionMode;
+  private final Long retainUntilDate;
+  private final boolean legalHold;
+  private final boolean bypassGovernanceRetention;
 
   private OmKeyArgs(Builder b) {
     super(b);
@@ -84,6 +88,10 @@ public final class OmKeyArgs extends WithMetadata implements Auditable {
     this.tags = b.tags.build();
     this.expectedDataGeneration = b.expectedDataGeneration;
     this.expectedETag = b.expectedETag;
+    this.retentionMode = b.retentionMode;
+    this.retainUntilDate = b.retainUntilDate;
+    this.legalHold = b.legalHold;
+    this.bypassGovernanceRetention = b.bypassGovernanceRetention;
   }
 
   public boolean getIsMultipartKey() {
@@ -170,6 +178,22 @@ public final class OmKeyArgs extends WithMetadata implements Auditable {
     return expectedETag;
   }
 
+  public String getRetentionMode() {
+    return retentionMode;
+  }
+
+  public Long getRetainUntilDate() {
+    return retainUntilDate;
+  }
+
+  public boolean getLegalHold() {
+    return legalHold;
+  }
+
+  public boolean isBypassGovernanceRetention() {
+    return bypassGovernanceRetention;
+  }
+
   @Override
   public Map<String, String> toAuditMap() {
     Map<String, String> auditMap = new LinkedHashMap<>();
@@ -218,6 +242,18 @@ public final class OmKeyArgs extends WithMetadata implements Auditable {
     if (expectedETag != null) {
       builder.setExpectedETag(expectedETag);
     }
+    if (retentionMode != null) {
+      builder.setRetentionMode(retentionMode);
+    }
+    if (retainUntilDate != null) {
+      builder.setRetainUntilDate(retainUntilDate);
+    }
+    if (legalHold) {
+      builder.setLegalHold(legalHold);
+    }
+    if (bypassGovernanceRetention) {
+      builder.setBypassGovernanceRetention(bypassGovernanceRetention);
+    }
     return builder.build();
   }
 
@@ -244,6 +280,10 @@ public final class OmKeyArgs extends WithMetadata implements Auditable {
     private final MapBuilder<String, String> tags;
     private Long expectedDataGeneration = null;
     private String expectedETag;
+    private String retentionMode;
+    private Long retainUntilDate;
+    private boolean legalHold = false;
+    private boolean bypassGovernanceRetention = false;
 
     public Builder() {
       this(AclListBuilder.empty());
@@ -263,6 +303,21 @@ public final class OmKeyArgs extends WithMetadata implements Auditable {
           .addAllMetadataGdpr(metadata)
           .addAllTags(tags)
           .setLatestVersionLocation(latestVersionLocation);
+
+      if (metadata != null) {
+        if (metadata.containsKey(OzoneConsts.OZONE_RETENTION_MODE)) {
+          setRetentionMode(metadata.get(OzoneConsts.OZONE_RETENTION_MODE));
+        }
+        if (metadata.containsKey(OzoneConsts.OZONE_RETAIN_UNTIL_DATE)) {
+          setRetainUntilDate(Long.parseLong(metadata.get(OzoneConsts.OZONE_RETAIN_UNTIL_DATE)));
+        }
+        if (metadata.containsKey(OzoneConsts.OZONE_LEGAL_HOLD)) {
+          setLegalHold(Boolean.parseBoolean(metadata.get(OzoneConsts.OZONE_LEGAL_HOLD)));
+        }
+        if (metadata.containsKey(OzoneConsts.OZONE_BYPASS_GOVERNANCE)) {
+          setBypassGovernanceRetention(Boolean.parseBoolean(metadata.get(OzoneConsts.OZONE_BYPASS_GOVERNANCE)));
+        }
+      }
     }
 
     private Builder(AclListBuilder acls) {
@@ -290,6 +345,10 @@ public final class OmKeyArgs extends WithMetadata implements Auditable {
           obj.forceUpdateContainerCacheFromSCM;
       this.expectedDataGeneration = obj.expectedDataGeneration;
       this.expectedETag = obj.expectedETag;
+      this.retentionMode = obj.retentionMode;
+      this.retainUntilDate = obj.retainUntilDate;
+      this.legalHold = obj.legalHold;
+      this.bypassGovernanceRetention = obj.bypassGovernanceRetention;
       this.tags = MapBuilder.of(obj.tags);
       this.acls = AclListBuilder.of(obj.acls);
     }
@@ -427,6 +486,26 @@ public final class OmKeyArgs extends WithMetadata implements Auditable {
 
     public Builder setExpectedETag(String eTag) {
       this.expectedETag = eTag;
+      return this;
+    }
+
+    public Builder setRetentionMode(String retentionMode) {
+      this.retentionMode = retentionMode;
+      return this;
+    }
+
+    public Builder setRetainUntilDate(Long retainUntilDate) {
+      this.retainUntilDate = retainUntilDate;
+      return this;
+    }
+
+    public Builder setLegalHold(boolean legalHold) {
+      this.legalHold = legalHold;
+      return this;
+    }
+
+    public Builder setBypassGovernanceRetention(boolean bypassGovernanceRetention) {
+      this.bypassGovernanceRetention = bypassGovernanceRetention;
       return this;
     }
 

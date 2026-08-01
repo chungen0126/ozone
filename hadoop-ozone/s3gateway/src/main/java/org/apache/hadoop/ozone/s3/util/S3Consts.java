@@ -92,6 +92,12 @@ public final class S3Consts {
   public static final String TAG_COUNT_HEADER = "x-amz-tagging-count";
   public static final String AWS_TAG_PREFIX = "aws:";
 
+  // Constants related to Object Lock (WORM)
+  public static final String OBJECT_LOCK_MODE_HEADER = "x-amz-object-lock-mode";
+  public static final String OBJECT_LOCK_RETAIN_UNTIL_DATE_HEADER = "x-amz-object-lock-retain-until-date";
+  public static final String OBJECT_LOCK_LEGAL_HOLD_HEADER = "x-amz-object-lock-legal-hold";
+  public static final String BYPASS_GOVERNANCE_RETENTION_HEADER = "x-amz-bypass-governance-retention";
+
   // tag limit for object
   public static final int TAG_NUM_LIMIT = 10;
   public static final int TAG_KEY_LENGTH_LIMIT = 128;

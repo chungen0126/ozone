@@ -274,6 +274,32 @@ public class ObjectEndpoint extends ObjectOperationHandler {
           getCustomMetadataFromHeaders(getHeaders().getRequestHeaders());
       putContentType(customMetadata);
       putStandardObjectHeaders(customMetadata);
+      
+      String retentionMode = getHeaders().getHeaderString(S3Consts.OBJECT_LOCK_MODE_HEADER);
+      if (retentionMode != null) {
+        customMetadata.put(OzoneConsts.OZONE_RETENTION_MODE, retentionMode);
+      }
+      
+      String retainUntilDate = getHeaders().getHeaderString(S3Consts.OBJECT_LOCK_RETAIN_UNTIL_DATE_HEADER);
+      if (retainUntilDate != null) {
+        try {
+          long retainMillis = java.time.Instant.parse(retainUntilDate).toEpochMilli();
+          customMetadata.put(OzoneConsts.OZONE_RETAIN_UNTIL_DATE, String.valueOf(retainMillis));
+        } catch (java.time.format.DateTimeParseException ex) {
+          throw newError(S3ErrorTable.INVALID_ARGUMENT, retainUntilDate, ex);
+        }
+      }
+      
+      String legalHold = getHeaders().getHeaderString(S3Consts.OBJECT_LOCK_LEGAL_HOLD_HEADER);
+      if (legalHold != null && legalHold.equalsIgnoreCase("ON")) {
+        customMetadata.put(OzoneConsts.OZONE_LEGAL_HOLD, "true");
+      }
+      
+      String bypassGovernance = getHeaders().getHeaderString(S3Consts.BYPASS_GOVERNANCE_RETENTION_HEADER);
+      if (bypassGovernance != null) {
+        customMetadata.put(OzoneConsts.OZONE_BYPASS_GOVERNANCE, bypassGovernance);
+      }
+
       Map<String, String> tags = getTaggingFromHeaders(getHeaders());
 
       long putLength;
@@ -713,11 +739,14 @@ public class ObjectEndpoint extends ObjectOperationHandler {
       OzoneVolume volume = context.getVolume();
       deleteCondition = S3ConditionalRequest.parseDeleteCondition(getHeaders(), keyPath);
 
+      boolean bypassGovernance = Boolean.parseBoolean(
+          getHeaders().getHeaderString(S3Consts.BYPASS_GOVERNANCE_RETENTION_HEADER));
+
       if (!deleteCondition.hasIfMatch()) {
-        getClientProtocol().deleteKey(volume.getName(), context.getBucketName(), keyPath, false);
+        getClientProtocol().deleteKey(volume.getName(), context.getBucketName(), keyPath, false, null, bypassGovernance);
       } else {
         getClientProtocol().deleteKey(volume.getName(), context.getBucketName(), keyPath, false,
-            deleteCondition.getExpectedETag());
+            deleteCondition.getExpectedETag(), bypassGovernance);
       }
 
       getMetrics().updateDeleteKeySuccessStats(startNanos);
@@ -770,6 +799,26 @@ public class ObjectEndpoint extends ObjectOperationHandler {
           getCustomMetadataFromHeaders(getHeaders().getRequestHeaders());
       putContentType(customMetadata);
       putStandardObjectHeaders(customMetadata);
+
+      String retentionMode = getHeaders().getHeaderString(S3Consts.OBJECT_LOCK_MODE_HEADER);
+      if (retentionMode != null) {
+        customMetadata.put(OzoneConsts.OZONE_RETENTION_MODE, retentionMode);
+      }
+      
+      String retainUntilDate = getHeaders().getHeaderString(S3Consts.OBJECT_LOCK_RETAIN_UNTIL_DATE_HEADER);
+      if (retainUntilDate != null) {
+        try {
+          long retainMillis = java.time.Instant.parse(retainUntilDate).toEpochMilli();
+          customMetadata.put(OzoneConsts.OZONE_RETAIN_UNTIL_DATE, String.valueOf(retainMillis));
+        } catch (java.time.format.DateTimeParseException ex) {
+          throw newError(S3ErrorTable.INVALID_ARGUMENT, retainUntilDate, ex);
+        }
+      }
+      
+      String legalHold = getHeaders().getHeaderString(S3Consts.OBJECT_LOCK_LEGAL_HOLD_HEADER);
+      if (legalHold != null && legalHold.equalsIgnoreCase("ON")) {
+        customMetadata.put(OzoneConsts.OZONE_LEGAL_HOLD, "true");
+      }
 
       Map<String, String> tags = getTaggingFromHeaders(getHeaders());
 

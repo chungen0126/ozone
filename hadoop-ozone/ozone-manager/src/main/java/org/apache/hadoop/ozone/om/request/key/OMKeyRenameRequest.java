@@ -176,6 +176,8 @@ public class OMKeyRenameRequest extends OMKeyRequest {
         throw new OMException("Key not found " + fromKey, KEY_NOT_FOUND);
       }
 
+      checkWormRetention(ozoneManager, fromKeyValue, keyArgs.getBypassGovernanceRetention());
+
       fromKeyValue = fromKeyValue.toBuilder()
           .setUpdateID(trxnLogIndex)
           .build();

@@ -355,13 +355,17 @@ public class BucketEndpoint extends BucketOperationHandler {
 
     if (request.getObjects() != null) {
       Map<String, ErrorInfo> undeletedKeyResultMap;
+      boolean bypassGovernance = Boolean.parseBoolean(
+          getHeaders().getHeaderString(S3Consts.BYPASS_GOVERNANCE_RETENTION_HEADER));
+
       for (DeleteObject keyToDelete : request.getObjects()) {
         deleteKeys.add(keyToDelete.getKey());
       }
       long startNanos = Time.monotonicNowNanos();
       try {
         S3Owner.verifyBucketOwnerCondition(getHeaders(), bucketName, bucket.getOwner());
-        undeletedKeyResultMap = bucket.deleteKeys(deleteKeys, true);
+        undeletedKeyResultMap = getClientProtocol().deleteKeys(
+            getVolume().getName(), bucketName, deleteKeys, true, bypassGovernance);
         for (DeleteObject d : request.getObjects()) {
           ErrorInfo error = undeletedKeyResultMap.get(d.getKey());
           boolean deleted = error == null ||

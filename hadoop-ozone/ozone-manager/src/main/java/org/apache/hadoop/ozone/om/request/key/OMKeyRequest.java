@@ -984,6 +984,21 @@ public abstract class OMKeyRequest extends OMClientRequest {
         builder.setExpectedDataGeneration(keyArgs.getExpectedDataGeneration());
       }
 
+      // Clear WORM properties so they aren't inherited by the new version
+      builder.setRetentionMode(null);
+      builder.setRetainUntilDate(0);
+      builder.setLegalHold(false);
+      
+      if (keyArgs.hasRetentionMode()) {
+        builder.setRetentionMode(keyArgs.getRetentionMode());
+      }
+      if (keyArgs.hasRetainUntilDate()) {
+        builder.setRetainUntilDate(keyArgs.getRetainUntilDate());
+      }
+      if (keyArgs.hasLegalHold()) {
+        builder.setLegalHold(keyArgs.getLegalHold());
+      }
+
       return builder.build();
     }
 
@@ -1032,6 +1047,15 @@ public abstract class OMKeyRequest extends OMClientRequest {
             .setFile(true);
     if (keyArgs.hasExpectedDataGeneration()) {
       builder.setExpectedDataGeneration(keyArgs.getExpectedDataGeneration());
+    }
+    if (keyArgs.hasRetentionMode()) {
+      builder.setRetentionMode(keyArgs.getRetentionMode());
+    }
+    if (keyArgs.hasRetainUntilDate()) {
+      builder.setRetainUntilDate(keyArgs.getRetainUntilDate());
+    }
+    if (keyArgs.hasLegalHold()) {
+      builder.setLegalHold(keyArgs.getLegalHold());
     }
     if (omPathInfo instanceof OMFileRequest.OMPathInfoWithFSO) {
       // FileTable metadata format
@@ -1388,5 +1412,45 @@ public abstract class OMKeyRequest extends OMClientRequest {
         .setExpectedDataGeneration(dbKeyInfo.getUpdateID())
         .clearExpectedETag()
         .build();
+  }
+
+  /**
+   * Validates if the key is protected by WORM Object Lock.
+   * Throws OMException if deletion/modification is blocked.
+   */
+  protected void checkWormRetention(OzoneManager ozoneManager, OmKeyInfo omKeyInfo,
+                                    boolean bypassGovernanceRetention)
+      throws OMException {
+    if (omKeyInfo == null) {
+      return;
+    }
+
+    if (omKeyInfo.getLegalHold()) {
+      throw new OMException("Key is protected by Legal Hold",
+          OMException.ResultCodes.PERMISSION_DENIED);
+    }
+
+    if (omKeyInfo.getRetainUntilDate() > org.apache.hadoop.util.Time.now()) {
+      if ("GOVERNANCE".equals(omKeyInfo.getRetentionMode()) && bypassGovernanceRetention) {
+        if (ozoneManager.getAccessAuthorizer() != null &&
+            ozoneManager.getAccessAuthorizer().isNative()) {
+          throw new OMException("BypassGovernanceRetention is not supported with Ozone Native ACL.",
+              OMException.ResultCodes.PERMISSION_DENIED);
+        }
+        // Validate s3:BypassGovernanceRetention permission (Task 4)
+        // We use WRITE_ACL as the equivalent permission in Ranger.
+        try {
+          checkKeyAcls(ozoneManager, omKeyInfo.getVolumeName(),
+              omKeyInfo.getBucketName(), omKeyInfo.getKeyName(),
+              IAccessAuthorizer.ACLType.WRITE_ACL, OzoneObj.ResourceType.KEY);
+          return;
+        } catch (IOException ex) {
+          throw new OMException("BypassGovernanceRetention requires WRITE_ACL permission.",
+              ex, OMException.ResultCodes.PERMISSION_DENIED);
+        }
+      }
+      throw new OMException("Key is protected by Object Lock retention",
+          OMException.ResultCodes.PERMISSION_DENIED);
+    }
   }
 }

@@ -108,6 +108,9 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
 
   private final String owner;
 
+  private final boolean objectLockEnabled;
+  private final BucketRetentionConfig defaultRetention;
+
   /**
    * S3-style tags stored on the bucket.
    */
@@ -135,6 +138,8 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     this.owner = b.owner;
     this.defaultReplicationConfig = b.defaultReplicationConfig;
     this.tags = b.tags.build();
+    this.objectLockEnabled = b.objectLockEnabled;
+    this.defaultRetention = b.defaultRetention;
   }
 
   public static Codec<OmBucketInfo> getCodec() {
@@ -317,6 +322,14 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     return tags;
   }
 
+  public boolean getObjectLockEnabled() {
+    return objectLockEnabled;
+  }
+
+  public BucketRetentionConfig getDefaultRetention() {
+    return defaultRetention;
+  }
+
   /**
    * Returns new builder class that builds a OmBucketInfo.
    *
@@ -365,6 +378,10 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     auditMap.put(OzoneConsts.QUOTA_IN_BYTES, String.valueOf(this.quotaInBytes));
     auditMap.put(OzoneConsts.QUOTA_IN_NAMESPACE,
         String.valueOf(this.quotaInNamespace));
+    auditMap.put("objectLockEnabled", String.valueOf(this.objectLockEnabled));
+    if (this.defaultRetention != null) {
+      auditMap.put("defaultRetentionMode", this.defaultRetention.getRetentionMode());
+    }
     return auditMap;
   }
 
@@ -393,7 +410,9 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         .setBucketLayout(bucketLayout)
         .setOwner(owner)
         .setDefaultReplicationConfig(defaultReplicationConfig)
-        .setTags(tags);
+        .setTags(tags)
+        .setObjectLockEnabled(objectLockEnabled)
+        .setDefaultRetention(defaultRetention);
   }
 
   /**
@@ -420,6 +439,8 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     private final MapBuilder<String, String> tags;
     private long snapshotUsedBytes;
     private long snapshotUsedNamespace;
+    private boolean objectLockEnabled;
+    private BucketRetentionConfig defaultRetention;
 
     public Builder() {
       acls = AclListBuilder.empty();
@@ -575,6 +596,16 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
       return this;
     }
 
+    public Builder setObjectLockEnabled(boolean objectLock) {
+      this.objectLockEnabled = objectLock;
+      return this;
+    }
+
+    public Builder setDefaultRetention(BucketRetentionConfig retentionConfig) {
+      this.defaultRetention = retentionConfig;
+      return this;
+    }
+
     @Override
     protected void validate() {
       super.validate();
@@ -630,6 +661,10 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     }
     if (owner != null) {
       bib.setOwner(owner);
+    }
+    bib.setObjectLockEnabled(objectLockEnabled);
+    if (defaultRetention != null) {
+      bib.setDefaultRetention(defaultRetention.toProtobuf());
     }
     return bib.build();
   }
@@ -703,6 +738,12 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
     if (bucketInfo.hasOwner()) {
       obib.setOwner(bucketInfo.getOwner());
     }
+    if (bucketInfo.hasObjectLockEnabled()) {
+      obib.setObjectLockEnabled(bucketInfo.getObjectLockEnabled());
+    }
+    if (bucketInfo.hasDefaultRetention()) {
+      obib.setDefaultRetention(BucketRetentionConfig.fromProtobuf(bucketInfo.getDefaultRetention()));
+    }
     return obib;
   }
 
@@ -744,6 +785,7 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         ", quotaInNamespace='" + quotaInNamespace + "'" +
         ", bucketLayout='" + bucketLayout + '\'' +
         ", defaultReplicationConfig='" + defaultReplicationConfig + '\'' +
+        ", objectLockEnabled='" + objectLockEnabled + '\'' +
         sourceInfo +
         '}';
   }
@@ -776,7 +818,9 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         Objects.equals(bekInfo, that.bekInfo) &&
         Objects.equals(owner, that.owner) &&
         Objects.equals(defaultReplicationConfig, that.defaultReplicationConfig) &&
-        Objects.equals(tags, that.tags);
+        Objects.equals(tags, that.tags) &&
+        objectLockEnabled == that.objectLockEnabled &&
+        Objects.equals(defaultRetention, that.defaultRetention);
   }
 
   @Override
@@ -809,6 +853,8 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         ", owner=" + owner +
         ", defaultReplicationConfig=" + defaultReplicationConfig +
         ", tags=" + tags +
+        ", objectLockEnabled=" + objectLockEnabled +
+        ", defaultRetention=" + defaultRetention +
         '}';
   }
 }

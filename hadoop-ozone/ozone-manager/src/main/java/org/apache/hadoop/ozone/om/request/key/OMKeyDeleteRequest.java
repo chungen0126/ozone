@@ -147,6 +147,7 @@ public class OMKeyDeleteRequest extends OMKeyRequest {
       }
 
       validateIfMatchETag(keyArgs, omKeyInfo);
+      checkWormRetention(ozoneManager, omKeyInfo, keyArgs.getBypassGovernanceRetention());
 
       // Set the UpdateID to current transactionLogIndex
       omKeyInfo = omKeyInfo.toBuilder()

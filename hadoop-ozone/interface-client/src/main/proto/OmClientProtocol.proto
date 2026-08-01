@@ -808,6 +808,14 @@ message BucketInfo {
     optional uint64 snapshotUsedNamespace = 22;
     // TODO: S3 bucket tags persisted in OM DB; set by PutBucketTagging, read by GetBucketTagging.
     repeated hadoop.hdds.KeyValue tags = 23;
+    optional bool objectLockEnabled = 24 [default = false];
+    optional BucketRetentionConfig defaultRetention = 25;
+}
+
+message BucketRetentionConfig {
+    optional string retentionMode = 1; // "GOVERNANCE" or "COMPLIANCE"
+    optional uint64 retentionPeriodDays = 2;
+    optional uint64 retentionPeriodYears = 3;
 }
 
 enum BucketLayoutProto {
@@ -883,6 +891,7 @@ message BucketArgs {
     optional BucketEncryptionInfoProto bekInfo = 12;
     // TODO: Tag payload for PutBucketTagging only.
     repeated hadoop.hdds.KeyValue tags = 13;
+    optional BucketRetentionConfig defaultRetention = 14;
 }
 
 message PrefixInfo {
@@ -1124,6 +1133,13 @@ message KeyArgs {
     // the given ETag for the operation to succeed. This is used for
     // S3 conditional writes with the If-Match header.
     optional string expectedETag = 24;
+
+    optional bool bypassGovernanceRetention = 25;
+    
+    // WORM (Write Once Read Many) Object Lock properties
+    optional string retentionMode = 26;
+    optional uint64 retainUntilDate = 27;
+    optional bool legalHold = 28 [default = false];
 }
 
 message KeyLocation {
@@ -1217,6 +1233,9 @@ message KeyInfo {
   // This allows a key to be created an committed atomically if the original has not
   // been modified.
     optional uint64 expectedDataGeneration = 22;
+    optional string retentionMode = 23;
+    optional uint64 retainUntilDate = 24; // Epoch milliseconds
+    optional bool legalHold = 25 [default = false];
 }
 
 // KeyInfoProtoLight is a lightweight subset of KeyInfo message containing
@@ -1427,6 +1446,7 @@ message DeleteKeyArgs {
     required string volumeName = 1;
     required string bucketName = 2;
     repeated string keys = 3;
+    optional bool bypassGovernanceRetention = 4;
 }
 
 message DeleteKeyError {

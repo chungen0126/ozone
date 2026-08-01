@@ -38,6 +38,7 @@ import org.apache.hadoop.ozone.om.OzoneManager;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.om.execution.flowcontrol.ExecutionContext;
 import org.apache.hadoop.ozone.om.helpers.BucketEncryptionKeyInfo;
+import org.apache.hadoop.ozone.om.helpers.BucketRetentionConfig;
 import org.apache.hadoop.ozone.om.helpers.KeyValueUtil;
 import org.apache.hadoop.ozone.om.helpers.OmBucketArgs;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
@@ -203,6 +204,17 @@ public class OMBucketSetPropertyRequest extends OMClientRequest {
       BucketEncryptionKeyInfo bek = omBucketArgs.getBucketEncryptionKeyInfo();
       if (bek != null && bek.getKeyName() != null) {
         bucketInfoBuilder.setBucketEncryptionKey(bek);
+      }
+
+      BucketRetentionConfig retentionConfig = omBucketArgs.getDefaultRetention();
+      if (retentionConfig != null) {
+        if (!dbBucketInfo.getObjectLockEnabled()) {
+          throw new OMException("Bucket object lock is not enabled.",
+              OMException.ResultCodes.INVALID_REQUEST);
+        }
+        bucketInfoBuilder.setDefaultRetention(retentionConfig);
+        LOG.debug("Updating bucket default retention for bucket: {} in volume: {}",
+            bucketName, volumeName);
       }
 
       omBucketInfo = bucketInfoBuilder.build();

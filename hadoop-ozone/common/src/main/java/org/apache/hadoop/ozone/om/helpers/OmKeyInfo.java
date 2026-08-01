@@ -111,6 +111,9 @@ public final class OmKeyInfo extends WithParentObjectId
   // This allows a key to be created an committed atomically if the original has not
   // been modified.
   private final Long expectedDataGeneration;
+  private final String retentionMode;
+  private final long retainUntilDate;
+  private final boolean legalHold;
 
   private OmKeyInfo(Builder b) {
     super(b);
@@ -130,6 +133,9 @@ public final class OmKeyInfo extends WithParentObjectId
     this.ownerName = b.ownerName;
     this.tags = b.tags.build();
     this.expectedDataGeneration = b.expectedDataGeneration;
+    this.retentionMode = b.retentionMode;
+    this.retainUntilDate = b.retainUntilDate;
+    this.legalHold = b.legalHold;
   }
 
   /**
@@ -206,6 +212,18 @@ public final class OmKeyInfo extends WithParentObjectId
 
   public Long getExpectedDataGeneration() {
     return expectedDataGeneration;
+  }
+
+  public String getRetentionMode() {
+    return retentionMode;
+  }
+
+  public long getRetainUntilDate() {
+    return retainUntilDate;
+  }
+
+  public boolean getLegalHold() {
+    return legalHold;
   }
 
   public String getOwnerName() {
@@ -485,6 +503,9 @@ public final class OmKeyInfo extends WithParentObjectId
         ", isFile=" + isFile +
         ", fileName='" + fileName + '\'' +
         ", acls=" + acls +
+        ", retentionMode='" + retentionMode + '\'' +
+        ", retainUntilDate=" + retainUntilDate +
+        ", legalHold=" + legalHold +
         '}';
   }
 
@@ -511,6 +532,9 @@ public final class OmKeyInfo extends WithParentObjectId
     private boolean isFile;
     private final MapBuilder<String, String> tags;
     private Long expectedDataGeneration = null;
+    private String retentionMode;
+    private long retainUntilDate;
+    private boolean legalHold;
 
     public Builder() {
       this.acls = AclListBuilder.empty();
@@ -533,6 +557,9 @@ public final class OmKeyInfo extends WithParentObjectId
       this.fileChecksum = obj.fileChecksum;
       this.isFile = obj.isFile;
       this.expectedDataGeneration = obj.expectedDataGeneration;
+      this.retentionMode = obj.retentionMode;
+      this.retainUntilDate = obj.retainUntilDate;
+      this.legalHold = obj.legalHold;
       this.tags = MapBuilder.of(obj.tags);
       obj.keyLocationVersions.forEach(keyLocationVersion ->
           this.omKeyLocationInfoGroups.add(
@@ -704,6 +731,21 @@ public final class OmKeyInfo extends WithParentObjectId
       return this;
     }
 
+    public Builder setRetentionMode(String mode) {
+      this.retentionMode = mode;
+      return this;
+    }
+
+    public Builder setRetainUntilDate(long retainUntilDate) {
+      this.retainUntilDate = retainUntilDate;
+      return this;
+    }
+
+    public Builder setLegalHold(boolean legalHold) {
+      this.legalHold = legalHold;
+      return this;
+    }
+
     @Override
     protected void validate() {
       super.validate();
@@ -855,6 +897,13 @@ public final class OmKeyInfo extends WithParentObjectId
     if (ownerName != null) {
       kb.setOwnerName(ownerName);
     }
+    if (retentionMode != null) {
+      kb.setRetentionMode(retentionMode);
+    }
+    if (retainUntilDate > 0) {
+      kb.setRetainUntilDate(retainUntilDate);
+    }
+    kb.setLegalHold(legalHold);
     return kb.build();
   }
 
@@ -909,6 +958,15 @@ public final class OmKeyInfo extends WithParentObjectId
     if (keyInfo.hasOwnerName()) {
       builder.setOwnerName(keyInfo.getOwnerName());
     }
+    if (keyInfo.hasRetentionMode()) {
+      builder.setRetentionMode(keyInfo.getRetentionMode());
+    }
+    if (keyInfo.hasRetainUntilDate()) {
+      builder.setRetainUntilDate(keyInfo.getRetainUntilDate());
+    }
+    if (keyInfo.hasLegalHold()) {
+      builder.setLegalHold(keyInfo.getLegalHold());
+    }
     return builder;
   }
 
@@ -946,7 +1004,10 @@ public final class OmKeyInfo extends WithParentObjectId
         Objects.equals(getMetadata(), omKeyInfo.getMetadata()) &&
         Objects.equals(acls, omKeyInfo.acls) &&
         Objects.equals(getTags(), omKeyInfo.getTags()) &&
-        getObjectID() == omKeyInfo.getObjectID();
+        getObjectID() == omKeyInfo.getObjectID() &&
+        retainUntilDate == omKeyInfo.retainUntilDate &&
+        legalHold == omKeyInfo.legalHold &&
+        Objects.equals(retentionMode, omKeyInfo.retentionMode);
 
     if (isEqual && checkUpdateID) {
       isEqual = getUpdateID() == omKeyInfo.getUpdateID();

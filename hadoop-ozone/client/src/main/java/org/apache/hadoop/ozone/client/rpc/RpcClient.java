@@ -1713,6 +1713,13 @@ public class RpcClient implements ClientProtocol {
   public void deleteKey(
       String volumeName, String bucketName, String keyName, boolean recursive,
       String expectedETag) throws IOException {
+    deleteKey(volumeName, bucketName, keyName, recursive, expectedETag, false);
+  }
+
+  @Override
+  public void deleteKey(
+      String volumeName, String bucketName, String keyName, boolean recursive,
+      String expectedETag, boolean bypassGovernanceRetention) throws IOException {
     verifyVolumeName(volumeName);
     verifyBucketName(bucketName);
     Objects.requireNonNull(keyName, "keyName == null");
@@ -1720,7 +1727,8 @@ public class RpcClient implements ClientProtocol {
         .setVolumeName(volumeName)
         .setBucketName(bucketName)
         .setKeyName(keyName)
-        .setRecursive(recursive);
+        .setRecursive(recursive)
+        .setBypassGovernanceRetention(bypassGovernanceRetention);
     if (expectedETag != null) {
       keyArgs.setExpectedETag(expectedETag);
     }
@@ -1741,13 +1749,21 @@ public class RpcClient implements ClientProtocol {
 
   @Override
   public Map<String, ErrorInfo> deleteKeys(
-      String volumeName, String bucketName, List<String> keyNameList, boolean quiet)
-      throws IOException {
+      String volumeName, String bucketName, List<String> keyNameList,
+      boolean quiet) throws IOException {
+    return deleteKeys(volumeName, bucketName, keyNameList, quiet, false);
+  }
+
+  @Override
+  public Map<String, ErrorInfo> deleteKeys(
+      String volumeName, String bucketName, List<String> keyNameList,
+      boolean quiet, boolean bypassGovernanceRetention) throws IOException {
     verifyVolumeName(volumeName);
     verifyBucketName(bucketName);
     Objects.requireNonNull(keyNameList, "keyNameList == null");
-    OmDeleteKeys omDeleteKeys = new OmDeleteKeys(volumeName, bucketName,
-        keyNameList);
+
+    OmDeleteKeys omDeleteKeys =
+        new OmDeleteKeys(volumeName, bucketName, keyNameList, bypassGovernanceRetention);
     return ozoneManagerClient.deleteKeys(omDeleteKeys, quiet);
   }
 

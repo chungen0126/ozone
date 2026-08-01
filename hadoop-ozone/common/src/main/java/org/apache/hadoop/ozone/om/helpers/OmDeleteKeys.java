@@ -28,11 +28,17 @@ public class OmDeleteKeys {
   private String bucket;
 
   private List<String> keyNames;
+  private boolean bypassGovernanceRetention;
 
   public OmDeleteKeys(String volume, String bucket, List<String> keyNames) {
+    this(volume, bucket, keyNames, false);
+  }
+
+  public OmDeleteKeys(String volume, String bucket, List<String> keyNames, boolean bypassGovernanceRetention) {
     this.volume = volume;
     this.bucket = bucket;
     this.keyNames = keyNames;
+    this.bypassGovernanceRetention = bypassGovernanceRetention;
   }
 
   public String getVolume() {
@@ -45,5 +51,9 @@ public class OmDeleteKeys {
 
   public List< String > getKeyNames() {
     return keyNames;
+  }
+
+  public boolean isBypassGovernanceRetention() {
+    return bypassGovernanceRetention;
   }
 }

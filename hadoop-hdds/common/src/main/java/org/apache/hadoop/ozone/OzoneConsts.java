@@ -50,6 +50,12 @@ public final class OzoneConsts {
   public static final int OZONE_MIN_BUCKET_NAME_LENGTH = 3;
   public static final int OZONE_MAX_BUCKET_NAME_LENGTH = 63;
 
+  // S3 Object Lock properties
+  public static final String OZONE_RETENTION_MODE = "ozone.worm.retentionMode";
+  public static final String OZONE_RETAIN_UNTIL_DATE = "ozone.worm.retainUntilDate";
+  public static final String OZONE_LEGAL_HOLD = "ozone.worm.legalHold";
+  public static final String OZONE_BYPASS_GOVERNANCE = "ozone.worm.bypassGovernance";
+
   public static final String OZONE_ACL_USER_TYPE = "user";
   public static final String OZONE_ACL_GROUP_TYPE = "group";
   public static final String OZONE_ACL_WORLD_TYPE = "world";

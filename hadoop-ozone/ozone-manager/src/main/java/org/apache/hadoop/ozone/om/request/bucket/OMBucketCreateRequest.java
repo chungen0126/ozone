@@ -93,9 +93,17 @@ public class OMBucketCreateRequest extends OMClientRequest {
         getOmRequest().getCreateBucketRequest();
     BucketInfo bucketInfo = createBucketRequest.getBucketInfo();
 
-    BucketLayout bucketLayout = BucketLayout.fromProto(bucketInfo.getBucketLayout());
+    BucketLayout bucketLayout = bucketInfo.hasBucketLayout() ?
+        BucketLayout.fromProto(bucketInfo.getBucketLayout()) :
+        ozoneManager.getOMDefaultBucketLayout();
+
     boolean strict = ozoneManager.isStrictS3()
         || bucketLayout == BucketLayout.OBJECT_STORE;
+
+    if (bucketInfo.getObjectLockEnabled() && bucketLayout != BucketLayout.OBJECT_STORE) {
+      throw new OMException("Object Lock is only supported for OBJECT_STORE bucket layout.",
+          OMException.ResultCodes.INVALID_REQUEST);
+    }
 
     // OBS (Object Store) buckets must follow strict S3 bucket naming rules.
     // FSO and LEGACY buckets are not strictly bound to S3 naming semantics.

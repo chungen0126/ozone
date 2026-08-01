@@ -167,6 +167,7 @@ public class OMKeysDeleteRequest extends OMKeyRequest {
         }
 
         try {
+          checkWormRetention(ozoneManager, omKeyInfo, deleteKeyArgs.getBypassGovernanceRetention());
           // check Acl
           long startNanosDeleteKeysAclCheckLatency = Time.monotonicNowNanos();
           checkKeyAcls(ozoneManager, volumeName, bucketName, keyName,
