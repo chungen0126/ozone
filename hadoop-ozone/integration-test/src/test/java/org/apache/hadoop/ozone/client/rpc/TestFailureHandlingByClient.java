@@ -63,6 +63,7 @@ import org.apache.hadoop.ozone.client.io.OzoneOutputStream;
 import org.apache.hadoop.ozone.container.ContainerTestHelper;
 import org.apache.hadoop.ozone.container.OzoneTestHelper;
 import org.apache.hadoop.ozone.container.common.helpers.BlockData;
+import org.apache.hadoop.ozone.container.common.impl.ContainerSet;
 import org.apache.hadoop.ozone.container.common.interfaces.DBHandle;
 import org.apache.hadoop.ozone.container.keyvalue.KeyValueContainer;
 import org.apache.hadoop.ozone.container.keyvalue.KeyValueContainerData;
@@ -275,10 +276,11 @@ public class TestFailureHandlingByClient {
     // write or not). The 3rd chunk would not exist on the first pipeline as
     // the pipeline would be closed before the last 0.5 chunk was committed
     // to the block.
-    KeyValueContainerData containerData1 =
-        ((KeyValueContainer) cluster.getHddsDatanode(block1DNs.get(2))
-            .getDatanodeStateMachine().getContainer().getContainerSet()
-            .getContainer(containerId1)).getContainerData();
+    final ContainerSet containerSet1 = cluster.getHddsDatanode(block1DNs.get(2))
+        .getDatanodeStateMachine().getContainer().getContainerSet();
+    GenericTestUtils.waitFor(() ->
+      containerSet1.getContainer(containerId1) != null, 500, 30000);
+    KeyValueContainerData containerData1 = ((KeyValueContainer)containerSet1.getContainer(containerId1)).getContainerData();
     try (DBHandle containerDb1 = BlockUtils.getDB(containerData1, conf)) {
       BlockData blockData1 = containerDb1.getStore().getBlockDataTable().get(
           containerData1.getBlockKey(locationList.get(0).getBlockID()
@@ -291,10 +293,11 @@ public class TestFailureHandlingByClient {
     }
 
     // Verify that the second block has the remaining 0.5*chunkSize of data
-    KeyValueContainerData containerData2 =
-        ((KeyValueContainer) cluster.getHddsDatanode(block2DNs.get(0))
-            .getDatanodeStateMachine().getContainer().getContainerSet()
-            .getContainer(containerId2)).getContainerData();
+    final ContainerSet containerSet2 = cluster.getHddsDatanode(block2DNs.get(0))
+            .getDatanodeStateMachine().getContainer().getContainerSet();
+    GenericTestUtils.waitFor(() ->
+        containerSet2.getContainer(containerId2) != null, 500, 30000);
+    KeyValueContainerData containerData2 = ((KeyValueContainer)containerSet2.getContainer(containerId2)).getContainerData();
     try (DBHandle containerDb2 = BlockUtils.getDB(containerData2, conf)) {
       BlockData blockData2 = containerDb2.getStore().getBlockDataTable().get(
           containerData2.getBlockKey(locationList.get(1).getBlockID()
