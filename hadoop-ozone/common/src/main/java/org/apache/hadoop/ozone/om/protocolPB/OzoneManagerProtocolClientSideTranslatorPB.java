@@ -164,7 +164,6 @@ import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3Se
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3VolumeContextRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.GetS3VolumeContextResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.InfoBucketRequest;
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.InfoBucketResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.InfoVolumeRequest;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.InfoVolumeResponse;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.KeyArgs;
@@ -636,8 +635,7 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
         .setAssumeS3Context(assumeS3Context)
         .build();
 
-    InfoBucketResponse resp =
-        handleError(submitRequest(omRequest)).getInfoBucketResponse();
+    OMResponse resp = handleError(submitRequest(omRequest));
 
     return BucketInfoWithVolumeContext.fromProtobuf(resp);
   }

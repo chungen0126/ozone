@@ -197,6 +197,7 @@ message OMRequest {
 
   optional ReadConsistencyHint readConsistencyHint = 7;
   optional bool assumeS3Context = 8;
+
   optional CreateVolumeRequest              createVolumeRequest            = 11;
   optional SetVolumePropertyRequest         setVolumePropertyRequest       = 12;
   optional CheckVolumeAccessRequest         checkVolumeAccessRequest       = 13;
@@ -355,6 +356,7 @@ message OMResponse {
   required Status status = 5;
 
   optional string leaderOMNodeId = 6;
+
   optional CreateVolumeResponse              createVolumeResponse          = 11;
   optional SetVolumePropertyResponse         setVolumePropertyResponse     = 12;
   optional CheckVolumeAccessResponse         checkVolumeAccessResponse     = 13;
@@ -489,6 +491,8 @@ message OMResponse {
   optional GetCallerIdentityResponse         getCallerIdentityResponse      = 156;
   optional SnapshotCountResponse snapshotCountResponse = 157;
   optional GetBucketDeletedBytesResponse     getBucketDeletedBytesResponse  = 158;
+  optional VolumeInfo volumeInfo = 159;
+  optional string userPrincipal = 160;
 }
 
 enum Status {
@@ -1072,8 +1076,6 @@ message InfoBucketRequest {
 
 message InfoBucketResponse {
     optional BucketInfo bucketInfo = 2;
-    optional VolumeInfo volumeInfo = 3;
-    optional string userPrincipal = 4;
 }
 
 message SetBucketPropertyRequest {

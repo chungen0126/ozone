@@ -232,7 +232,7 @@ public class OzoneManagerRequestHandler implements RequestHandler {
         responseBuilder.setListVolumeResponse(listVolumeResponse);
         break;
       case InfoBucket:
-        InfoBucketResponse infoBucketResponse = infoBucket(request);
+        InfoBucketResponse infoBucketResponse = infoBucket(request, responseBuilder);
         responseBuilder.setInfoBucketResponse(infoBucketResponse);
         break;
       case ListBuckets:
@@ -664,7 +664,7 @@ public class OzoneManagerRequestHandler implements RequestHandler {
     return resp.build();
   }
 
-  private InfoBucketResponse infoBucket(OMRequest request)
+  private InfoBucketResponse infoBucket(OMRequest request, OMResponse.Builder responseBuilder)
       throws IOException {
     InfoBucketRequest infoBucketRequest = request.getInfoBucketRequest();
     InfoBucketResponse.Builder resp =
@@ -674,8 +674,8 @@ public class OzoneManagerRequestHandler implements RequestHandler {
         infoBucketRequest.getVolumeName(), infoBucketRequest.getBucketName(), assumeS3Context);
     resp.setBucketInfo(context.getBucketInfo().getProtobuf());
     if (assumeS3Context) {
-      context.getUserPrincipal().ifPresent(resp::setUserPrincipal);
-      context.getVolumeArgs().ifPresent(v -> resp.setVolumeInfo(v.getProtobuf()));
+      context.getUserPrincipal().ifPresent(responseBuilder::setUserPrincipal);
+      context.getVolumeArgs().ifPresent(v -> responseBuilder.setVolumeInfo(v.getProtobuf()));
     }
 
     return resp.build();
