@@ -44,7 +44,7 @@ import org.apache.hadoop.ozone.om.helpers.OmDeleteKeys;
 import org.apache.hadoop.ozone.om.helpers.OmKeyArgs;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OmKeyLocationInfo;
-import org.apache.hadoop.ozone.om.helpers.OmLifecycleConfiguration;
+import org.apache.hadoop.ozone.om.helpers.BucketInfoWithVolumeContext;import org.apache.hadoop.ozone.om.helpers.OmLifecycleConfiguration;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartCommitUploadPartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadCompleteInfo;
@@ -208,6 +208,20 @@ public interface OzoneManagerProtocol
    */
   OmBucketInfo getBucketInfo(String volumeName, String bucketName)
       throws IOException;
+
+  /**
+   * Gets bucket information.
+   * @param volumeName - Volume name.
+   * @param bucketName - Bucket name.
+   * @param assumeS3Context if true OM will automatically lookup the S3
+   *                        volume context info.
+   * @return BucketInfoWithVolumeContext or exception is thrown.
+   * @throws IOException
+   */
+  default BucketInfoWithVolumeContext getBucketInfo(String volumeName, String bucketName,
+                                     boolean assumeS3Context) throws IOException {
+    return BucketInfoWithVolumeContext.newBuilder().setBucketInfo(getBucketInfo(volumeName, bucketName)).build();
+  }
 
   /**
    * Sets bucket property from args.

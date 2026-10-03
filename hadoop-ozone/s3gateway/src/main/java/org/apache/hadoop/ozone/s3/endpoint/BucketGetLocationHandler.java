@@ -22,6 +22,7 @@ import static org.apache.hadoop.ozone.s3.exception.S3ErrorTable.newError;
 
 import java.io.IOException;
 import javax.ws.rs.core.Response;
+import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.audit.S3GAction;
 import org.apache.hadoop.ozone.s3.exception.OS3Exception;
 import org.apache.hadoop.ozone.s3.util.S3Consts.QueryParams;
@@ -42,6 +43,12 @@ class BucketGetLocationHandler extends BucketOperationHandler {
     }
 
     context.setAction(S3GAction.GET_BUCKET_LOCATION);
+    try {
+      // Check if bucket exists
+      getClient().getProxy().getS3BucketDetails(bucketName);
+    } catch (OMException ex) {
+      throw newError(bucketName, ex);
+    }
     throw newError(NOT_IMPLEMENTED, "GetBucketLocation");
   }
 

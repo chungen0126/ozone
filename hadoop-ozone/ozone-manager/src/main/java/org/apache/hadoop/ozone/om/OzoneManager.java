@@ -3290,19 +3290,34 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
   @Override
   public OmBucketInfo getBucketInfo(String volume, String bucket)
       throws IOException {
+    return getBucketInfo(volume, bucket, false);
+  }
+
+  @Override
+  public BucketInfoWithVolumeContext getBucketInfo(String volume, String bucket, boolean assumeS3Context)
+      throws IOException {
+    String resolvedVolumeName = volume;
+    BucketInfoWithVolumeContext.Builder builder = BucketInfoWithVolumeContext.newBuilder();
+    if (assumeS3Context) {
+      S3VolumeContext context = getS3VolumeContext(true);
+      resolvedVolumeName = context.getOmVolumeArgs().getVolume();
+      builder.setVolumeArgs(context.getOmVolumeArgs());
+      builder.setUserPrincipal(context.getUserPrincipal());
+    }
+    
     boolean auditSuccess = true;
-    Map<String, String> auditMap = buildAuditMap(volume);
+    Map<String, String> auditMap = buildAuditMap(resolvedVolumeName);
     auditMap.put(OzoneConsts.BUCKET, bucket);
     try {
       if (getAclsEnabled()) {
         omMetadataReader.checkAcls(ResourceType.BUCKET,
-            StoreType.OZONE, ACLType.READ, volume,
+            StoreType.OZONE, ACLType.READ, resolvedVolumeName,
             bucket, null);
       }
       metrics.incNumBucketInfos();
 
-      return enrichLinkBucketInfo(
-          bucketManager.getBucketInfo(volume, bucket));
+      builder.setBucketInfo(enrichLinkBucketInfo(bucketManager.getBucketInfo(resolvedVolumeName, bucket)));
+      return builder.build();
     } catch (Exception ex) {
       metrics.incNumBucketInfoFails();
       auditSuccess = false;

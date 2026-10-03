@@ -147,6 +147,7 @@ import org.apache.hadoop.ozone.om.helpers.OmDeleteKeys;
 import org.apache.hadoop.ozone.om.helpers.OmKeyArgs;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OmKeyLocationInfo;
+import org.apache.hadoop.ozone.om.helpers.BucketInfoWithVolumeContext;
 import org.apache.hadoop.ozone.om.helpers.OmKeyLocationInfoGroup;
 import org.apache.hadoop.ozone.om.helpers.OmLifecycleConfiguration;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartInfo;
@@ -1333,6 +1334,19 @@ public class RpcClient implements ClientProtocol {
     verifyBucketName(bucketName);
     OmBucketInfo bucketInfo =
         ozoneManagerClient.getBucketInfo(volumeName, bucketName);
+    return buildOzoneBucket(bucketInfo);
+  }
+
+  @Override
+  public OzoneBucket getS3BucketDetails(String bucketName) throws IOException {
+    verifyBucketName(bucketName);
+    BucketInfoWithVolumeContext bucketInfo =
+        ozoneManagerClient.getBucketInfo(OzoneConfigKeys.OZONE_S3_VOLUME_NAME_DEFAULT, bucketName, true);
+    bucketInfo.getUserPrincipal().ifPresent(this::updateS3Principal);
+    return buildOzoneBucket(bucketInfo.getBucketInfo());
+  }
+
+  private OzoneBucket buildOzoneBucket(OmBucketInfo bucketInfo) {
     return OzoneBucket.newBuilder(conf, this)
         .setVolumeName(bucketInfo.getVolumeName())
         .setName(bucketInfo.getBucketName())
@@ -1356,6 +1370,7 @@ public class RpcClient implements ClientProtocol {
         .setDefaultReplicationConfig(bucketInfo.getDefaultReplicationConfig())
         .build();
   }
+
 
   @Override
   public List<OzoneBucket> listBuckets(String volumeName, String bucketPrefix,

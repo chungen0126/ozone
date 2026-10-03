@@ -78,7 +78,7 @@ import org.apache.hadoop.ozone.om.helpers.OmDeleteKeys;
 import org.apache.hadoop.ozone.om.helpers.OmKeyArgs;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OmKeyLocationInfo;
-import org.apache.hadoop.ozone.om.helpers.OmLifecycleConfiguration;
+import org.apache.hadoop.ozone.om.helpers.BucketInfoWithVolumeContext;import org.apache.hadoop.ozone.om.helpers.OmLifecycleConfiguration;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartCommitUploadPartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartUpload;
@@ -619,6 +619,12 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
   @Override
   public OmBucketInfo getBucketInfo(String volume, String bucket)
       throws IOException {
+    return getBucketInfo(volume, bucket, false).getBucketInfo();
+  }
+
+  @Override
+  public BucketInfoWithVolumeContext getBucketInfo(String volume, String bucket, boolean assumeS3Context)
+      throws IOException {
     InfoBucketRequest.Builder req =
         InfoBucketRequest.newBuilder();
     req.setVolumeName(volume);
@@ -626,12 +632,13 @@ public final class OzoneManagerProtocolClientSideTranslatorPB
 
     OMRequest omRequest = createOMRequest(Type.InfoBucket)
         .setInfoBucketRequest(req)
+        .setAssumeS3Context(assumeS3Context)
         .build();
 
     InfoBucketResponse resp =
         handleError(submitRequest(omRequest)).getInfoBucketResponse();
 
-    return OmBucketInfo.getFromProtobuf(resp.getBucketInfo());
+    return BucketInfoWithVolumeContext.fromProtobuf(resp);
   }
 
   /**

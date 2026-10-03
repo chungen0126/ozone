@@ -296,7 +296,7 @@ public class BucketEndpoint extends BucketOperationHandler {
     S3RequestContext context = new S3RequestContext(this, S3GAction.HEAD_BUCKET);
     long startNanos = context.getStartNanos();
     try {
-      OzoneBucket bucket = getVolume().getBucket(bucketName);
+      OzoneBucket bucket = getClient().getProxy().getS3BucketDetails(bucketName);
       S3Owner.verifyBucketOwnerCondition(getHeaders(), bucketName, bucket.getOwner());
       auditReadSuccess(context.getAction());
       getMetrics().updateHeadBucketSuccessStats(startNanos);

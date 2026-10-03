@@ -86,7 +86,7 @@ import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadList;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadListParts;
 import org.apache.hadoop.ozone.om.helpers.OmPartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmVolumeArgs;
-import org.apache.hadoop.ozone.om.helpers.OpenKeySession;
+import org.apache.hadoop.ozone.om.helpers.BucketInfoWithVolumeContext;import org.apache.hadoop.ozone.om.helpers.OpenKeySession;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatus;
 import org.apache.hadoop.ozone.om.helpers.OzoneFileStatusLight;
 import org.apache.hadoop.ozone.om.helpers.S3STSUtils;
@@ -231,8 +231,7 @@ public class OzoneManagerRequestHandler implements RequestHandler {
         responseBuilder.setListVolumeResponse(listVolumeResponse);
         break;
       case InfoBucket:
-        InfoBucketResponse infoBucketResponse = infoBucket(
-            request.getInfoBucketRequest());
+        InfoBucketResponse infoBucketResponse = infoBucket(request);
         responseBuilder.setInfoBucketResponse(infoBucketResponse);
         break;
       case ListBuckets:
@@ -664,13 +663,19 @@ public class OzoneManagerRequestHandler implements RequestHandler {
     return resp.build();
   }
 
-  private InfoBucketResponse infoBucket(InfoBucketRequest request)
+  private InfoBucketResponse infoBucket(OMRequest request)
       throws IOException {
+    InfoBucketRequest infoBucketRequest = request.getInfoBucketRequest();
     InfoBucketResponse.Builder resp =
         InfoBucketResponse.newBuilder();
-    OmBucketInfo omBucketInfo = impl.getBucketInfo(
-        request.getVolumeName(), request.getBucketName());
-    resp.setBucketInfo(omBucketInfo.getProtobuf());
+    boolean assumeS3Context = request.hasAssumeS3Context() && request.getAssumeS3Context();
+    BucketInfoWithVolumeContext context = impl.getBucketInfo(
+        infoBucketRequest.getVolumeName(), infoBucketRequest.getBucketName(), assumeS3Context);
+    resp.setBucketInfo(context.getBucketInfo().getProtobuf());
+    if (assumeS3Context) {
+      context.getUserPrincipal().ifPresent(resp::setUserPrincipal);
+      context.getVolumeArgs().ifPresent(v -> resp.setVolumeInfo(v.getProtobuf()));
+    }
 
     return resp.build();
   }

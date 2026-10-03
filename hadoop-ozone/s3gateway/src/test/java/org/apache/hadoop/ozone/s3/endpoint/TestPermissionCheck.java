@@ -123,8 +123,7 @@ public class TestPermissionCheck {
    */
   @Test
   public void testGetBucket() throws IOException {
-    doThrow(exception).when(volume).getBucket(anyString());
-    when(objectStore.getS3Volume()).thenReturn(volume);
+    doThrow(exception).when(clientProtocol).getS3BucketDetails(anyString());
     BucketEndpoint bucketEndpoint = EndpointBuilder.newBucketEndpointBuilder()
         .setClient(client)
         .build();
