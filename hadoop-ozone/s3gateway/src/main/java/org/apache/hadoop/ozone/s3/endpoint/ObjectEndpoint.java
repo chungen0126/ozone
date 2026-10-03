@@ -1369,7 +1369,7 @@ public class ObjectEndpoint extends ObjectOperationHandler {
 
     OzoneBucket getBucket() throws IOException {
       if (bucket == null) {
-        bucket = getVolume().getBucket(bucketName);
+        bucket = getClientProtocol().getS3BucketDetails(bucketName);
       }
       return bucket;
     }

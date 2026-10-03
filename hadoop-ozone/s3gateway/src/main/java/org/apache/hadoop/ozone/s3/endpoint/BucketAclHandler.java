@@ -91,7 +91,7 @@ public class BucketAclHandler extends BucketOperationHandler {
     context.setAction(S3GAction.GET_ACL);
 
     try {
-      OzoneBucket bucket = context.getVolume().getBucket(bucketName);
+      OzoneBucket bucket = getClientProtocol().getS3BucketDetails(bucketName);
       S3Owner.verifyBucketOwnerCondition(getHeaders(), bucketName, bucket.getOwner());
       S3Owner owner = S3Owner.of(bucket.getOwner());
 
