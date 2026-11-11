@@ -181,10 +181,13 @@ public class MockOmTransport implements OmTransport {
 
   private GetKeyInfoResponse getKeyInfo(GetKeyInfoRequest request) {
     final KeyArgs keyArgs = request.getKeyArgs();
+    final KeyInfo keyInfo = keys.get(keyArgs.getVolumeName()).get(keyArgs.getBucketName())
+        .get(keyArgs.getKeyName());
+    if (keyInfo == null) {
+      throw new MockOmException(Status.KEY_NOT_FOUND);
+    }
     return GetKeyInfoResponse.newBuilder()
-        .setKeyInfo(
-            keys.get(keyArgs.getVolumeName()).get(keyArgs.getBucketName())
-                .get(keyArgs.getKeyName()))
+        .setKeyInfo(keyInfo)
         .build();
   }
 

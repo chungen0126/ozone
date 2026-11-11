@@ -108,6 +108,17 @@ public class OzoneOutputStream extends ByteArrayStreamOutput
     outputStream.close();
   }
 
+  /**
+   * Releases this stream without committing the key, if the underlying stream supports it.
+   * A later close() does not commit the key.
+   *
+   * @return false if abort is not supported; the stream is then left unchanged and should be closed.
+   */
+  public synchronized boolean abort() throws IOException {
+    // A wrapping stream, such as CryptoOutputStream, would be left with its own resources unreleased.
+    return outputStream instanceof KeyCommitOutput && ((KeyCommitOutput) outputStream).abort();
+  }
+
   @Override
   public void hflush() throws IOException {
     hsync();

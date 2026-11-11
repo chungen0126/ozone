@@ -25,6 +25,7 @@ import static org.apache.hadoop.ozone.util.MetricUtil.captureLatencyNs;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
@@ -158,6 +159,8 @@ public class BlockOutputStream extends OutputStream {
 
   private CompletableFuture<Void> lastFlushFuture;
   private CompletableFuture<Void> allPendingFlushFutures = CompletableFuture.completedFuture(null);
+  // A sent WriteChunk request may still read its buffer until the request completes.
+  private CompletableFuture<Void> allPendingWriteChunkFutures = CompletableFuture.completedFuture(null);
 
   /**
    * Creates a new BlockOutputStream.
@@ -415,6 +418,12 @@ public class BlockOutputStream extends OutputStream {
     this.allPendingFlushFutures = allPendingFlushFutures.thenCombine(flushFuture, (last, curr) -> null);
   }
 
+  private <T> CompletableFuture<T> recordWriteChunkAsync(CompletableFuture<T> writeChunkFuture) {
+    Preconditions.checkState(Thread.holdsLock(this));
+    this.allPendingWriteChunkFutures = allPendingWriteChunkFutures.thenCombine(writeChunkFuture, (last, curr) -> null);
+    return writeChunkFuture;
+  }
+
   private void allocateNewBufferIfNeeded() throws IOException {
     if (currentBufferRemaining == 0) {
       try {
@@ -654,14 +663,14 @@ public class BlockOutputStream extends OutputStream {
 
   private void writeChunk(ChunkBuffer buffer) throws IOException {
     writeChunkCommon(buffer);
-    writeChunkToContainer(buffer.duplicate(0, buffer.position()), false, false);
+    recordWriteChunkAsync(writeChunkToContainer(buffer.duplicate(0, buffer.position()), false, false));
   }
 
   private CompletableFuture<PutBlockResult> writeChunkAndPutBlock(ChunkBuffer buffer, boolean close)
       throws IOException {
     LOG.debug("WriteChunk and Putblock from flush, buffer={}", buffer);
     writeChunkCommon(buffer);
-    return writeChunkToContainer(buffer.duplicate(0, buffer.position()), true, close);
+    return recordWriteChunkAsync(writeChunkToContainer(buffer.duplicate(0, buffer.position()), true, close));
   }
 
   /**
@@ -790,6 +799,24 @@ public class BlockOutputStream extends OutputStream {
         cleanup(false);
       }
     }
+  }
+
+  /**
+   * Releases the client without sending the data left in the current buffer or a final putBlock, and without waiting
+   * for the sent data to be committed. Waits for the sent WriteChunk requests, which may still read the buffers,
+   * even if interrupted.
+   */
+  public void abort() {
+    final CompletableFuture<Void> pendingWriteChunks;
+    synchronized (this) {
+      pendingWriteChunks = allPendingWriteChunkFutures;
+    }
+    try {
+      Uninterruptibles.getUninterruptibly(pendingWriteChunks);
+    } catch (ExecutionException ignored) {
+      // A failed WriteChunk no longer reads its buffer.
+    }
+    cleanup(false);
   }
 
   void waitOnFlushFuture() throws InterruptedException, ExecutionException {

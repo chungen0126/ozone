@@ -88,6 +88,12 @@ public final class ECKeyOutputStream extends KeyOutputStream
     this.preCommits = preCommits;
   }
 
+  /** Not supported: the stripes are written by a separate flush thread. */
+  @Override
+  public boolean abort() {
+    return false;
+  }
+
   @VisibleForTesting
   public void insertFlushCheckpoint(long version) throws IOException {
     addStripeToQueue(new CheckpointDummyStripe(version));

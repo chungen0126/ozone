@@ -32,4 +32,14 @@ interface KeyCommitOutput extends KeyMetadataAware {
       @Nonnull List<CheckedRunnable<IOException>> preCommits);
 
   OmMultipartCommitUploadPartInfo getCommitUploadPartInfo();
+
+  /**
+   * Releases this stream without committing the key, discarding the data not yet sent to the datanodes.
+   * A later close() does not commit the key.
+   *
+   * @return false if this stream does not support abort; it is then left unchanged.
+   */
+  default boolean abort() throws IOException {
+    return false;
+  }
 }

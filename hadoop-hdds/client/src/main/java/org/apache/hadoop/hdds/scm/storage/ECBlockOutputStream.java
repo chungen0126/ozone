@@ -126,6 +126,12 @@ public class ECBlockOutputStream extends BlockOutputStream {
     return writeChunkToContainer(ChunkBuffer.wrap(buff));
   }
 
+  /** Not supported: the WriteChunk requests reading the buffers are not tracked. */
+  @Override
+  public void abort() {
+    throw new UnsupportedOperationException("abort is not supported for " + getClass().getSimpleName());
+  }
+
   public CompletableFuture<ContainerProtos.
       ContainerCommandResponseProto> executePutBlock(boolean close,
       boolean force, long blockGroupLength, BlockData[] blockData)

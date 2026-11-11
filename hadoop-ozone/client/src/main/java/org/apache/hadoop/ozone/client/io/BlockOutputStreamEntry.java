@@ -221,6 +221,12 @@ public class BlockOutputStreamEntry extends OutputStream {
     }
   }
 
+  void abort() {
+    if (isInitialized()) {
+      ((BlockOutputStream) getOutputStream()).abort();
+    }
+  }
+
   boolean isClosed() {
     if (isInitialized()) {
       return  ((BlockOutputStream) getOutputStream()).isClosed();

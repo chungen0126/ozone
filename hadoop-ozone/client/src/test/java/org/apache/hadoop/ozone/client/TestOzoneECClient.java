@@ -21,6 +21,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -303,6 +304,25 @@ public class TestOzoneECClient {
       // A further read should give EOF
       assertEquals(-1, is.read(fileContent));
     }
+  }
+
+  @Test
+  public void testAbortECKeyIsNotSupported() throws IOException {
+    store.createVolume(volumeName);
+    OzoneVolume volume = store.getVolume(volumeName);
+    volume.createBucket(bucketName);
+    OzoneBucket bucket = volume.getBucket(bucketName);
+
+    try (OzoneOutputStream out = bucket.createKey(keyName, inputSize, new ECReplicationConfig(dataBlocks,
+        parityBlocks, ECReplicationConfig.EcCodec.RS, chunkSize), new HashMap<>())) {
+      for (byte[] chunk : inputChunks) {
+        out.write(chunk);
+      }
+      assertFalse(out.abort());
+    }
+
+    // The stream is left unchanged, so close() still commits the key.
+    assertEquals(keyName, bucket.getKey(keyName).getName());
   }
 
   @Test

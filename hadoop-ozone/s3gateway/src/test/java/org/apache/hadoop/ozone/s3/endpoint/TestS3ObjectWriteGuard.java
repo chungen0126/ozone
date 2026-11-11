@@ -177,6 +177,22 @@ class TestS3ObjectWriteGuard {
   }
 
   @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void incompleteTransferAbortsKeyIfSupported(boolean abortSupported) {
+    CloseRecordingKeyMetadataAwareOutputStream keyOutputStream =
+        new CloseRecordingKeyMetadataAwareOutputStream(abortSupported);
+    S3ObjectWriteGuard guard = new S3ObjectWriteGuard(
+        new OzoneOutputStream(keyOutputStream, null), CONTENT.length, KEY_PATH);
+    assertThrows(IOException.class, () -> guard.copyFrom(failingInputStream(new IOException("read failed")), 4));
+
+    assertCommitBlocked(guard);
+
+    assertThat(keyOutputStream.isAborted()).isEqualTo(abortSupported);
+    // close() would first flush the data written so far to the datanodes.
+    assertThat(keyOutputStream.isCloseCalled()).isEqualTo(!abortSupported);
+  }
+
+  @ParameterizedTest
   @ValueSource(strings = {"", "content"})
   void completedTransferCommits(String content) throws IOException {
     KeyMetadataAwareOutputStream keyOutputStream = new KeyMetadataAwareOutputStream(Collections.emptyMap());
@@ -293,6 +309,33 @@ class TestS3ObjectWriteGuard {
 
     private int getWriteAttempts() {
       return writeAttempts;
+    }
+  }
+
+  private static final class CloseRecordingKeyMetadataAwareOutputStream
+      extends KeyMetadataAwareOutputStream {
+
+    private final boolean abortSupported;
+    private boolean closeCalled;
+
+    private CloseRecordingKeyMetadataAwareOutputStream(boolean abortSupported) {
+      super(Collections.emptyMap());
+      this.abortSupported = abortSupported;
+    }
+
+    @Override
+    public boolean abort() {
+      return abortSupported && super.abort();
+    }
+
+    @Override
+    public void close() throws IOException {
+      closeCalled = true;
+      super.close();
+    }
+
+    private boolean isCloseCalled() {
+      return closeCalled;
     }
   }
 

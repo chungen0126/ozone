@@ -20,10 +20,12 @@ package org.apache.hadoop.ozone.client;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.hadoop.hdds.client.ReplicationFactor.ONE;
 import static org.apache.ozone.test.GenericTestUtils.getTestStartTime;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.annotation.Nonnull;
 import java.io.IOException;
@@ -37,6 +39,7 @@ import org.apache.hadoop.hdds.client.ReplicationType;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.scm.XceiverClientFactory;
+import org.apache.hadoop.hdds.scm.storage.BlockOutputStream;
 import org.apache.hadoop.ozone.OzoneConfigKeys;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.client.io.OzoneInputStream;
@@ -60,6 +63,7 @@ public class TestOzoneClient {
 
   private OzoneClient client;
   private ObjectStore store;
+  private MockXceiverClientFactory xceiverClientFactory;
 
   public static <E extends Throwable> void expectOmException(
       OMException.ResultCodes code,
@@ -88,7 +92,8 @@ public class TestOzoneClient {
       @Override
       protected XceiverClientFactory createXceiverClientFactory(
           ServiceInfoEx serviceInfo) {
-        return new MockXceiverClientFactory();
+        xceiverClientFactory = new MockXceiverClientFactory();
+        return xceiverClientFactory;
       }
     });
 
@@ -188,6 +193,42 @@ public class TestOzoneClient {
   }
 
   @Test
+  public void testAbortKeyDoesNotWriteBufferedData() throws IOException {
+    OzoneOutputStream out = createKeyWithBufferedData(getOzoneBucket(), UUID.randomUUID().toString());
+
+    assertTrue(out.abort());
+
+    assertThat(xceiverClientFactory.getStorages()).isNotEmpty();
+    for (MockDatanodeStorage storage : xceiverClientFactory.getStorages().values()) {
+      assertThat(storage.getAllBlockData()).isEmpty();
+    }
+  }
+
+  @Test
+  public void testAbortKeyReleasesBlockStream() throws IOException {
+    OzoneOutputStream out = createKeyWithBufferedData(getOzoneBucket(), UUID.randomUUID().toString());
+    BlockOutputStream blockStream =
+        (BlockOutputStream) out.getKeyOutputStream().getStreamEntries().get(0).getOutputStream();
+
+    assertTrue(out.abort());
+
+    assertTrue(blockStream.isClosed());
+    assertEquals(0, blockStream.getBufferPool().getSize());
+  }
+
+  @Test
+  public void testCloseAfterAbortDoesNotCommitKey() throws Exception {
+    OzoneBucket bucket = getOzoneBucket();
+    String keyName = UUID.randomUUID().toString();
+    OzoneOutputStream out = createKeyWithBufferedData(bucket, keyName);
+
+    assertTrue(out.abort());
+    out.close();
+
+    expectOmException(ResultCodes.KEY_NOT_FOUND, () -> bucket.getKey(keyName));
+  }
+
+  @Test
   public void testPutKeyWithECReplicationConfig() throws IOException {
     close();
     OzoneConfiguration config = new OzoneConfiguration();
@@ -218,6 +259,14 @@ public class TestOzoneClient {
       OzoneKey key = bucket.getKey(keyName);
       assertEquals(keyName, key.getName());
     }
+  }
+
+  private static OzoneOutputStream createKeyWithBufferedData(OzoneBucket bucket, String keyName) throws IOException {
+    byte[] value = "sample value".getBytes(UTF_8);
+    OzoneOutputStream out = bucket.createKey(keyName, value.length, ReplicationType.RATIS, ONE, new HashMap<>());
+    // Less than a buffer, so it is not sent to the datanode before close.
+    out.write(value);
+    return out;
   }
 
   private OzoneBucket getOzoneBucket() throws IOException {

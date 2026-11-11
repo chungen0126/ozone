@@ -70,9 +70,13 @@ class S3ObjectWriteGuard implements AutoCloseable {
 
   private void validateBeforeCommit() throws IOException {
     if (!transferComplete) {
-      throw new IOException("S3 object transfer did not complete before commit: " + keyPath);
+      throw transferIncomplete();
     }
     EndpointBase.validateContentLength(expectedLength, writtenLength, keyPath).run();
+  }
+
+  private IOException transferIncomplete() {
+    return new IOException("S3 object transfer did not complete before commit: " + keyPath);
   }
 
   protected List<CheckedRunnable<IOException>> getPreCommits() {
@@ -147,6 +151,10 @@ class S3ObjectWriteGuard implements AutoCloseable {
 
   @Override
   public void close() throws IOException {
+    // The commit would be rejected, so do not flush the data written so far to the datanodes.
+    if (!transferComplete && ((OzoneOutputStream) outputStream).abort()) {
+      throw transferIncomplete();
+    }
     outputStream.close();
   }
 }

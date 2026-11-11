@@ -1120,6 +1120,7 @@ public final class OzoneBucketStub extends OzoneBucket {
     private final Map<String, String> metadata;
     private List<CheckedRunnable<IOException>> preCommits = Collections.emptyList();
     private long modificationTime;
+    private boolean aborted;
 
     public KeyMetadataAwareOutputStream(Map<String, String> metadata) {
       super(null, null);
@@ -1155,6 +1156,16 @@ public final class OzoneBucketStub extends OzoneBucket {
       }
       modificationTime = Time.now();
       buffer.close();
+    }
+
+    @Override
+    public boolean abort() {
+      aborted = true;
+      return true;
+    }
+
+    public boolean isAborted() {
+      return aborted;
     }
 
     @Override

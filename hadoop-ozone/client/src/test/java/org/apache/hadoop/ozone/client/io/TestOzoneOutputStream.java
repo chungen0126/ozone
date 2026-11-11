@@ -18,6 +18,7 @@
 package org.apache.hadoop.ozone.client.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,6 +47,7 @@ public class TestOzoneOutputStream {
 
     private final Map<String, String> metadata;
     private List<CheckedRunnable<IOException>> preCommits;
+    private boolean aborted;
 
     FakeKeyOutputStream(Map<String, String> metadata) {
       super(); // VisibleForTesting constructor
@@ -64,6 +66,16 @@ public class TestOzoneOutputStream {
 
     List<CheckedRunnable<IOException>> getPreCommits() {
       return preCommits;
+    }
+
+    @Override
+    public boolean abort() {
+      aborted = true;
+      return true;
+    }
+
+    boolean isAborted() {
+      return aborted;
     }
 
     @Override
@@ -143,6 +155,22 @@ public class TestOzoneOutputStream {
       assertNotNull(ozone.getKeyOutputStream());
       assertEquals("v1", ozone.getMetadata().get("k1"));
     }
+  }
+
+  /**
+   * Aborting only the wrapped stream would leave the wrapper's own resources unreleased.
+   */
+  @Test
+  public void testAbortIsNotSupportedThroughCryptoWrapper() throws IOException {
+    FakeKeyOutputStream key = new FakeKeyOutputStream(Collections.emptyMap());
+    CryptoOutputStream crypto = mock(CryptoOutputStream.class);
+    when(crypto.getWrappedStream()).thenReturn(key);
+
+    try (OzoneOutputStream ozone = new OzoneOutputStream(crypto, null)) {
+      assertFalse(ozone.abort());
+    }
+
+    assertFalse(key.isAborted());
   }
 
   @Test

@@ -659,6 +659,24 @@ public class KeyOutputStream extends OutputStream
   }
 
   @Override
+  public boolean abort() {
+    doInWriteLock(this::abortInternal);
+    return true;
+  }
+
+  private void abortInternal() {
+    if (closed) {
+      return;
+    }
+    closed = true;
+    for (BlockOutputStreamEntry entry : blockOutputStreamEntryPool.getStreamEntries()) {
+      entry.abort();
+    }
+    // Only after the aborted entries no longer read the buffers.
+    blockOutputStreamEntryPool.cleanup();
+  }
+
+  @Override
   public synchronized OmMultipartCommitUploadPartInfo
       getCommitUploadPartInfo() {
     return blockOutputStreamEntryPool.getCommitUploadPartInfo();
