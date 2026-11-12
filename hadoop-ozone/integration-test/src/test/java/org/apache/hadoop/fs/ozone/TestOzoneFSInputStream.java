@@ -181,9 +181,11 @@ public abstract class TestOzoneFSInputStream implements ClusterForTests.TestCase
     }
   }
 
-  @Test
-  void testECVectoredRead() throws Exception {
-    Path path = new Path("/vectored-ec-reads");
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void testECVectoredRead(boolean parallelRead) throws Exception {
+    FileSystem ecFs = ecFs(parallelRead);
+    Path path = new Path("/vectored-ec-reads-" + parallelRead);
     try (FSDataOutputStream output = ecFs.create(path)) {
       output.write(data);
     }
