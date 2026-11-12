@@ -602,8 +602,8 @@ public class TestStreamBlockInputStream {
     doThrow(new IllegalStateException("injected")).doNothing()
         .when(dn.factory).releaseClientForReadData(any(), anyBoolean());
     assertDoesNotThrow(stream::close);
-    // close() went all the way: the stream is closed
-    assertThrows(IOException.class, () -> stream.readPositioned(10, ByteBuffer.allocate(10)));
+    // close() went all the way: the stream is closed. Since HDDS-17399, readPositioned() itself does not check this.
+    assertThrows(IOException.class, stream::checkOpen);
   }
 
   @Test
